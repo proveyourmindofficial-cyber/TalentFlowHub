@@ -1,0 +1,246 @@
+Perfect—thanks for the clear brief. Here’s a **developer-ready spec** (you can paste this to your dev or an AI tool) to implement the **Offer Letter salary breakup** exactly as you wrote. It keeps **payslip logic out** and **does not create any new module**—only updates the existing Offer dialog + API.
+
+---
+
+# 🔧 DO THIS (Offer Letter Salary Format ONLY)
+
+**Don’t create a new component/module.**
+**Overwrite/replace the current salary breakdown logic & UI** in the existing “Release Offer” flow.
+
+---
+
+## 1) Input
+
+* `CTC_ANNUAL` (e.g., **₹6,50,000**)
+
+---
+
+## 2) Offer Letter Formulas (Annual = source of truth)
+
+**Earnings (A):**
+
+* **Basic (Annual)** = **60% of CTC**
+* **HRA (Annual)** = **40% of Basic**
+* **Conveyance (Annual)** = **₹19,200** (₹1,600/month)
+* **Medical (Annual)** = **₹15,000** (₹1,250/month)
+* **Employer PF (Monthly)** = `min(0.12 * min(₹15,000, Basic_monthly), ₹1,800)`
+
+  * **Employer PF (Annual)** = `EmployerPF_monthly * 12`
+* **A (Annual)** = `CTC_ANNUAL − EmployerPF_Annual`
+* **Flexi (Annual)** = `A_Annual − (Basic_Annual + HRA_Annual + 19,200 + 15,000)`
+
+**Deductions (for offer screen only):**
+
+* **Employee PF (Monthly)** = same as Employer PF Monthly
+* **PT (Monthly)** = **₹200**
+* **Insurance (Monthly)** = **₹500**
+* **Total Deductions (Monthly)** = `EmployeePF + PT + Insurance`
+
+**Net Take-home (Monthly)** = `A_Monthly − TotalDeductions_Monthly`
+
+> Note: **Income Tax/TDS** and **payslip components** are **NOT** shown here (handled by HR payroll separately).
+
+---
+
+## 3) Display Rules (Monthly & Annual like your table)
+
+* Compute **annuals first**, then **monthly = round(annual / 12)** to whole rupees.
+* For **Flexi Monthly**, ensure the **row sum matches A\_Monthly**:
+  `flexiMonthly = A_Monthly − (basicMonthly + hraMonthly + 1600 + 1250)`
+* Always show **A\_Annual + EmployerPF\_Annual = CTC\_ANNUAL exactly** (avoid 5,99,998 type errors).
+* Keep labels exactly as below (and in this order).
+
+### UI Sections & Labels (match your sheet)
+
+**SALARY BREAKUP (A)**
+
+* Basic Salary
+* Conveyance
+* House Rent Allowance (HRA)
+* Medical Reimbursements
+* Flexi Benefit Allowances
+* **Total (A)**
+
+**OTHER BENEFITS (B)**
+
+* Employer Contribution to ESI (show “—”)
+* Employer Contribution to EPF
+* **Total (B)**
+
+**Totals**
+
+* **Total Salary (A+B)** → show **per month & per year**
+* (Below show deductions)
+
+**DEDUCTIONS**
+
+* Professional Tax (PT)
+* Employee Contribution of PF
+* Insurance
+* **Total Deductions**
+
+**Monthly Take Home Salary**
+
+* `A_Monthly − (PF employee + PT + Insurance)`
+
+---
+
+## 4) Example (must render EXACTLY like this for CTC ₹6,50,000)
+
+**Earnings (A)**
+
+* Basic Salary: **₹32,500 / ₹3,90,000**
+* Conveyance: **₹1,600 / ₹19,200**
+* HRA: **₹13,000 / ₹1,56,000**
+* Medical Reimbursements: **₹1,250 / ₹15,000**
+* Flexi Benefit Allowances: **₹4,017 / ₹48,200**
+* **Total (A): ₹52,367 / ₹6,28,400**
+
+**Other Benefits (B)**
+
+* Employer Contribution to ESI: **— / —**
+* Employer Contribution to EPF: **₹1,800 / ₹21,600**
+* **Total (B): ₹1,800 / ₹21,600**
+
+**Total Salary (A+B): ₹54,167 / ₹6,50,000**
+
+**Deductions**
+
+* Professional Tax (PT): **₹200 / ₹2,400**
+* Employee Contribution of PF: **₹1,800 / ₹21,600**
+* Insurance: **₹500 / ₹6,000**
+* **Total Deductions: ₹2,500 / ₹30,000**
+
+**Monthly Take Home Salary: ₹49,867**
+
+> Note on rounding: Monthly figures are displayed to whole rupees. Minor monthly×12 ≠ annual differences (e.g., Flexi 4,017 × 12 = 48,204 vs 48,200) are **allowed**. **Annual totals are the source of truth** and must equal CTC.
+
+---
+
+## 5) TypeScript helper (drop-in)
+
+```ts
+type Amount = { monthly: number | string; annual: number | string };
+type Breakup = {
+  earningsA: {
+    basic: Amount;
+    conveyance: Amount;
+    hra: Amount;
+    medical: Amount;
+    flexi: Amount;
+    totalA: Amount;
+  };
+  otherBenefitsB: {
+    esi: Amount;                // show "—" for both
+    epfEmployer: Amount;
+    totalB: Amount;
+  };
+  totals: {
+    totalAB: Amount;            // A + B
+  };
+  deductions: {
+    pt: Amount;
+    pfEmployee: Amount;
+    insurance: Amount;
+    total: Amount;
+  };
+  netTakeHomeMonthly: number | string;
+};
+
+export function calcOfferBreakup(ctcAnnual: number): Breakup {
+  const round0 = (n: number) => Math.round(n);
+
+  // Annuals (truth)
+  const basicAnnual = round0(0.60 * ctcAnnual);
+  const hraAnnual = round0(0.40 * basicAnnual);
+  const conveyAnnual = 19200;
+  const medicalAnnual = 15000;
+
+  const basicMonthlyRaw = basicAnnual / 12;
+  const employerPFMonthly = Math.min(0.12 * Math.min(15000, basicMonthlyRaw), 1800);
+  const employerPFAnnual = round0(employerPFMonthly * 12); // 21,600 at cap
+
+  const aAnnual = ctcAnnual - employerPFAnnual;
+  const flexiAnnual = aAnnual - (basicAnnual + hraAnnual + conveyAnnual + medicalAnnual);
+
+  // Monthlies (rounded display)
+  const basicMonthly = round0(basicAnnual / 12);      // 32,500
+  const hraMonthly = round0(hraAnnual / 12);          // 13,000
+  const conveyMonthly = 1600;
+  const medicalMonthly = 1250;
+  const aMonthly = round0(aAnnual / 12);              // 52,367
+
+  // Flexi monthly balances the row sum to equal A monthly
+  const flexiMonthly = aMonthly - (basicMonthly + hraMonthly + conveyMonthly + medicalMonthly);
+
+  const epfEmployerMonthly = employerPFMonthly;       // 1,800
+  const epfEmployerAnnual = employerPFAnnual;         // 21,600
+
+  const totalABMonthly = aMonthly + epfEmployerMonthly; // 54,167
+  const totalABAnnual  = aAnnual  + epfEmployerAnnual;  // must equal CTC
+
+  // Deductions (offer screen only)
+  const pfEmployeeMonthly = epfEmployerMonthly;       // 1,800
+  const pfEmployeeAnnual  = epfEmployerAnnual;        // 21,600
+  const ptMonthly = 200, ptAnnual = 2400;
+  const insuranceMonthly = 500, insuranceAnnual = 6000;
+
+  const deductionsMonthly = pfEmployeeMonthly + ptMonthly + insuranceMonthly; // 2,500
+  const deductionsAnnual = pfEmployeeAnnual + ptAnnual + insuranceAnnual;     // 30,000
+
+  const netMonthly = aMonthly - deductionsMonthly;    // 49,867
+
+  const dash = "—"; // for ESI display
+
+  return {
+    earningsA: {
+      basic:       { monthly: basicMonthly, annual: basicAnnual },
+      conveyance:  { monthly: conveyMonthly, annual: conveyAnnual },
+      hra:         { monthly: hraMonthly, annual: hraAnnual },
+      medical:     { monthly: medicalMonthly, annual: medicalAnnual },
+      flexi:       { monthly: flexiMonthly, annual: flexiAnnual },
+      totalA:      { monthly: aMonthly, annual: aAnnual },
+    },
+    otherBenefitsB: {
+      esi:         { monthly: dash, annual: dash }, // show dash as string
+      epfEmployer: { monthly: epfEmployerMonthly, annual: epfEmployerAnnual },
+      totalB:      { monthly: totalABMonthly - aMonthly, annual: totalABAnnual - aAnnual },
+    },
+    totals: {
+      totalAB:     { monthly: totalABMonthly, annual: totalABAnnual }, // equals CTC
+    },
+    deductions: {
+      pt:          { monthly: ptMonthly, annual: ptAnnual },
+      pfEmployee:  { monthly: pfEmployeeMonthly, annual: pfEmployeeAnnual },
+      insurance:   { monthly: insuranceMonthly, annual: insuranceAnnual },
+      total:       { monthly: deductionsMonthly, annual: deductionsAnnual },
+    },
+    netTakeHomeMonthly: netMonthly,
+  };
+}
+```
+
+---
+
+## 6) DB & UI notes
+
+* Numeric columns: use `numeric(12,2)` for stored annuals; UI can show without decimals.
+* Show **Monthly** and **Annual** columns side-by-side like your screenshot.
+* **Delete/replace** any earlier “Indian standards / Keka payslip style” logic. **Do not add a new screen.**
+* Add a small note under Net Pay: *“TDS and payslip structure are handled by HR separately.”*
+
+---
+
+## 7) Quick QA checklist (for your review)
+
+* [ ] A\_Annual + EmployerPF\_Annual == **CTC exactly**
+* [ ] **A\_Monthly = 52,367**; **Total (A+B) Monthly = 54,167**
+* [ ] **Flexi** displays **₹4,017 / ₹48,200**
+* [ ] **Deductions Monthly = 2,500** (PF 1,800 + PT 200 + Insurance 500)
+* [ ] **Monthly Take Home = ₹49,867**
+* [ ] ESI shows **— / —**
+* [ ] No Income Tax or “Other Benefits / Special Allowance” fields
+
+---
+
+If you want, I can also give a **1-sheet Excel** with these formulas wired so HR/QA can verify any CTC quickly.

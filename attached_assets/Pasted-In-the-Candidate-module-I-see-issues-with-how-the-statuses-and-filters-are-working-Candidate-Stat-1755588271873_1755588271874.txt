@@ -1,0 +1,49 @@
+In the Candidate module, I see issues with how the statuses and filters are working:
+
+Candidate Status (Available → Applied)
+
+Initially, a candidate shows as Available.
+
+When I apply that candidate to a job (in Applications), the status in the Candidate module should also automatically update to Applied.
+
+This is a basic concept and common workflow standard — when applied, the candidate should no longer remain “Available.”
+
+Duplicate Visibility in Applications
+
+After applying a candidate (e.g., Raju) to a job, that candidate should not appear again when creating a new application.
+
+However, currently, the same candidate still appears in the dropdown list for selection.
+
+This creates duplication and goes against common logic — once applied, they shouldn’t be selectable again.
+
+Duplicate Visibility in Interviews
+
+Similarly, after scheduling a candidate (e.g., Raju) for an L1 interview, when scheduling a new interview for another candidate, I still see Raju in the dropdown.
+
+Logically, once scheduled, that candidate should not reappear for scheduling until the interview process moves forward or ends.
+
+Observations
+
+Status updates between Candidate module and Applications module are inconsistent.
+
+Filters are missing — candidates who are already applied or scheduled are still shown again in dropdowns.
+
+This breaks the expected workflow and adds confusion.
+
+Expected Behavior
+
+Candidate status should update automatically (Available → Applied) once they are used in Applications.
+
+Applied candidates should not be visible again when creating new Applications.
+
+Scheduled candidates should not appear again when scheduling new Interviews.
+
+Filters must ensure only eligible candidates appear at each stage.
+
+Request for Clarification
+
+Please explain what logic is currently being used that allows candidates to still appear after being applied or scheduled.
+
+If you have designed it this way for a specific reason, please justify how it helps in real workflows.
+
+If I am missing something, kindly suggest the correct approach. Otherwise, fix the filters so they align with basic and global ATS concepts.

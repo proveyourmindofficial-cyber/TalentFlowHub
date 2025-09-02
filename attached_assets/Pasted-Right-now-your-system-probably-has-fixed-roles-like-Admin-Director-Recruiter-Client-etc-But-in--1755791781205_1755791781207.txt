@@ -1,0 +1,73 @@
+Right now, your system probably has fixed roles like Admin, Director, Recruiter, Client etc.
+But in real life, every company works differently → sometimes you may want to:
+
+Create a new role (e.g., Senior Recruiter, HR Intern, Finance Officer)
+
+Control exactly what that role can do (e.g., can view candidates but not edit, can send offer letters but not delete)
+
+That’s why you need a customizable role permission module → so you are not limited to only the pre-built roles.
+
+🔹 How It Works Step by Step
+
+Role Creation
+
+In User Management → “+ Create New Role” button.
+
+Enter: Role Name (e.g., HR Coordinator) and Description.
+
+Permission Assignment
+
+System should list all possible features/modules:
+
+Dashboard
+
+Candidates
+
+Jobs
+
+Applications
+
+Interviews
+
+Offer Letters
+
+Client Requirements
+
+Reports
+
+Settings
+
+For each feature → you define the permissions:
+
+View / Add / Edit / Delete (typical CRUD model)
+
+Or even more granular: Approve, Export, Download, Manage Workflow
+
+✅ Example:
+
+HR Coordinator: Can view candidates, add applications, schedule interviews, but cannot generate offer letters.
+
+Finance Officer: Can view reports, manage invoicing, but cannot access candidate details.
+
+Assign Role to User
+
+When you add a new user (or edit an existing one), you choose from the role list (including custom roles).
+
+Example: Assign HR Coordinator role to Sarah → she instantly gets only the permissions you defined.
+
+Centralized Role Management
+
+If later you edit the role permissions (e.g., add delete permission for Candidates), it applies automatically to all users with that role.
+
+🔹 Benefits
+
+Flexibility → adapt roles to your company’s structure.
+
+Security → no accidental access, only the right people see/manage the right things.
+
+Scalability → if tomorrow you expand, you don’t need new code, just define new roles.
+
+Standardization → same role = same permissions for everyone.
+
+👉 In short:
+This module lets you design your own roles (like Lego blocks) instead of being stuck with fixed ones.

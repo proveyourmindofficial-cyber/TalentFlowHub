@@ -1,0 +1,64 @@
+Please implement an Email Template System for our ATS with the following requirements:
+
+1. **Check & Create (No Duplicates)**  
+   - When I add a new email template (e.g., Candidate Registration, Application Submission, Interview Invite, Offer Letter, etc.), the system should first check if a template with the same `key` (like "candidate_registration") already exists.  
+   - If it exists → update it.  
+   - If it doesn’t exist → create it.  
+   - This ensures there are no duplicate templates.
+
+2. **Central Email Template Store**  
+   - Keep all templates in a single JSON or database table called `email_templates`.  
+   - Each template should have:
+     - `key` (unique ID like "candidate_registration")  
+     - `subject` (string)  
+     - `body_html` (HTML with placeholders like `{{candidate.name}}`)  
+     - `updatedAt`  
+
+3. **Professional Modern UI Emails**  
+   - Use modern responsive HTML with inline CSS (Tailwind-like, clean look).  
+   - Should look professional but stylish (Gen-Z design: rounded cards, clean fonts, accent colors).  
+   - Support dynamic placeholders (like `{{candidate.name}}`, `{{job.title}}`, etc.).  
+   - Provide option to include company logo at the top (if available).  
+   - Default to my ATS brand name if no logo is set.
+
+4. **Customization Option**  
+   - Add a simple `logoUrl` and `primaryColor` setting in configuration.  
+   - All emails should adapt automatically:
+     - If `logoUrl` exists → show logo at top center.  
+     - If not → show ATS system name.  
+     - Background color, button color, links use `primaryColor`.
+
+5. **Integration with Email Service**  
+   - Expose a function `sendEmail(templateKey, to, data)` that:
+     - Looks up template by `key`.  
+     - Replaces placeholders with values from `data`.  
+     - Sends via existing Microsoft Graph API integration.  
+   - Example:  
+     - `sendEmail("candidate_registration", candidate.email, { name: candidate.name, portalLink: "https://..." })`
+
+6. **Initial Templates (Seed Data)**  
+   Please create and insert/update the following templates:
+
+   ### A. Candidate Registration
+   - key: `candidate_registration`
+   - subject: `Welcome to TalentFlowHub – Your Profile is Created 🎉`
+   - body:  
+     Hi {{candidate.name}},  
+     Welcome to TalentFlowHub! Your candidate profile has been created.  
+     👉 Next step: Please login to your candidate portal and upload your documents.  
+     🔗 {{candidatePortal.link}}
+
+   ### B. Application Submission
+   - key: `application_submission`
+   - subject: `Application Received – {{job.title}} at {{client.name}}`
+   - body:  
+     Hi {{candidate.name}},  
+     Thank you for applying for the role of **{{job.title}}** at **{{client.name}}**.  
+     Our recruitment team will review your profile and update you soon.
+
+   (You can add more later the same way.)
+
+---
+
+Make sure everything is in a **single reusable service**, no scattered files, no duplication.  
+

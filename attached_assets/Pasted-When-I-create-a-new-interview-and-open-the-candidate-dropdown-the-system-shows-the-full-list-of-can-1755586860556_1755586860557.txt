@@ -1,0 +1,57 @@
+When I create a new interview and open the candidate dropdown, the system shows the full list of candidates. This includes those who are already scheduled for interviews and are in different stages (L1, L2, HR, Final, etc.) with statuses such as Scheduled, Selected, or Rejected.
+
+Expected Behavior
+
+The dropdown should only display:
+
+Candidates who are available, and
+
+Candidates who have applied but are not yet scheduled for any interview.
+
+This is a basic and standard workflow rule that should be followed in any ATS or recruitment system.
+
+Problems Observed
+
+Candidates already in L1, L2, HR, or Final stages still appear in the list, which causes confusion.
+
+This breaks the logical flow of automation and increases the chance of duplicate scheduling.
+
+It seems the current implementation ignores the candidate’s existing stage and status.
+
+This looks like a basic gap in concept — the system should apply common sense logic when filtering.
+
+Concerns About Communication
+
+I feel there is no proper communication between what I am asking and what is being built.
+
+I give clear instructions, but they are not being followed properly.
+
+Instead of addressing the main workflow issue, only minor fixes are being done, which wastes time and effort.
+
+Questions to Clarify
+
+What exact logic did you apply that makes already-scheduled candidates still appear?
+
+How do you think this approach is useful in real-world workflow?
+
+Is there an alternate logic you are following? If yes, explain it so I can analyze.
+
+Suggestions for Improvement
+
+If you do not fully understand my requirement, ask me before building.
+
+When I give requirements, you should also suggest improvements or alternatives (e.g., “If we add this, it will be better” or “Do you want it to work like this?”).
+
+AI is expected to apply basic reasoning and not just act mechanically like a printer (which only prints what is given). It should understand context and apply common sense.
+
+Please ensure workflows are aligned with global ATS standards and practical logic.
+
+Summary
+
+Candidates already scheduled/interviewed should not appear in the new interview dropdown.
+
+The system should use basic logic and filtering to avoid confusion.
+
+There must be better communication and clarification before implementation.
+
+AI should analyze, reason, and suggest improvements — not just execute blindly.

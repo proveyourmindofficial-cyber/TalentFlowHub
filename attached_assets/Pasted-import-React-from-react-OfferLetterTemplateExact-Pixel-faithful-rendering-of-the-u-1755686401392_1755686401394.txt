@@ -1,0 +1,529 @@
+import React from "react";
+
+/**
+ * OfferLetterTemplateExact
+ * Pixel-faithful rendering of the uploaded O2F Offer Letter inside React.
+ *
+ * Notes:
+ * - Typography defaults to Times New Roman 11pt and 1.5 line height to match the Word doc.
+ * - Text content is verbatim from the uploaded document, with {{placeholders}} where dynamic.
+ * - Annexure-1 table follows the document order: Per Month, Per Year.
+ * - Add your own values via the `offer` prop. Sensible fallbacks are provided.
+ */
+
+export type OfferData = {
+  offerDate?: string | Date;
+  joiningDate?: string | Date;
+  baseLocationIntro?: string;   // e.g., "Hyderabad"
+  baseLocationSection?: string; // e.g., "Bangalore"
+  candidate?: { name?: string; currentLocation?: string };
+  designation?: string;
+  ctc?: number; // Annual CTC
+  // Annexure-1 numbers (if not provided, example values from doc are used)
+  basicSalary?: number; // per year
+  hra?: number; // per year
+  conveyance?: number; // per year
+  medical?: number; // per year
+  flexi?: number; // per year
+  employerPf?: number; // per year
+  employeePf?: number; // per year
+  professionalTax?: number; // per year
+  insurance?: number; // per year
+  incomeTax?: number; // per year
+  netMonthly?: number; // computed or manual per month
+  hrName?: string;
+};
+
+function fmtDate(d?: string | Date): string {
+  if (!d) return "____________";
+  const dd = new Date(d);
+  const day = dd.getDate();
+  const month = dd.toLocaleString("en-US", { month: "long" });
+  const year = dd.getFullYear();
+  const s = ["th", "st", "nd", "rd"]; const v = day % 100;
+  const ord = (s[(v - 20) % 10] || s[v] || s[0]);
+  return `${month} ${day}${ord}, ${year}`;
+}
+
+function inr(n: number | undefined): string {
+  const v = n ?? 0;
+  return v.toLocaleString("en-IN");
+}
+
+export default function OfferLetterTemplateExact({ offer }: { offer: OfferData }) {
+  const offerDate = fmtDate(offer.offerDate);
+  const joiningDate = fmtDate(offer.joiningDate);
+  const name = offer.candidate?.name ?? "Candidate Name";
+  const city = offer.candidate?.currentLocation ?? "Bangalore";
+  const baseIntro = offer.baseLocationIntro ?? "Hyderabad";
+  const baseSection = offer.baseLocationSection ?? "Bangalore";
+  const ctc = offer.ctc ?? 650000;
+
+  // Annexure-1 defaults (from uploaded doc example)
+  const basicY = offer.basicSalary ?? 390000;
+  const hraY = offer.hra ?? 156000;
+  const conveyY = offer.conveyance ?? 19200;
+  const medicalY = offer.medical ?? 15000;
+  const flexiY = offer.flexi ?? 48200;
+  const employerPfY = offer.employerPf ?? 21600;
+  const employeePfY = offer.employeePf ?? 21600;
+  const ptY = offer.professionalTax ?? 2400;
+  const insuranceY = offer.insurance ?? 6000;
+  const incomeTaxY = offer.incomeTax ?? 0;
+
+  const toMonthly = (y: number) => Math.round(y / 12);
+
+  const totalA_Y = basicY + hraY + conveyY + medicalY + flexiY; // 6,28,400
+  const totalB_Y = employerPfY; // 21,600
+  const totalSalary_Y = totalA_Y + totalB_Y; // 6,50,000
+  const totalDeductions_Y = employeePfY + ptY + insuranceY + incomeTaxY; // 30,000 in example
+  const netMonthly = offer.netMonthly ?? 49867; // from example in doc
+
+  return (
+    <div className="text-[11pt] leading-[1.5]" style={{ fontFamily: 'Times New Roman, serif' }}>
+      <style>{`
+        @page { margin: 20mm; }
+        .page-break { page-break-before: always; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #000; padding: 6px; }
+        .no-border td, .no-border th { border: none; }
+        .center { text-align: center; }
+        .right { text-align: right; }
+        .section-title { font-weight: bold; margin: 14px 0 6px; }
+      `}</style>
+
+      {/* Date (top-right) */}
+      <div className="right mb-6">{offerDate}</div>
+
+      {/* Candidate block */}
+      <div className="mb-8">
+        {name}<br />
+        {city}
+      </div>
+
+      <div className="center text-[14pt] font-bold mb-4">Offer of Employment</div>
+      <div className="mb-4">Dear {name},</div>
+      <div className="center font-bold mb-4">Congratulations!!!</div>
+
+      {/* Body paragraphs — verbatim from document with placeholders */}
+      <p>Please refer to the interview and discussions you had with us recently.</p>
+
+      <p>
+        We are pleased to offer you the position of <strong>{offer.designation ?? 'Sr Consultant – Talent Acquisition'}</strong> at <strong>O2F Info Solutions Pvt Ltd</strong> and the joining date would be <strong>{joiningDate}</strong>.
+      </p>
+
+      <p>
+        Your employment will be based at {baseIntro}, however, based on the position’s requirements, you may be required to work anywhere in India and this offer of employment will take effect from the date of your reporting. This offer is valid up to <strong>{joiningDate}</strong> subject to your joining on or before the given joining date.
+      </p>
+
+      <p>
+        Your Annual CTC will be Rs. {inr(ctc)}. This CTC Includes Conveyance and all other allowances and benefits as applicable to you as detailed in Annexure-1. The break-up of your CTC is indicated in the attached annexure.
+      </p>
+
+      <p>
+        You will be covered under Group Medical Insurance for a sum of Rs.5,00,000. Under Group Medical Insurance, Hospitalization cover can be utilized only by the employee and the benefit is not extended to any other family members.
+      </p>
+
+      <p>
+        Your compensation details are strictly confidential, and you may discuss it only with the authorized personnel of HR in case of any clarification. It is our hope that your acceptance of this offer will be just the beginning of a mutually rewarding relationship.
+      </p>
+
+      <p>
+        Salary Payments will be made by 05th of the next calendar month subject to attendance. Net take home salary is subject to Income Tax and other statutory deductions and will be paid into the Bank Account of the Employee. For operating convenience, we encourage all our employees to open a salary account with HDFC Bank after joining the employment with us.
+      </p>
+
+      <p>
+        Note: Alternatively, you can share us your HDFC Bank Account details, if you are already holding an account with HDFC Bank. you are free to provide us your other Bank Account details (For NEFT Transfers) other than HDFC Bank if you do not want to have HDFC Bank as your Banking Partner.
+      </p>
+
+      <p>
+        You will receive a monthly pay statement detailing gross pay and deductions. Any subsequent changes to your salary will be highlighted on that statement. Income tax liability (TDS) or any other statutory deduction arising as a result of your employment, it should be borne by the employee and company in no event be liable for payment of those taxes and statutory deductions in addition to your CTC either during the period of your employment or after cessation of your employment with O2F.
+      </p>
+
+      <p>
+        Your employment with O2F Info solutions Pvt Ltd will be governed by the following Terms and conditions. You will also be governed by current O2F’s rules, regulations, internal policies, and practices which are subject to change from time to time.
+      </p>
+
+      {/* Sections */}
+      <div className="section-title">Location of work</div>
+      <p>
+        Your employment will be based in {baseSection} and the company reserves the right to Transfer your services to anywhere in India and Overseas or utilize your expertise to any of our projects based in India and Overseas. Relocation or Compensatory allowance applicable to a specific Project / location as per Company’s policy will be paid to you.
+      </p>
+
+      <div className="section-title">Duties and Responsibilities</div>
+      <p>
+        The Company reserves the right, at any time during your employment, with reasonable notice, to require you to undertake any reasonable, alternative duties which are within your capabilities. You shall not indulge actively/or cause any act likely to affect the discipline that is expected from every employee of this organization or associate with any such activity which may amount to an act subversive of discipline.
+      </p>
+
+      <div className="section-title">Notice Period / Termination</div>
+      <p>
+        At the time of tendering resignation, you shall be required to give 60 Days’ notice in writing. Your resignation will become effective and final upon acceptance by the Management not withstanding that the communication of the acceptance of resignation has reached you or not. However, it will be the prerogative of the Management to accept or not your resignation. In case of any misconduct on your part, Non-Performance of your services can be terminated with immediate effect without assigning any reason and without giving to you any notice or notice pay in lieu of notice or any other claim, compensation or damages.
+      </p>
+      <p>
+        Expect where your employment is terminatable on the grounds of Gross Misconduct, Non-Performance and any unexpected business circumstances. You are entitled to a termination without Notice. As per our company norms for termination, the processing of any pending payments will not be carried out. This decision aligns with our commitment to maintaining the integrity and authenticity of our workforce.
+      </p>
+      <p>
+        In the event of the information furnished by you in your application to the company or in the testimonials with regard to your educational qualifications/prior employment and experience history are found incorrect or willfully withheld, you will be liable for termination, or such action as may be deemed fit by the management.
+      </p>
+
+      <div className="section-title">You shall inform the Company</div>
+      <p>
+        You shall inform the Company of any changes in your personal data within 3 days’ time. Any notice required to be given to you shall be deemed to have been duly and properly given if delivered to you personally or sent to your email ID or sent by post to you at your address in India, as recorded in the Company.
+      </p>
+
+      <div className="section-title">Use of Company Resources</div>
+      <p>
+        You shall be responsible for the safe keeping and in good condition and order of all O2F’s and its client’s property entrusted to your care and charge. You may use the company resources only for official purpose with utmost honesty and diligence.
+      </p>
+
+      <div className="section-title">Business Conduct</div>
+      <p>
+        It is expected that employees appreciate the importance of proper behaviour and appearance in business life and they ensure their dress, grooming and appearance are appropriate to professional business life. Your dress, grooming and appearance should reflect favourably upon other team members in the Company.
+      </p>
+
+      <div className="section-title">Dual Employment</div>
+      <p>
+        You will need to devote full time to the work of the company and shall not undertake any other direct/indirect business or work, honorary or remunerative.
+      </p>
+
+      <div className="section-title">Professional Ethics</div>
+      <p>
+        You are required to deal with the O2F’s and its client’s money, material and documents with utmost honesty and professional Ethics. If you are found guilty at any point of time of moral turpitude or dishonesty in dealing with the Company’s and Client material, document or theft or misappropriation regardless of a value involved, your services would be terminated with immediate effect, notwithstanding any other terms and conditions mentioned in the Offer letter.
+      </p>
+
+      <div className="section-title">Forfeiture</div>
+      <p>
+        Notwithstanding anything contained herein before, the Company shall be entitled without prejudice to any other remedy available in law, to apply any money due to an employee from the Company towards making good, in full or in part, any loss or damage that the Company may have suffered by reason of his/her default or misconduct.
+      </p>
+
+      <div className="section-title">Sexual Harassment / Discrimination</div>
+      <p>
+        You are required to familiarize yourself with Harassment policy and comply with it always. Any instances of harassment are regarded as serious issues and non-compliance may lead to disciplinary action being instigated against you as per Law of the Land. Offensive posters/ screen savers/ mails or magazines and books at the work place should be strictly avoided.
+      </p>
+      <p>
+        Every employee of O2F Info solutions Pvt Ltd holding a senior and responsible position at O2F or its client’s place shall take all possible steps to ensure a positive work environment free of any form of discrimination.
+      </p>
+
+      <div className="section-title">Remedies or Breaches</div>
+      <p>
+        You shall ratify that monetary damage would be an inadequate remedy for any breach of the terms contained herein committed by you. As a result of the said breach, the Company shall be entitled to temporary restraining orders and injunctions and permanent restraining orders and injunctions to prohibit such breach(s). This paragraph is in no way meant to limit those remedies which the Company has at law or equity for such breach(s) by you of any terms and conditions mentioned in the Offer letter and the Company reserves the right to proceed on more than once cause of action including seeking damages as well as injunctions and restraining orders.
+      </p>
+
+      <div className="section-title">Negligence</div>
+      <p>
+        If you are guilty of any inattention to or negligence in the conduct of the business or of any other act or omission inconsistent with your duties or any breach of the terms and conditions of your employment for which the Company shall be the sole judge and you shall be liable for appropriate legal action including immediate termination of your employment.
+      </p>
+
+      <div className="section-title">Absence of Work</div>
+      <p>
+        You will abide by all the rules, regulation and policies of the company. O2F Info Solutions Pvt Ltd reserves the right to amend such policies as needed.
+      </p>
+      <p>
+        You shall inform the company of your absence from work from time to time. If you are absent from work for four consecutive days without any permission/intimation to HR personal or management, will be treated as absconding from the company. If you go on leave with permission but don’t report to work as per the timelines and later don’t intimate the extension of leave will also be treated as absconding from the company. The company also has the right to initiate appropriate legal action applicable as per law for absconding from the company. You will also be subject to all standard O2F Data Protection and Network Security policies and either O2F or its customers may require you to sign a statement to such effect at any time.
+      </p>
+
+      <div className="section-title">Confidentiality and non-compete clause</div>
+      <p>
+        You shall during your service with us, devote your whole time and attention to the Company’s business entrusted to you, and shall not engage yourself directly or indirectly in any business or service other than Company’s business or service.
+      </p>
+      <p>
+        You shall at all times keep the information that may come to your knowledge regarding company’s plans, business affairs, operations etc. confidential.
+      </p>
+      <p>
+        You shall be required to keep the information regarding “salary” being offered to you strictly confidential at all times. You shall not divulge any details pertaining to your salary to any friend/colleague or acquaintance either before/during or after the cessation of your employment with us. Divulging such information at any time may lead to either withdrawal of this offer letter or termination of your existing employment with us.
+      </p>
+      <p>
+        You agree not to employ, or solicit or seek to employ, any employee, consultants, customer or associate of the Company during your employment and for a period of one year after your termination / resignation of employment from the company. Upon breach of this Section with respect to a particular employee, consultants, customer or associate of the Company, you will be liable to pay liquidated damages.
+      </p>
+      <p>
+        During the term of this Agreement and for a period of 1 year thereafter, you shall not directly or indirectly approach or in any way assist or be involved with any partners and / or customers of O2F. You cannot directly approach any partners of O2F more particularly, whose work is being undertaken by you or supervised by you due to this employment agreement.
+      </p>
+      <p>
+        You shall not at any time discuss or disclose or forward O2F’s or its client’s business emails and data (like materials, technical aspects, codes, design documents, study material and any other content that is designed for either internal or external use) to your personal email IDs or to any other emails IDs and shall not publish any personal or confidential information about O2F or its clients in any public forums. The company also has the right to initiate appropriate legal action applicable as per law for infringement of confidentiality code.
+      </p>
+
+      <div className="section-title">Data Protection and Confidentiality</div>
+      <p>
+        You may have access to personal and/or confidential information about the internal business affairs of O2F or its client’s organization considered ‘commercially sensitive’. It must only be used for the purpose(s) for which it has been authorized. Please read and sign Annexure 3 for more details about Data Protection and Confidentiality Policy. Please note that in addition to what has been mentioned in this appointment letter, no other commitment is being made by the company. This offer letter, together with the various documents referenced herein, represent the complete offer by the Company. If there is any element of our offer that you feel is unclear or not covered, please contact me at undersigned ahead of signing this document.
+      </p>
+      <p>
+        To ensure that you have a full understanding of the terms and conditions of your prospective employment with O2F and the benefits available to you there are a number of enclosures to this letter which we hope you will find interesting and informative and have agreed to abide by them in form and substance. On joining you will be able to access Company’s Intranet site, which contains comprehensive information regarding all benefits, policies and procedures but, in the meantime, to answer any questions you may have, please do not hesitate to contact your respective People Partners in People Development Function.
+      </p>
+
+      <div className="section-title">Full and Final Settlement</div>
+      <p>
+        Please to inform you that your Full and Final settlement will be processed after 60 days from the date of relieving based on your approved attendance.
+      </p>
+
+      <p>
+        At O2F our long-term success depends on both the results we achieve and the way we make these results happen. We set high standards for our people, our products and our processes. Quality must set us apart. We set high standards of personal integrity and ethics in all our business ventures. We, at O2F, feel that you will make an invaluable addition to our team and it is with great enthusiasm that I hope you accept this offer of employment.
+      </p>
+
+      <p>
+        We take pleasure in welcoming you to our organization and look forward to a mutually beneficial association.
+      </p>
+
+      <p>For O2F Info Solutions Pvt Ltd.</p>
+      <br />
+      <p>Manager – Human Resource</p>
+
+      {/* Declaration block */}
+      <div className="page-break" />
+      <div className="section-title">DECLARATION</div>
+      <p>I have read and understood the above terms and conditions of employment and am accepting the same.</p>
+      <table className="no-border" style={{ marginTop: 24 }}>
+        <tbody>
+          <tr className="no-border">
+            <td className="no-border" style={{ width: '50%' }}>
+              Date:
+            </td>
+            <td className="no-border" style={{ width: '50%' }}>
+              Signature: ___________________
+            </td>
+          </tr>
+          <tr className="no-border">
+            <td className="no-border" colSpan={2}>Name:</td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* Annexure 1 */}
+      <div className="page-break" />
+      <div className="center text-[14pt] font-bold mb-4">Annexure 1 – Particulars of Remuneration</div>
+
+      <table className="no-border" style={{ marginBottom: 12 }}>
+        <tbody>
+          <tr className="no-border"><td className="no-border"><strong>BASIC DETAILS</strong></td></tr>
+          <tr className="no-border"><td className="no-border">Employee Name: {name}</td></tr>
+          <tr className="no-border"><td className="no-border">Location: {city}</td></tr>
+          <tr className="no-border"><td className="no-border">Designation: {offer.designation ?? 'Sr Consultant - Talent Acquisition'}</td></tr>
+          <tr className="no-border"><td className="no-border">Department: Recruitment</td></tr>
+          <tr className="no-border"><td className="no-border">Annual Fixed Compensation: {inr(ctc)}</td></tr>
+          <tr className="no-border"><td className="no-border">Total Cost to Company (CTC): {inr(ctc)}</td></tr>
+        </tbody>
+      </table>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Salary Components</th>
+            <th className="right">Per Month (₹)</th>
+            <th className="right">Per Year (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Basic Salary</td>
+            <td className="right">{inr(toMonthly(basicY))}</td>
+            <td className="right">{inr(basicY)}</td>
+          </tr>
+          <tr>
+            <td>Conveyance</td>
+            <td className="right">{inr(toMonthly(conveyY))}</td>
+            <td className="right">{inr(conveyY)}</td>
+          </tr>
+          <tr>
+            <td>House Rent Allowance (HRA)</td>
+            <td className="right">{inr(toMonthly(hraY))}</td>
+            <td className="right">{inr(hraY)}</td>
+          </tr>
+          <tr>
+            <td>Medical Reimbursements</td>
+            <td className="right">{inr(toMonthly(medicalY))}</td>
+            <td className="right">{inr(medicalY)}</td>
+          </tr>
+          <tr>
+            <td>Flexi Benefit Allowances</td>
+            <td className="right">{inr(toMonthly(flexiY))}</td>
+            <td className="right">{inr(flexiY)}</td>
+          </tr>
+          <tr>
+            <td><strong>Total (A)</strong></td>
+            <td className="right"><strong>{inr(toMonthly(totalA_Y))}</strong></td>
+            <td className="right"><strong>{inr(totalA_Y)}</strong></td>
+          </tr>
+          <tr>
+            <td colSpan={3} className="no-border"></td>
+          </tr>
+          <tr>
+            <td>Employer Contribution to ESI</td>
+            <td className="right">-</td>
+            <td className="right">-</td>
+          </tr>
+          <tr>
+            <td>Employer Contribution to EPF</td>
+            <td className="right">{inr(toMonthly(employerPfY))}</td>
+            <td className="right">{inr(employerPfY)}</td>
+          </tr>
+          <tr>
+            <td><strong>Total (B)</strong></td>
+            <td className="right"><strong>{inr(toMonthly(totalB_Y))}</strong></td>
+            <td className="right"><strong>{inr(totalB_Y)}</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Total Salary (A)+(B)</strong></td>
+            <td className="right"><strong>{inr(toMonthly(totalA_Y + totalB_Y))}</strong></td>
+            <td className="right"><strong>{inr(totalA_Y + totalB_Y)}</strong></td>
+          </tr>
+          <tr>
+            <td>Project/Performance Bonus (C)</td>
+            <td className="right">-</td>
+            <td className="right">-</td>
+          </tr>
+          <tr>
+            <td><strong>TOTAL COST TO THE COMPANY</strong></td>
+            <td className="right">-</td>
+            <td className="right">-</td>
+          </tr>
+          <tr>
+            <td><strong>Total Cost to Company (CTC)(A+B+C)</strong></td>
+            <td className="right"><strong>{inr(toMonthly(ctc))}</strong></td>
+            <td className="right"><strong>{inr(ctc)}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style={{ height: 16 }} />
+      <table>
+        <thead>
+          <tr>
+            <th>DEDUCTIONS FROM SALARY</th>
+            <th className="right">Per Month (₹)</th>
+            <th className="right">Per Year (₹)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Professional Tax (PT)</td>
+            <td className="right">{inr(toMonthly(ptY))}</td>
+            <td className="right">{inr(ptY)}</td>
+          </tr>
+          <tr>
+            <td>Employees Contribution of ESI</td>
+            <td className="right">-</td>
+            <td className="right">-</td>
+          </tr>
+          <tr>
+            <td>Employees Contribution of PF</td>
+            <td className="right">{inr(toMonthly(employeePfY))}</td>
+            <td className="right">{inr(employeePfY)}</td>
+          </tr>
+          <tr>
+            <td>Insurance **</td>
+            <td className="right">{inr(toMonthly(insuranceY))}</td>
+            <td className="right">{inr(insuranceY)}</td>
+          </tr>
+          <tr>
+            <td>Income Tax (TDS)**</td>
+            <td className="right">{inr(toMonthly(incomeTaxY))}</td>
+            <td className="right">{inr(incomeTaxY)}</td>
+          </tr>
+          <tr>
+            <td><strong>Total Deductions From Salary</strong></td>
+            <td className="right"><strong>{inr(toMonthly(totalDeductions_Y))}</strong></td>
+            <td className="right"><strong>{inr(totalDeductions_Y)}</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Monthly Take Home Salary</strong></td>
+            <td className="right"><strong>{inr(netMonthly)}</strong></td>
+            <td className="right"> </td>
+          </tr>
+        </tbody>
+      </table>
+      <p className="mt-2">**TDS as applicable will be deducted from monthly salary.</p>
+
+      {/* Annexure 2 */}
+      <div className="page-break" />
+      <div className="center text-[14pt] font-bold mb-4">Annexure 2</div>
+      <p>Every employee as per the terms of Offer of Employment is requested to submit the following documents to our HR Personnel at the time of your reporting to duty at O2F Office.</p>
+      <ul className="list-disc ml-6">
+        <li>Passport copy (along with all used pages)</li>
+        <li>3 Photographs (Passport size)</li>
+        <li>Aadhar card copy</li>
+        <li>PAN Card Copy</li>
+        <li>Proof of present and permanent address (photocopy)</li>
+        <li>Mark Sheets and Certificate of Class X &amp; Class XII</li>
+        <li>Graduation Certificate (all mark memos and certificates)</li>
+        <li>Post-Graduation Certificate (all mark memos and certificates)</li>
+        <li>Mark sheets and Certificates of Diploma(s)</li>
+        <li>Mark sheets and Certificates of any training(s) attended</li>
+        <li>Any other additional diplomas/certificates (Mark-sheets)</li>
+      </ul>
+      <p className="mt-3"><strong>Previous Employment Record:</strong></p>
+      <ul className="list-disc ml-6">
+        <li>Relieving Letter and Service / Experience Certificate from all previous employer(s)</li>
+        <li>Copy of the resignation acceptance letter</li>
+        <li>Salary slips/ certificate from all employers (min last 3 months)</li>
+        <li>Form 16/ TDS certificate from all ex-employers (as required)</li>
+        <li>Form 12B /Provisional Form 16 for the current financial year</li>
+      </ul>
+
+      {/* Annexure 3 */}
+      <div className="page-break" />
+      <div className="center text-[14pt] font-bold mb-4">Annexure 3 – Data Protection and Confidentiality Policy</div>
+      <p>
+        Everyone who has access to any personal information held by or on behalf of the organization, should be fully aware of and abide by their duties and responsibilities under the Data Protection Act. The information must be handled and dealt with properly however it is collected, recorded and used, and must be done so in accordance with the safeguards set out within the policy and the Act. This applies to information recorded on paper, in computer records or recorded by any other means.
+      </p>
+      <ul className="list-disc ml-6">
+        <li>Assume that information is confidential unless you know that it is intended to be made public by O2F or its clients, this includes passing information to another organization or person</li>
+        <li>Exercise common sense and discretion in identifying whether information is expected to be confidential. In most cases information will not be explicitly stated as being confidential</li>
+        <li>Avoid exchanging personal or confidential information or comments (eg: gossip) about individuals and organizations with which you have a professional relationship</li>
+        <li>Avoid talking about organizations or individuals in social settings</li>
+        <li>Not disclose to anyone, other than to colleagues, your manager, or the CEO, any information considered sensitive, personal, financial or private without the prior knowledge and consent of the individual or the organization concerned</li>
+        <li>Share information sensitively if they need to discuss issues and seek advice with your Manager and/or CEO only</li>
+        <li>Seek the consent of an individual or organization before discussing difficult situations with other colleagues to gain a wider perspective on how to approach a problem, unless it is beyond doubt that the organization would not object to this. Alternatively, a discussion may take place with names and identifying information anonymized. Where the situation may have legal implications for either the individual, organization or for O2F, you should have a confidential discussion with the CEO to ascertain the appropriate course of action and/or advice</li>
+        <li>Not compromise or seek to evade security measures designed to protect personal data and/or confidential information</li>
+        <li>Where we have a legal duty to disclose information, inform the person or organization with whom confidentiality is owed that disclose has or will be made</li>
+        <li>Note that your obligations to use and respect personal data and confidential information continues to apply even after you leave the organization</li>
+      </ul>
+      <div className="mt-6"><strong>DECLARATION</strong></div>
+      <p>I have read and understood the above Data Protection and Confidentiality Policy and am accepting the same.</p>
+      <p>Date: ____________________   Signature: ____________________</p>
+      <p>Name: ____________________</p>
+
+      {/* Annexure 4 */}
+      <div className="page-break" />
+      <div className="center text-[14pt] font-bold mb-4">Annexure 4 – Deputation policy V 1.0</div>
+      <p>All O2F employees deputed at client place will follow and adhere to the guidelines of the client in respect to work, security policies.</p>
+      <p>All employees on return after Deputation will be required to update their profile and also submit a report on the deputation assignment and to be sent to <em>corehr@o2finfo.com</em></p>
+      <p>At the end of deputation or assignment at client place, you are requested to submit all belongings of the client to designated team. It may include ID cards, laptops, any records either in physical or in electronic form to concerned team. There may be more items that have been passed on to you while working on given assignment on day to day interaction. Please kindly note that client can terminate your assignment without any notice and you will have to inform O2F immediately on the same.</p>
+      <p>It is the sole responsibility of the employee to take care of his belongings and company property during the period of deputation. The organization will not take any responsibility in case of any theft/ loss of company property during that period.</p>
+      <p>Any damages caused at client place due to mishandling and negligence will be recovered from the employee.</p>
+      <p>All employees on Deputation will be governed by Terms put forth by the client.</p>
+      <p>As an employee of O2F, it’s your utmost responsibility to reach out O2F for any issue or concern you may have including grievances. You should bring it to <em>corehr@o2finfo.com</em> and if not resolved in 5 working days, it can be forwarded to <em>Devi@o2finfo.com</em></p>
+      <p>You agree to not to disclose salary in client premises and if found to be disclosed, appropriate action will be taken including termination of employment and legal action as per land of law.</p>
+      <p>Every employee should attend an exit interview either in person or over phone.</p>
+      <p>In any circumstance, if you desire to leave your position/assignment then its mandatory to intimate O2F about the same and not to client directly or indirectly. This information should be emailed to <em>corehr@o2finfo.com</em> and concerned delivery team. You may refer below table for concerned delivery team and Escalation matrix.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Issue Type</th>
+            <th>Contact Name</th>
+            <th>First Contact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>HR</td>
+            <td>Sravan Tallam</td>
+            <td>corehr@o2finfo.com</td>
+          </tr>
+          <tr>
+            <td>Finance</td>
+            <td>Mantu Kumar</td>
+            <td>mantu.k@o2finfo.com</td>
+          </tr>
+          <tr>
+            <td>Director- Operations</td>
+            <td>Sridevi Chitturi</td>
+            <td>devi@o2finfo.com</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p className="mt-6">Date: ____________________   Signature: ____________________</p>
+      <p>Name: ____________________</p>
+    </div>
+  );
+}

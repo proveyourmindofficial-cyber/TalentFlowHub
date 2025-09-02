@@ -1,0 +1,64 @@
+Please check and confirm whether this part has already been implemented.
+
+If not done, then implement it.
+
+If already done, let me know exactly what has been completed.
+I just want clarity before you start building this flow.Do not change or touch the existing automation workflows. They are working fine and must stay exactly as they are:
+
+HR Interview Completed + Feedback = Selected → Application = Selected, Candidate = Offered.
+
+Now extend the flow by integrating the new Offer Letter module:
+
+🔄 Workflow Integration
+
+When Candidate status = Offered, show a Release Offer button in the Applications module.
+
+This button must work (currently not functional).
+
+On click, it should open the Offer Letter creation form.
+
+On Release Offer (after HR fills details like CTC, joining date, etc.):
+
+Create an Offer Letter record in database.
+
+Application status → Offer Released
+
+Candidate status → Offer Released
+
+Candidate Portal (to be built later):
+
+Accept → Application & Candidate = Joined
+
+Reject → Application = Not Joined, Candidate = Rejected.
+
+🖥️ Navigation
+
+The sidebar/menu must properly display Offer Letters section and allow navigation.
+
+In the screenshot shared, the “Offer Letters” page is not showing properly in the menu. This needs to be fixed so the menu works consistently like other modules (Dashboard, Jobs, Candidates, etc.).
+
+✅ Status Naming (for clarity)
+
+Keep the existing “Offered” status untouched (it is the internal stage after HR selection).
+
+Add the new “Offer Released” stage after the offer letter is officially created.
+
+This avoids confusion between “Candidate Offered” vs “Offer Letter Released.”
+
+⚠️ Fix Issues
+
+Release Offer button in Application actions is currently not working → fix this.
+
+Ensure that only Selected applications with Candidate status = Offered show this button.
+
+Ensure menu navigation to “Offer Letters” works properly.
+
+✅ Expected Behavior
+
+Old flows remain unchanged.
+
+New Offer Letter module comes only after Offered.
+
+HR/Admin can release offers, generate PDF, email, and track statuses.
+
+Menu and button issues are fixed.

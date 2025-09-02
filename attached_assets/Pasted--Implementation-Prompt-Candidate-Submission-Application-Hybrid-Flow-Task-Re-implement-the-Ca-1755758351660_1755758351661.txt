@@ -1,0 +1,74 @@
+🔥 Implementation Prompt – Candidate Submission + Application Hybrid Flow
+
+Task:
+Re-implement the Candidate Submission & Application Email Flow as per the updated hybrid design.
+⚠️ Important: Clean up any old or duplicate code related to Candidate Email flow, Application Auto-Creation, or Status updates to avoid conflicts. Keep the existing ATS logic (statuses, workflows, filters, Offer Letter, etc.) intact. Do not override unrelated modules.
+
+📌 Flow Specification
+Candidate Submission
+
+Candidate fills the Candidate Form → status = Available.
+
+System triggers an initial Welcome Email:
+
+Subject: “Thanks for sharing your details”
+
+Body: acknowledgement message only (no JD attached).
+
+Recruiter Application Assignment
+
+Recruiter links the Candidate to a JD from the Application module.
+
+Once assigned, the system auto-creates the Application record.
+
+At this point, system sends JD Email:
+
+Includes JD as PDF attachment (from job posting).
+
+Message: “Thanks for applying for this role. Please review the JD and confirm your interest.”
+
+Two action links: Interested / Not Interested.
+
+Candidate Response → Status Updates
+
+If Interested:
+
+Candidate status → Available (remains, but mark as Engaged).
+
+Application status → Applied.
+
+Feedback stored in Candidate profile (e.g., “Confirmed via JD email”).
+
+If Not Interested:
+
+Candidate status → Not Interested.
+
+Application status → On Hold.
+
+Feedback reason captured (short text form).
+
+⚠️ Implementation Notes
+
+Remove any previous automation that:
+
+Auto-created Applications immediately after Candidate Form submission.
+
+Auto-sent JD emails at submission stage.
+
+Keep existing predefined statuses (Applied, On Hold, Not Interested, etc.) — do not introduce new ones unless necessary.
+
+Make sure no duplicate triggers or multiple emails are sent.
+
+All changes should stay isolated to Candidate → Application workflow.
+
+Ensure clean code: no redundant files, functions, or conflicting logic.
+
+✅ End Result:
+
+Candidate submits → Welcome Email only.
+
+Recruiter applies candidate → JD Email triggered.
+
+Candidate response → Status auto-updates in both Candidate & Application modules.
+
+Recruiter workflow stays simple + Candidate experience stays automated.

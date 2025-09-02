@@ -1,0 +1,74 @@
+// GET /api/applications → list all
+// GET /api/applications/:id → get one
+// POST /api/applications → create new
+// PUT /api/applications/:id → update
+// DELETE /api/applications/:id → delete
+
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+
+const ApplicationSchema = z.object({
+  job_id: z.string().uuid(),
+  candidate_id: z.string().uuid(),
+  stage: z.enum([
+    "Applied",
+    "Shortlisted",
+    "L1 Scheduled",
+    "L2 Scheduled",
+    "Selected",
+    "Offer Released",
+    "Joined",
+    "Rejected",
+    "No Show",
+    "Not Joined",
+    "On Hold"
+  ]),
+  feedback: z.string().optional(),
+  scheduled_date: z.string().datetime().optional()
+});
+
+// Stage Transition Rules
+const allowedTransitions: Record<string, string[]> = {
+  Applied: ["Shortlisted", "Rejected"],
+  Shortlisted: ["L1 Scheduled"],
+  "L1 Scheduled": ["L2 Scheduled", "Selected", "Rejected"],
+  "L2 Scheduled": ["Selected", "Rejected"],
+  Selected: ["Offer Released"],
+  "Offer Released": ["Joined", "Not Joined", "On Hold"],
+  Joined: [],
+  Rejected: [],
+  "No Show": [],
+  "Not Joined": [],
+  "On Hold": []
+};
+
+function validateTransition(oldStage: string, newStage: string) {
+  if (!allowedTransitions[oldStage]?.includes(newStage)) {
+    throw new Error(`Invalid transition from ${oldStage} → ${newStage}`);
+  }
+}
+
+// POST (Create Application)
+export async function POST(req) {
+  const body = await req.json();
+  const data = ApplicationSchema.parse(body);
+  const app = await prisma.applications.create({ data });
+  return Response.json(app);
+}
+
+// PUT (Update Application - with stage check)
+export async function PUT(req, { params }) {
+  const body = await req.json();
+  const data = ApplicationSchema.partial().parse(body);
+
+  const oldApp = await prisma.applications.findUnique({ where: { id: params.id } });
+  if (data.stage && oldApp?.stage) {
+    validateTransition(oldApp.stage, data.stage);
+  }
+
+  const app = await prisma.applications.update({
+    where: { id: params.id },
+    data
+  });
+  return Response.json(app);
+}

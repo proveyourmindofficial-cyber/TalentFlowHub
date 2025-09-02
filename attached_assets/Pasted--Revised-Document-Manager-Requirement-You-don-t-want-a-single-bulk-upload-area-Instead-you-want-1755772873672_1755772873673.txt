@@ -1,0 +1,92 @@
+🔹 Revised Document Manager Requirement
+
+You don’t want a single bulk upload area. Instead, you want a well-organized, section-based, detailed Document Manager — where each type of information has its own structured entry + its related documents, not just all files in one place.
+
+1. Education Section
+
+Each qualification should be entered separately.
+
+Fields per entry:
+
+Qualification (Dropdown: Degree, Intermediate, Diploma, MBA, etc.)
+
+Institution Name
+
+Passed Out Year
+
+Percentage/CGPA (optional)
+
+Upload relevant document only (e.g., Degree Certificate, Marks Memo).
+
+Candidate can add multiple education entries (Add More button).
+
+2. Employment Section
+
+Each organization should be entered separately.
+
+Fields per employment entry:
+
+Organization Name
+
+Designation
+
+From Date → To Date
+
+CTC (Optional)
+
+Location
+
+Document Upload (Multiple allowed per organization):
+
+Offer Letter
+
+Experience Letter
+
+Bank Statement / Salary Slips
+
+PF/ESI related document
+
+Candidate can add multiple employment entries.
+
+3. Identity / Government Details
+
+Fields:
+
+Aadhaar Number + Upload Aadhaar
+
+PAN Number + Upload PAN
+
+Passport Number + Upload Passport (optional)
+
+UAN Number + Upload UAN (if applicable)
+
+Each identity should have its own field + its related upload.
+
+4. Additional / Optional Documents
+
+Category-based uploads:
+
+Resume (CV)
+
+LinkedIn Verification (link + screenshot/doc if needed)
+
+Video Screening (Manager Screening Video link/upload)
+
+Any other supporting documents (customizable).
+
+5. UI / UX Expectations
+
+Clean and well-structured sections (Education, Employment, Identity, Additional).
+
+Each section has sub-entries with fields + documents, not just a flat upload list.
+
+“Add More” option to allow multiple entries in Education & Employment.
+
+Clear validation: e.g., if "Degree" is selected → only Degree Certificate upload allowed.
+
+Professional look (can refine later with animations/UI polish, e.g., GenZ style).
+
+🔹 Difference From Current Flow
+
+Right now → Info is collected in one place + docs uploaded in one bulk place.
+What you need → Each detail and its related documents should live together in one entry, so it’s clear, traceable, and organized.

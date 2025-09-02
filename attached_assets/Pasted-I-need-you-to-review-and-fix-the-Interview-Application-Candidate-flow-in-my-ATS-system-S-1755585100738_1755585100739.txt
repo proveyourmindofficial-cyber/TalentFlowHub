@@ -1,0 +1,44 @@
+I need you to review and fix the Interview → Application → Candidate flow in my ATS system.
+
+### Step 1: Check Current Flow
+1. When a new interview is scheduled (L1/L2/HR/Final), verify:
+   - Applications stage updates instantly (e.g., "L1 Scheduled", "Selected").
+   - Candidate status updates to "Interviewing".
+   - Dashboard counters update without page refresh.
+2. Verify if the same candidate is still visible in the interview scheduling lookup after already being scheduled for that round.
+3. Verify if interviewer feedback (text) is being saved and displayed correctly in both Interviews and Applications.
+4. Verify if candidate status changes automatically when Final interview result is updated.
+
+### Step 2: Fix Issues
+1. **Candidate Filtering**
+   - When scheduling a new interview, only show candidates who:
+     - Have an active application.
+     - Are not already scheduled or cleared for that specific round.
+   - Example: Candidate cleared L1 should not appear again in L1 dropdown, but can appear for L2.
+
+2. **Feedback Integration**
+   - Add a proper text box for interviewer notes/feedback.
+   - Save it and display in:
+     - Interviews → Feedback column.
+     - Applications → Feedback column.
+
+3. **Final Round Automation**
+   - If Final Interview → Status = Selected:
+     - Application status = "Selected".
+     - Candidate status = "Offered".
+   - If Final Interview → Status = Rejected:
+     - Application status = "Rejected".
+     - Candidate status = "Rejected".
+
+4. **Candidate Status Sync**
+   - Ensure Candidate does not stay stuck as "Interviewing".
+   - After final round, update to "Offered" or "Rejected" accordingly.
+
+### Step 3: Confirm Working
+- Test flow end-to-end:
+  - Create Application → Schedule L1/L2/HR/Final interviews.
+  - Update status + feedback at each step.
+  - Check if Applications, Candidates, and Interviews are always in sync automatically without refresh.
+- Fix any mismatches so the whole workflow is consistent.
+
+Make sure all fixes are implemented cleanly in both backend logic and UI updates.

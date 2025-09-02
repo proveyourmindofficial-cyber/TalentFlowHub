@@ -1,0 +1,107 @@
+Clarification Needed: Candidate Response & Portal Integration
+
+Thanks for sharing both approaches. I need some more detailed clarification before I decide:
+
+Current Flow (Working Now)
+
+Candidate clicks Interested → Simple confirmation page
+
+Candidate clicks Not Interested → Simple rejection page
+
+No login required, response tracked in database
+
+Alternative Flow (Candidate Portal Integration)
+
+Candidate clicks Interested → Redirects to Candidate Portal
+
+Auto-creates portal account if needed
+
+Candidate can:
+
+View job applications
+
+Upload documents
+
+Track application status
+
+Complete profile info
+
+Communicate with recruiters
+
+My Questions (Please answer all in detail)
+
+Feedback Collection
+
+Currently, feedback is missing.
+
+Can we add a short feedback form for both Interested and Not Interested responses?
+
+How will this feedback be stored (in Candidate module, Application module, or a new table)?
+
+Document Handling
+
+If the portal is used, how will we collect additional candidate documents (offer acceptance, PAN, Aadhaar, payslips, experience letters, etc.)?
+
+To which module/form will these documents be linked — Candidate, Application, or both?
+
+Can we configure document categories (e.g., Identity Proof, Salary Proof, Resume, etc.)?
+
+Status Updates
+
+When a candidate clicks Interested, how will the status update in both:
+
+Candidate module (Available → Applied / Shortlisted / Interested?)
+
+Application module (Submitted → Applied / Shortlisted?)
+
+Similarly, for Not Interested, what exact statuses will be set in Candidate and Application modules?
+
+Do we need to add new status fields (e.g., “Waiting for Confirmation” or “Rejected by Candidate”) or should we reuse the existing statuses?
+
+Portal Account Creation
+
+When auto-creating a Candidate Portal account, how are credentials generated and shared?
+
+Will the candidate get a Welcome Email with login details automatically?
+
+If they already exist in the system, how is duplication avoided?
+
+Integration Logic
+
+If we adopt a hybrid approach (Interested → Portal, Not Interested → Simple page), how will this affect existing automation?
+
+Can we ensure no breakage of current flows (status updates, filters, automations)?
+
+Will any new fields be added to Candidate/Application modules to track this flow?
+
+Candidate Form Limitations
+
+Currently, the Candidate form only collects basic details + CV.
+
+Do we need to expand it to include:
+
+More personal info fields (PAN, Aadhaar, UAN, etc.)
+
+Professional/Experience details
+
+Bank & compliance details
+
+Or should these be captured later through the portal?
+
+Application–Candidate Linkage
+
+If a candidate applies to multiple JDs, how will the system handle statuses and documents?
+
+Will the candidate’s feedback/status apply to all applications or just the specific one?
+
+Decision Needed
+
+Before we proceed, I need your confirmation:
+
+Should we keep the simple flow,
+
+Or integrate the Candidate Portal for Interested responses,
+
+Or go for full portal integration (Interested & Not Interested both)?
+
+And based on that, please explain how each of the above points will work in detail.

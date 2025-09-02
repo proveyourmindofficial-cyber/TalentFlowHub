@@ -1,0 +1,88 @@
+⚠️ Please do not create a new module.
+Just fix / update the existing salary breakdown logic & UI to match Keka Portal format. If you already built something earlier with Indian Standard (40/20/30) logic → delete/remove it completely and re-update this one correctly.
+
+🔎 Current Issue (From Portal Screenshot)
+
+Salary breakup is still using Indian Standard (Basic 40%, HRA 20%, Special Allowance 30%) ❌.
+
+Wrong fields: Special Allowance, Other Benefits.
+
+Wrong deductions: Income Tax hardcoded, PT added wrongly.
+
+Net Take-home calculation does not match Keka.
+
+✅ What It Should Be (Follow Keka Format Exactly)
+
+Structure: Show both Monthly & Annual like Keka.
+
+Earnings:
+
+Basic (fixed % or set value)
+
+HRA (40% of Basic)
+
+Leave Encashment & Additional Allowance
+
+Leave Travel Allowance (LTA)
+
+Subtotal (sum of above)
+
+PF – Employer (max ₹1,800/month = ₹21,600/year)
+
+Total Earnings (Subtotal + Employer PF) = CTC
+
+Deductions:
+
+PF – Employee (same as Employer PF)
+
+Total Deductions
+
+Net Pay:
+
+(Total Earnings − Employee PF)
+
+Monthly & Annual values must display side by side
+
+🔑 Implementation Notes
+
+Use Keka as reference – mirror exact fields, layout, and calculation flow.
+
+Show Monthly & Annual columns clearly.
+
+Flexi / Other Benefits → remove (not part of Keka structure).
+
+Do not add Income Tax or PT manually – those are handled separately by payroll.
+
+Ensure PF capped at ₹1,800/month.
+
+Do not create new code modules – only update/replace existing breakdown logic & UI.
+
+🎯 Example (₹6,00,000 CTC like Keka)
+
+Earnings (Monthly / Annual):
+
+Basic = 30,000 / 3,60,000
+
+HRA = 12,000 / 1,44,000
+
+Leave Encashment & Addl. Allowance = 3,200 / 38,400
+
+LTA = 3,000 / 36,000
+
+Subtotal = 48,200 / 5,78,400
+
+PF Employer = 1,800 / 21,600
+
+Total = 50,000 / 6,00,000
+
+Deductions (Monthly / Annual):
+
+PF Employee = 1,800 / 21,600
+
+Total = 1,800 / 21,600
+
+Net Pay = 46,400 / 5,56,800
+
+📌 Final Note:
+👉 Please remove/overwrite the old Indian standard logic (don’t keep both).
+👉 The UI + calculation must look exactly like Keka with Monthly & Annual side by side.

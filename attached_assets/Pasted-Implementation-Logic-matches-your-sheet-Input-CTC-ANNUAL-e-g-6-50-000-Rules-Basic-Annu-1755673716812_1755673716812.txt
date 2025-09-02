@@ -1,0 +1,152 @@
+Implementation Logic (matches your sheet)
+
+Input:
+
+CTC_ANNUAL (e.g., ₹6,50,000)
+
+Rules:
+
+Basic (Annual) = 60% of CTC
+
+HRA (Annual) = 40% of Basic
+
+Conveyance (Annual) = ₹19,200 (₹1,600/month)
+
+Medical (Annual) = ₹15,000 (₹1,250/month)
+
+Employer PF (Monthly) = 12% × min(₹15,000, Basic_Monthly) → i.e., max ₹1,800/month
+
+Employer PF (Annual) = Employer PF (Monthly) × 12
+
+Fixed Pay “A” (Annual) = CTC_ANNUAL − Employer PF (Annual)
+
+Flexi (Annual) = A − (Basic + HRA + Conveyance + Medical)
+
+Employee PF (Monthly) = same as Employer PF (Monthly)
+
+PT (Monthly) = ₹200
+
+Insurance (Monthly) = ₹500
+
+Gross Monthly (A) = (Basic + HRA + Conveyance + Medical + Flexi) ÷ 12
+
+Total Deductions (Monthly) = PT + Employee PF + Insurance (+ TDS if applicable)
+
+Net Take Home (Monthly) = Gross Monthly − Total Deductions (Monthly)
+
+Income Tax (TDS) = compute per slabs if you want; else leave 0.
+
+Excel Formulas (copy-paste)
+
+Assume:
+
+B2 = CTC Annual (number)
+
+Field	Annual	Monthly
+Basic	=ROUND(0.60*$B$2,0)	=ROUND(Basic_Annual/12,0)
+HRA	=ROUND(0.40*Basic_Annual,0)	=ROUND(HRA_Annual/12,0)
+Conveyance	=19200	=1600
+Medical	=15000	=1250
+Employer PF	=12*MIN(0.12*MIN(15000,Basic_Annual/12),1800) (annual)	=MIN(0.12*MIN(15000,Basic_Annual/12),1800)
+A (Fixed Pay)	=$B$2 - EmployerPF_Annual	=A_Annual/12
+Flexi	=A_Annual - (Basic_Annual + HRA_Annual + 19200 + 15000)	=ROUND(Flexi_Annual/12,0)
+Employee PF	=EmployerPF_Annual	=EmployerPF_Monthly
+PT	=2400	=200
+Insurance	=6000	=500
+Gross (A)	=A_Annual	=ROUND((Basic_Annual + HRA_Annual + 19200 + 15000 + Flexi_Annual)/12,0)
+Total Deductions	=EmployeePF_Annual + 2400 + 6000 + TDS_Annual	=EmployerPF_Monthly + 200 + 500 + TDS_Monthly
+Net Take Home	(not needed annual in your sheet)	=Gross_Monthly - TotalDeductions_Monthly
+
+Tip: Keep all annuals exact, then derive monthly = ROUND(annual/12,0). The Flexi acts as the balancing figure so A + Employer PF = CTC always.
+
+TypeScript (backend calc helper)
+type SalaryBreakup = {
+  basic: { monthly: number; annual: number };
+  hra: { monthly: number; annual: number };
+  conveyance: { monthly: number; annual: number };
+  medical: { monthly: number; annual: number };
+  flexi: { monthly: number; annual: number };
+  employerPF: { monthly: number; annual: number };
+  fixedA: { monthly: number; annual: number }; // A
+  deductions: {
+    pt: { monthly: number; annual: number };
+    employeePF: { monthly: number; annual: number };
+    insurance: { monthly: number; annual: number };
+    tds: { monthly: number; annual: number };
+    total: { monthly: number; annual: number };
+  };
+  gross: { monthly: number; annual: number };  // equals A
+  netTakeHome: { monthly: number };            // monthly in offer
+};
+
+export function calcOffer(ctcAnnual: number, tdsAnnual = 0): SalaryBreakup {
+  const round0 = (n: number) => Math.round(n);
+
+  const basicAnnual = round0(0.60 * ctcAnnual);
+  const basicMonthly = basicAnnual / 12;
+
+  const hraAnnual = round0(0.40 * basicAnnual);
+  const hraMonthly = hraAnnual / 12;
+
+  const conveyMonthly = 1600;
+  const conveyAnnual = conveyMonthly * 12;
+
+  const medicalMonthly = 1250;
+  const medicalAnnual = medicalMonthly * 12;
+
+  // PF cap: 12% of min(₹15,000, basicMonthly), max ₹1,800
+  const employerPFMonthly = Math.min(0.12 * Math.min(15000, basicMonthly), 1800);
+  const employerPFAnnual = employerPFMonthly * 12;
+
+  const fixedAAnnual = ctcAnnual - employerPFAnnual;
+
+  const flexiAnnual = fixedAAnnual - (basicAnnual + hraAnnual + conveyAnnual + medicalAnnual);
+  const flexiMonthly = flexiAnnual / 12;
+
+  const grossMonthly = (basicAnnual + hraAnnual + conveyAnnual + medicalAnnual + flexiAnnual) / 12;
+  const grossAnnual = fixedAAnnual;
+
+  const employeePFMonthly = employerPFMonthly; // mirror employer side
+  const employeePFAnnual = employeePFMonthly * 12;
+
+  const ptMonthly = 200, ptAnnual = ptMonthly * 12;
+  const insuranceMonthly = 500, insuranceAnnual = insuranceMonthly * 12;
+
+  const tdsMonthly = tdsAnnual / 12;
+
+  const totalDedMonthly = employeePFMonthly + ptMonthly + insuranceMonthly + tdsMonthly;
+  const totalDedAnnual = employeePFAnnual + ptAnnual + insuranceAnnual + tdsAnnual;
+
+  const netTakeHomeMonthly = grossMonthly - totalDedMonthly;
+
+  return {
+    basic: { monthly: round0(basicMonthly), annual: basicAnnual },
+    hra: { monthly: round0(hraMonthly), annual: hraAnnual },
+    conveyance: { monthly: conveyMonthly, annual: conveyAnnual },
+    medical: { monthly: medicalMonthly, annual: medicalAnnual },
+    flexi: { monthly: round0(flexiMonthly), annual: flexiAnnual },
+    employerPF: { monthly: employerPFMonthly, annual: employerPFAnnual },
+    fixedA: { monthly: grossMonthly, annual: fixedAAnnual },
+    deductions: {
+      pt: { monthly: ptMonthly, annual: ptAnnual },
+      employeePF: { monthly: employeePFMonthly, annual: employeePFAnnual },
+      insurance: { monthly: insuranceMonthly, annual: insuranceAnnual },
+      tds: { monthly: tdsMonthly, annual: tdsAnnual },
+      total: { monthly: totalDedMonthly, annual: totalDedAnnual },
+    },
+    gross: { monthly: grossMonthly, annual: grossAnnual },
+    netTakeHome: { monthly: netTakeHomeMonthly },
+  };
+}
+
+Sanity Check (CTC = ₹6,50,000)
+
+Basic ₹3,90,000; HRA ₹1,56,000; Convey ₹19,200; Medical ₹15,000; Employer PF ₹21,600;
+
+Flexi auto-balances to ₹48,200;
+
+A = ₹6,28,400; Gross Monthly ≈ ₹52,367;
+
+Deductions Monthly = ₹200 + ₹1,800 + ₹500 (+ TDS) = ₹2,500;
+
+Net ≈ ₹49,867 → matches your sheet.

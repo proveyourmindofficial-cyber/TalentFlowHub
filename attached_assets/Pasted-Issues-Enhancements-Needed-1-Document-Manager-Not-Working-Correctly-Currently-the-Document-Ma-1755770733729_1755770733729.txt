@@ -1,0 +1,66 @@
+Issues & Enhancements Needed
+1. Document Manager (Not Working Correctly)
+
+Currently, the Document Manager button has no functionality.
+
+We need to redesign it so documents can be uploaded by category/section.
+
+Example structure:
+
+Experience Details: Enter experience info + upload relevant docs (Offer Letter, Experience Letter, Bank Statement, etc.)
+
+Education Details: Enter qualification info + upload supporting certificates.
+
+Basic / Government Details: Aadhaar, PAN, UAN, Passport, etc. with validations.
+
+Additional Documents: Any extra or optional uploads.
+
+Each section should have its own fields + document upload option for clarity.
+
+2. Candidate Skill Set (Internal & External)
+
+Right now, the Skill Set field is very basic (single text field).
+
+We need to make it advanced:
+
+Allow multiple skills per candidate.
+
+Each skill should be stored so that a candidate can be applied to multiple roles/JDs based on their different skills.
+
+Add option to manage/update skill sets centrally so recruiters can reuse them.
+
+3. Dynamic Dropdowns (Still Not Updated)
+
+Some fields are still plain text inputs instead of dropdowns with add/manage options.
+
+Please fix this as planned:
+
+Current Company, Locations, Departments → Dropdown + ability to add new values instantly.
+
+These values should be saved and available for all recruiters (centralized).
+
+Example: If a recruiter types a new company name, it should get added to the company list and be available for the next time.
+
+4. External Candidate Form (Enhancements)
+
+Recruiter Name → Should default to the logged-in user’s name.
+
+Client Name → Should be linked to the Client module, with an option to add new clients directly from this field if not already in the system.
+
+National / Regional Options → Keep as dropdowns with editable/addable options.
+
+Education & Experience Fields → Should have both input fields and document upload linked to them.
+
+My Expectation
+
+Make the forms structured, advanced, and dynamic (not just static text fields).
+
+Ensure centralized data for all recruiters.
+
+Document Manager should be section-based, with real functionality, not dummy buttons.
+
+Dropdowns should support dynamic additions and be reusable across modules.
+
+Everything should be clean, neat, and well-organized with proper UI layout.
+
+👉 Once you check this, please suggest if you see additional improvements we can add — I want this to be advanced, professional, and future-ready.

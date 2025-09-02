@@ -1,0 +1,71 @@
+Menu Duplication & Formatting
+
+In the left sidebar, modules like Applications0, Interviews0 are showing 0 directly attached (no spacing → looks like a bug).
+
+Should display as Applications (0), Interviews (0) → cleaner and more readable.
+
+Inconsistent Spacing
+
+Some menu items have proper spacing (like Jobs 1, Candidates 1), but others are missing parentheses or spacing.
+
+Consistency issue in sidebar UI.
+
+Hierarchy Confusion
+
+"Admin" section is just showing User Management — but in the screenshot, the user logged in is Director, not Admin.
+
+Roles/permissions are unclear → Directors shouldn’t see Admin-only options unless explicitly allowed.
+
+Tab Design
+
+On top of "Settings" → you have Company Profile | Email Management | User Management tabs.
+
+They are plain radio-style toggles, not highlighted clearly → difficult to know which one is active.
+
+Suggestion: Use colored underline / bold active state for clarity.
+
+Form Layout
+
+Fields like Website, Industry, Founded Year, Company Size are just plain text inputs.
+
+Some of these should be dropdowns or pickers (e.g., Industry, Company Size).
+
+Example: Company Size could be a predefined dropdown (1–10, 11–50, 51–200, 200+).
+
+Company Logo URL
+
+Right now it’s a text box with a long Google Drive link → not user-friendly.
+
+Better: Show an image preview of the uploaded logo + option to re-upload.
+
+UI Alignment
+
+The tagline field is short while company name is long → they look misaligned.
+
+Need better grid alignment (2-column layout with equal widths).
+
+General Modernization
+
+The form looks plain, no section dividers.
+
+Could use cards/sections with icons for: Basic Info, Company Branding, Contact Details.
+
+Right now it looks like one big flat form.
+
+✅ Suggested Fixes
+
+Sidebar: Standardize counts → (0) format.
+
+Role visibility: Only show Admin options if logged-in user has Admin role.
+
+Tabs: Add highlight/active color state.
+
+Fields: Convert Industry & Company Size into dropdowns.
+
+Logo: Replace URL field with upload + preview.
+
+Layout: Align fields into neat 2-column sections.
+
+UX polish: Add animations (expand/collapse for sections), consistent spacing, Gen-Z styled subtle hover effects.
+
+👉 In short: The biggest issues are sidebar duplication/formatting, missing dropdowns, and lack of clean role-based visibility.

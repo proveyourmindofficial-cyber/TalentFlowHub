@@ -1,0 +1,372 @@
+Prompt for API Endpoints
+// GET all interviews
+GET /api/interviews
+
+// GET one interview
+GET /api/interviews/:id
+
+// CREATE interview
+POST /api/interviews
+  { application_id, round, scheduled_date, mode, interviewer, feedback, status }
+
+// UPDATE interview
+PUT /api/interviews/:id
+
+// DELETE interview
+DELETE /api/interviews/:id
+
+✅ Prompt for Interview Form (Frontend)
+Sections:
+1. Basic Info: Application (lookup), Round, Scheduled Date, Mode
+2. Details: Interviewer, Feedback
+3. Status: Dropdown [Scheduled, Completed, Cancelled, Feedback Pending]
+
+
+👉 Step 1: Copy-paste the DB schema prompt into Supabase SQL editor.
+Then we’ll move to API → Form → Table step by step.
+
+Do you want me to bundle all Interview module prompts in one full script (DB + API + UI) or keep giving one-by-one so it’s safer?
+
+You said:
+sorry to distrub i think did we connected to supabase i think not why you jumping and mix and getting confusion bro ...whats you problem ?
+ChatGPT said:
+
+You’re absolutely right 👍 — thanks for catching that.
+We did not yet fully connect Supabase. Right now, what we built (Jobs, Candidates, Applications) is still running on local PostgreSQL (via Replit db push), not Supabase.
+
+That’s why you’re feeling confusion — I mixed both. My mistake 🚫
+
+🔄 Correct Order (No Confusion)
+
+Confirm Current DB → We’re on PostgreSQL (local / Replit), ✅ not Supabase yet.
+
+Decide Timing → Either:
+
+(A) Finish all modules locally → then migrate to Supabase,
+
+(B) Connect Supabase now → so everything from here will save directly in cloud.
+
+👉 Best & safest: Finish core skeleton locally (Jobs, Candidates, Applications, Interviews).
+Then, when stable, we do one-time Supabase migration. That avoids breaking flow and saves credits.
+
+So next step (before Interview module):
+✅ Confirm DB = PostgreSQL (local).
+✅ Build Interview table + API + UI in local first.
+✅ Later, migrate everything to Supabase in one go.
+
+Do you want me to continue Interview module for local PostgreSQL first (safe flow), or do you want me to pause here and connect Supabase before adding new modules?
+
+You said:
+yEah
+ChatGPT said:
+
+Perfect 👍 got it.
+So we’ll stay on local PostgreSQL for now (no Supabase yet), finish the Interview module, and then later we’ll migrate everything in one go.
+
+🔹 Step 1: Interview Table (PostgreSQL Schema)
+create table interviews (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid not null references applications(id) on delete cascade,
+  interview_round text not null, -- e.g., L1, L2, HR, Final
+  interviewer text not null,     -- interviewer name/email
+  mode text not null,            -- Online, Offline
+  scheduled_date timestamp not null,
+  feedback text,
+  status text default 'Scheduled', -- Scheduled, Completed, Selected, Rejected, On Hold
+  created_at timestamp default now(),
+  updated_at timestamp default now()
+);
+
+🔹 Step 2: API Endpoints
+
+GET /api/interviews → list all interviews
+
+GET /api/interviews/:id → single interview
+
+POST /api/interviews → create new
+
+PUT /api/interviews/:id → update
+
+DELETE /api/interviews/:id → delete
+
+🔹 Step 3: Interview Form (Frontend)
+
+Fields in form:
+
+Application (lookup from Applications table)
+
+Interview Round (dropdown: L1, L2, HR, Final)
+
+Interviewer
+
+Mode (dropdown: Online, Offline, In-Person)
+
+Scheduled Date/Time
+
+Feedback
+
+Status (Scheduled, Completed, Selected, Rejected, On Hold)
+
+🔹 Step 4: Interview Table View (Frontend)
+
+Columns:
+
+Candidate (auto from application → candidate lookup)
+
+Job (auto from application → job lookup)
+
+Round
+
+Interviewer
+
+Mode
+
+Date/Time
+
+Status
+
+Actions (View, Edit, Delete)
+
+✅ Once this is in place, we’ll have Job → Candidate → Application → Interview complete flow ready.
+
+👉 Do you want me to give you the Replit AI prompt for this full Interview module (schema + API + form + table) so you can just copy-paste and run?
+
+You said:
+Yeah pleas go ahead
+ChatGPT said:
+
+Perfect 🚀 here’s the ready-to-use Replit AI prompt for the Interview Module.
+Just copy-paste this into Replit AI, it will generate schema, APIs, frontend form & table:
+
+📌 Replit AI Prompt – Interview Module
+
+Hi Replit AI,
+
+We are continuing to build our TalentFlowHub ATS. The next module is Interviews. Follow the same structure as Jobs, Candidates, and Applications.
+
+Rules
+
+Do not rename or remove fields.
+
+Keep the UI simple (form + table view).
+
+Always link modules correctly with foreign keys.
+
+Respect role-based access (Recruiter, Manager, HR).
+
+Use same style as existing modules.
+
+1. Database Schema (PostgreSQL)
+create table interviews (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid not null references applications(id) on delete cascade,
+  interview_round text not null,       -- L1, L2, HR, Final
+  interviewer text not null,           -- interviewer name or email
+  mode text not null,                  -- Online, Offline, In-Person
+  scheduled_date timestamp not null,
+  feedback text,
+  status text default 'Scheduled',     -- Scheduled, Completed, Selected, Rejected, On Hold
+  created_at timestamp default now(),
+  updated_at timestamp default now()
+);
+
+2. API Endpoints
+
+GET /api/interviews → list all interviews
+
+GET /api/interviews/:id → get single interview
+
+POST /api/interviews → create interview
+
+PUT /api/interviews/:id → update interview
+
+DELETE /api/interviews/:id → delete interview
+
+Use Zod validation on all requests.
+
+3. Interview Form (Frontend)
+
+Fields to include:
+
+Application (lookup from Applications table, show Candidate + Job together)
+
+Interview Round (dropdown: L1, L2, HR, Final)
+
+Interviewer (text input)
+
+Mode (dropdown: Online, Offline, In-Person)
+
+Scheduled Date/Time (date-time picker)
+
+Feedback (textarea)
+
+Status (dropdown: Scheduled, Completed, Selected, Rejected, On Hold)
+
+4. Interview Table View (Frontend)
+
+Columns to display:
+
+Candidate (via application → candidate lookup)
+
+Job (via application → job lookup)
+
+Interview Round
+
+Interviewer
+
+Mode
+
+Scheduled Date/Time
+
+Status (badge)
+
+Actions (View, Edit, Delete)
+
+👉 After this, confirm the module works end-to-end:
+
+Create an interview for an existing application
+
+Edit feedback & status after completion
+
+View interviews in table with candidate/job details
+
+Do you want me to also prepare a cross-check prompt (like before) so you can test if Replit built it correctly once done?
+
+You said:
+now i need give only this "create table interviews (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid not null references applications(id) on delete cascade,
+  interview_round text not null,       -- L1, L2, HR, Final
+  interviewer text not null,           -- interviewer name or email
+  mode text not null,                  -- Online, Offline, In-Person
+  scheduled_date timestamp not null,
+  feedback text,
+  status text default 'Scheduled',     -- Scheduled, Completed, Selected, Rejected, On Hold
+  created_at timestamp default now(),
+  updated_at timestamp default now()
+);"
+ChatGPT said:
+
+Good question 👍
+
+No bro, don’t give only the create table query.
+If you just paste that, Replit will only create the table in Supabase/Postgres and stop there.
+
+But what we need is the full module (DB + API + UI). That’s why I wrote the full Interview Module Prompt for you — so Replit generates:
+
+Database schema (your create table ✅)
+
+API endpoints (CRUD for interviews)
+
+Frontend form (to create/edit interview)
+
+Frontend table (to list interviews with candidate/job lookup)
+
+👉 So the correct way is: give the entire prompt I wrote above.
+That way Replit won’t skip APIs or UI, and it will build everything together in one flow.
+
+⚡ If you want step-by-step (safe way), we can do:
+
+First run the create table interviews... in Supabase migration
+
+Then add APIs
+
+Then add UI
+
+But the best and proper way (since you said you’ll just follow me) → give the full prompt, not just the SQL.
+
+Do you want me to break it into Step 1 (DB) → Step 2 (API) → Step 3 (UI) prompts separately so you paste one by one?
+
+You said:
+then you hvae to give full prompt right
+ChatGPT said:
+
+Exactly 👍 You’re right.
+I’ll always give you the full prompt so you can just copy–paste into Replit AI without missing pieces.
+
+Here’s the full prompt for the Interview Module (step-by-step, including your create table):
+
+📌 Prompt to Replit AI
+
+Hi Replit AI,
+We are now building the Interview Module for our ATS (TalentFlowHub).
+Follow the same rules as before (DB + API + Form + Table, no assumptions).
+
+1. Database Schema (PostgreSQL / Supabase)
+create table interviews (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid not null references applications(id) on delete cascade,
+  interview_round text not null,       -- L1, L2, HR, Final
+  interviewer text not null,           -- interviewer name or email
+  mode text not null,                  -- Online, Offline, In-Person
+  scheduled_date timestamp not null,
+  feedback text,
+  status text default 'Scheduled',     -- Scheduled, Completed, Selected, Rejected, On Hold
+  created_at timestamp default now(),
+  updated_at timestamp default now()
+);
+
+2. API Endpoints
+
+GET /api/interviews → list all interviews
+
+GET /api/interviews/:id → get single interview
+
+POST /api/interviews → create interview
+
+PUT /api/interviews/:id → update interview
+
+DELETE /api/interviews/:id → delete interview
+
+✅ Make sure each interview links to an application_id, and through that, we can see the job + candidate.
+
+3. Frontend Form (React + Tailwind + RHF + Zod)
+
+Sections inside form:
+
+Interview Round → dropdown (L1, L2, HR, Final)
+
+Interviewer → text/email input
+
+Mode → dropdown (Online, Offline, In-Person)
+
+Scheduled Date → date-time picker
+
+Feedback → textarea
+
+Status → dropdown (Scheduled, Completed, Selected, Rejected, On Hold)
+
+Application → lookup dropdown (list applications with Candidate + Job name)
+
+4. Frontend Table (List UI)
+
+Columns:
+
+Candidate Name (from linked application)
+
+Job Title (from linked application)
+
+Interview Round
+
+Mode
+
+Scheduled Date
+
+Status (badge with colors)
+
+Actions (View / Edit / Delete)
+
+5. Integration
+
+Add Interview statistics card on Dashboard (e.g., Total Interviews, Scheduled, Completed).
+
+Ensure the workflow is connected: Job → Candidate → Application → Interview.
+
+⚡ Final Reminder:
+Do not assume any extra fields. Follow my schema + flow exactly.
+
+✅ This will give you everything in one go (DB + API + Form + Table + Dashboard card).
+
+Do you want me to also prepare the step-by-step split prompts (DB first → API → UI) so you can paste them one by one safely?
+
+ChatGPT can make mistakes. Check important info. See Cookie Preferences.

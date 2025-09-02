@@ -1,0 +1,96 @@
+1. Extend Application Stages
+
+Add these new valid application stages:
+
+Offer Released
+
+Joined
+
+Not Joined
+
+No Show
+
+So the full valid list becomes:
+['Applied', 'Shortlisted', 'L1 Scheduled', 'L2 Scheduled', 'Selected', 'Offer Released', 'Joined', 'Rejected', 'No Show', 'Not Joined', 'On Hold']
+
+2. Automation Rules
+
+Update applyInterviewAutomation() so status transitions are correct:
+
+HR + Completed + Selected
+→ Application = Selected
+→ Candidate = Offered
+
+HR + Completed + Rejected
+→ Application = Rejected
+→ Candidate = Rejected
+
+HR + Completed + On Hold
+→ Application = On Hold
+→ Candidate = Interviewing
+
+HR + Completed + No Show
+→ Application = No Show
+→ Candidate = Available
+
+L1/L2/Final (any status)
+→ Application = Shortlisted
+→ Candidate = Interviewing
+
+When recruiter clicks "Release Offer"
+→ Application = Offer Released
+→ Candidate = Offered
+
+When candidate accepts offer
+→ Application = Joined
+→ Candidate = Joined
+
+When candidate rejects or fails to join
+→ Application = Not Joined
+→ Candidate = Not Joined
+
+Default fallback
+→ Application = Shortlisted
+→ Candidate = Interviewing
+
+3. UI Changes
+
+In Applications page, show new stages in dropdown & status badges.
+
+In Candidates page, show status as: Available, Interviewing, Offered, Joined, Rejected, Not Joined.
+
+Add "Release Offer" button on application detail page that moves status from Selected → Offer Released.
+
+4. Email/Offer Letter Placeholder
+
+Add backend endpoint /applications/:id/release-offer
+
+Generates a placeholder Offer Letter PDF (template later).
+
+Sends an email with a dummy "Accept / Reject" link (to be wired later).
+
+5. Data Consistency
+
+Candidate and Application must always stay in sync (no mismatch allowed).
+
+Whenever interview or offer status changes, both must recalculate fresh.
+
+✅ Deliverables
+
+Backend: updated enums, automation rules, API endpoints.
+
+Frontend: dropdowns, badges, Release Offer button.
+
+DB migration if required.
+
+Tested flow:
+
+Candidate reaches Selected
+
+HR clicks Release Offer → Candidate=Offered, Application=Offer Released
+
+Candidate accepts → Candidate=Joined, Application=Joined
+
+Candidate rejects → Candidate=Not Joined, Application=Not Joined
+
+⚡ Output should include full code changes (backend + frontend), updated enums, and clear commit notes.

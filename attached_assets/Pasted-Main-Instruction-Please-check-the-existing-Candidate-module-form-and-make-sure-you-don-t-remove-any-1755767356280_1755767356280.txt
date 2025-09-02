@@ -1,0 +1,115 @@
+Main Instruction
+
+Please check the existing Candidate module form and make sure you don’t remove any current fields — only add the new or missing ones.
+
+The form should be neat, clean, and well-structured, with proper sections and layout.
+
+Use correct field names and include a document upload option.
+
+Where possible, allow advanced features like uploading multiple documents.
+
+First, review the current Candidate form and suggest how we can make it more advanced, professional, and user-friendly (e.g., modern animated Gen-Z style UI).
+
+(If needed, we can do the UI polishing later.)
+
+When suggesting, don’t just give ideas — please provide a working flow with field validations and logic that will work in real use cases (not dummy/assumptions).
+
+For example: if we add fields like PAN or Aadhaar, they must have proper validations (I shouldn’t even need to remind you of this — you know better). If I say “make it advanced,” you should already know what to implement.
+
+Small Confirmation (External Candidates)
+
+I want to add one more feature if possible: when adding a candidate, there should be an option to select Internal or External.
+
+Internal: Current fields and flow should remain as they are.
+
+External: The below fields should be displayed (in proper font, format, and style). Add advanced/required validations where needed, same as above.
+
+External Candidate Fields:
+
+S. No
+
+Date
+
+Recruiter
+
+Source
+
+Client
+
+Skill Set
+
+Candidate Name
+
+Total Years of Experience
+
+Relevant Experience
+
+Contact Number
+
+UAN Number
+
+Email
+
+Current Company
+
+Current Location
+
+Job Location
+
+Current CTC
+
+Expected CTC
+
+Notice Period
+
+Highest Qualification
+
+LinkedIn Verification / Link
+
+Aadhaar Card Number / Verification
+
+Manager Screening (Video)
+
+Sample Data (for reference):
+
+Date: 22-07-2025
+
+Recruiter: Mounika
+
+Source: Naukri
+
+Client: Infosys
+
+Skill Set: Agile BA
+
+Candidate: Dhananjayakumara H R
+
+Exp: 10 Yrs (Total), 7 Yrs (Relevant)
+
+Contact: 9980831744
+
+UAN: 100510973504
+
+Email: dhananjayahr91@gmail.com
+
+Current Company: Wells Fargo
+
+Location: Bengaluru
+
+Job Location: Bengaluru
+
+Current CTC: 13 LPA
+
+Expected CTC: 17 LPA
+
+Notice Period: Immediate (LWD: 13th June 2025)
+
+Qualification: MBA
+
+LinkedIn: NA
+
+Aadhaar: NA
+
+Manager Screening (Video): NA
+
+👉 This way, everything is aligned, advanced, and validated properly for both internal and external candidates.

@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offer Letter - Sandeep</title>
+  <style>
+    body { 
+      font-family: 'Times New Roman', Times, serif; 
+      font-size: 11pt; 
+      line-height: 1.6; 
+      margin: 0; 
+      padding: 0;
+      color: black;
+    }
+    .container { 
+      max-width: 8.5in; 
+      margin: 0 auto; 
+      padding: 1in; 
+      background: white;
+    }
+    .header-date { 
+      text-align: right; 
+      margin-bottom: 2em; 
+    }
+    .address { 
+      margin: 2em 0; 
+    }
+    .title { 
+      font-size: 14pt; 
+      font-weight: bold; 
+      text-align: center; 
+      margin: 2em 0 1em 0; 
+    }
+    .greeting { 
+      margin: 2em 0 1em 0; 
+    }
+    .congratulations { 
+      font-weight: bold; 
+      text-align: center; 
+      margin: 1em 0; 
+    }
+    .paragraph { 
+      margin: 1em 0; 
+      text-align: justify; 
+    }
+    .salary-table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin: 2em 0;
+      border: 1px solid black;
+    }
+    .salary-table th, .salary-table td { 
+      border: 1px solid black; 
+      padding: 8px; 
+      text-align: left; 
+    }
+    .salary-table th { 
+      background-color: #f0f0f0; 
+      font-weight: bold;
+    }
+    .salary-table td:nth-child(2), .salary-table td:nth-child(3) { 
+      text-align: right; 
+    }
+    .total-row { 
+      font-weight: bold; 
+      background-color: #f9f9f9; 
+    }
+    .signature-section { 
+      margin-top: 3em; 
+      display: flex; 
+      justify-content: space-between; 
+    }
+    .signature-left, .signature-right { 
+      width: 45%; 
+    }
+    .signature-line { 
+      border-bottom: 1px solid black; 
+      width: 200px; 
+      height: 50px; 
+      margin: 2em 0 0.5em 0; 
+    }
+  </style>
+
+        <style>
+          @media print {
+            body { margin: 0; }
+            .container { margin: 0; padding: 0.5in; }
+          }
+          @page {
+            size: A4;
+            margin: 1in;
+          }
+        </style>
+        <script>
+          window.onload = function() {
+            // Auto-open print dialog
+            setTimeout(() => window.print(), 1000);
+          }
+        </script>
+        </head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header-date">
+      August 20th, 2025
+    </div>
+
+    <!-- Candidate Address -->
+    <div class="address">
+      Sandeep<br/>
+      Bangalore
+    </div>
+
+    <!-- Title -->
+    <div class="title">Offer of Employment</div>
+
+    <!-- Greeting -->
+    <div class="greeting">Dear Sandeep,</div>
+
+    <!-- Congratulations -->
+    <div class="congratulations">Congratulations!!!</div>
+
+    <!-- Main Content -->
+    <div class="paragraph">
+      Please refer to the interview and discussions you had with us recently.
+    </div>
+
+    <div class="paragraph">
+      We are pleased to offer you the position of <strong>Talent Acquisition Specialist (Domestic IT Recruitment)</strong> at <strong>O2F Info Solutions Pvt Ltd</strong> and the joining date would be <strong>August 25th, 2025</strong>.
+    </div>
+
+    <div class="paragraph">
+      Your employment will be based at Hyderabad, however, based on the position's requirements, you may be required to work anywhere in India and this offer of employment will take effect from the date of your reporting. This offer is valid up to <strong>August 25th, 2025</strong> subject to your joining on or before the given joining date.
+    </div>
+
+    <!-- Salary Breakdown Table -->
+    <table class="salary-table">
+      <thead>
+        <tr>
+          <th>Salary Components</th>
+          <th>Monthly (Rs.)</th>
+          <th>Annual (Rs.)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Basic Salary</td>
+          <td>Rs. 30,000</td>
+          <td>Rs. 3,60,000</td>
+        </tr>
+        <tr>
+          <td>HRA</td>
+          <td>Rs. 12,000</td>
+          <td>Rs. 1,44,000</td>
+        </tr>
+        <tr>
+          <td>Conveyance</td>
+          <td>Rs. 1,600</td>
+          <td>Rs. 19,200</td>
+        </tr>
+        <tr>
+          <td>Medical</td>
+          <td>Rs. 1,250</td>
+          <td>Rs. 15,000</td>
+        </tr>
+        <tr>
+          <td>Flexi</td>
+          <td>Rs. 3,350</td>
+          <td>Rs. 40,200</td>
+        </tr>
+        <tr class="total-row">
+          <td>Gross Salary</td>
+          <td>Rs. 50,000</td>
+          <td>Rs. 6,00,000</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Signature Section -->
+    <div class="signature-section">
+      <div class="signature-left">
+        <div>Employee Acceptance:</div>
+        <div class="signature-line"></div>
+        <div>Sandeep</div>
+        <div>Date: _______________</div>
+      </div>
+      <div class="signature-right">
+        <div>For O2F Info Solutions Pvt Ltd</div>
+        <div class="signature-line"></div>
+        <div>Sravan</div>
+        <div>HR Manager</div>
+        <div>Date: August 20th, 2025</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  

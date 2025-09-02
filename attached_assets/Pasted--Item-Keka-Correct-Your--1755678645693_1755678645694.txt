@@ -1,0 +1,13 @@
+| Item                                            |          **Keka (Correct)** |            **Your Portal (Now)** | Status                                   |
+| ----------------------------------------------- | --------------------------: | -------------------------------: | :--------------------------------------- |
+| **Total Earnings / CTC (Annual)**               |               **₹6,00,000** |                    **₹5,99,998** | ❌ off by ₹2                              |
+| **Basic (Annual)**                              |  **₹3,60,000** (₹30,000/mo) | **₹3,59,999** (₹30,000/mo shown) | ❌ rounding                               |
+| **HRA (Annual)**                                |  **₹1,44,000** (₹12,000/mo) |       **₹1,44,000** (₹12,000/mo) | ✅                                        |
+| **Leave Encashment & Addl. Allowance (Annual)** |     **₹38,400** (₹3,200/mo) |    **₹44,639** (₹3,720/mo shown) | ❌ wrong formula/value                    |
+| **LTA (Annual)**                                |     **₹36,000** (₹3,000/mo) |          **₹29,760** (₹2,480/mo) | ❌ wrong formula/value                    |
+| **Sub Total (Earnings excl. PF-Employer)**      |  **₹5,78,400** (₹48,200/mo) |       **₹5,78,398** (₹48,200/mo) | ❌ rounding (-₹2)                         |
+| **PF – Employer**                               | **₹21,600** (₹1,800/mo cap) |          **₹21,600** (₹1,800/mo) | ✅                                        |
+| **Total Earnings (incl. PF-Employer)**          |               **₹6,00,000** |                    **₹5,99,998** | ❌ should equal CTC                       |
+| **PF – Employee (Deduction)**                   |     **₹21,600** (₹1,800/mo) |          **₹21,600** (₹1,800/mo) | ✅                                        |
+| **Total Deductions**                            |                 **₹21,600** |                      **₹21,600** | ✅                                        |
+| **NET PAY (Monthly / Annual)**                  |     **₹46,400 / ₹5,56,800** |          **₹48,200 / ₹5,78,398** | ❌ overstated (+₹1,800/mo) & wrong annual |

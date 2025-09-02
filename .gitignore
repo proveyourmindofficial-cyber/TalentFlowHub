@@ -1,0 +1,12 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+# Extra ignores for secrets
+.env
+.env.local
+.env.*.local
+.local/
+AZURE_SECRET_FIX_GUIDE.md
