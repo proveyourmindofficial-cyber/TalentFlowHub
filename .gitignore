@@ -4,9 +4,17 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
-# Extra ignores for secrets
+
+# Ignore environment files
 .env
 .env.local
 .env.*.local
 .local/
+
+# Ignore secret docs
 AZURE_SECRET_FIX_GUIDE.md
+AZURE_PERMISSIONS_VERIFICATION.md
+GRAPH_API_ALTERNATIVE_APPROACH.md
+SECRET_UPDATE_GUIDE.md
+FINAL_AZURE_SOLUTION.md
+MICROSOFT_GRAPH_SUCCESS_SUMMARY.md
