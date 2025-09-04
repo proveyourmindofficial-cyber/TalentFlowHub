@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertJobSchema, insertCandidateSchema, insertApplicationSchema, insertInterviewSchema, insertOfferLetterSchema, insertClientSchema, insertClientRequirementSchema, insertCompanyProfileSchema } from "@shared/schema";
+import { insertJobSchema, insertCandidateSchema, insertApplicationSchema, insertInterviewSchema, insertOfferLetterSchema, insertClientSchema, insertClientRequirementSchema, insertCompanyProfileSchema, insertCustomRoleSchema } from "@shared/schema";
 import { z } from "zod";
 import { validateCandidateTypeFields, uanNumberSchema, aadhaarNumberSchema, linkedinUrlSchema } from "./validationUtils";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -131,14 +131,14 @@ async function sendModuleEmail(templateKey: string, recipientEmail: string, data
     }
     
     // Replace application placeholders
-    if (data.application) {
+    if (data.application && emailContent) {
       emailContent = emailContent.replace(/\{\{application\.submittedAt\}\}/g, new Date().toLocaleDateString());
       emailContent = emailContent.replace(/\{\{application\.referenceId\}\}/g, `TFT-${Date.now()}`);
       emailContent = emailContent.replace(/\{\{application\.trackingLink\}\}/g, 'https://talentflow.tech/track');
     }
     
     // Replace interview placeholders
-    if (data.interview) {
+    if (data.interview && emailContent) {
       emailContent = emailContent.replace(/\{\{interview\.date\}\}/g, new Date(data.interview.scheduledDate).toLocaleDateString());
       emailContent = emailContent.replace(/\{\{interview\.time\}\}/g, new Date(data.interview.scheduledDate).toLocaleTimeString());
       emailContent = emailContent.replace(/\{\{interview\.type\}\}/g, data.interview.interviewRound || 'Interview');
@@ -149,7 +149,7 @@ async function sendModuleEmail(templateKey: string, recipientEmail: string, data
     }
     
     // Replace offer placeholders
-    if (data.offer) {
+    if (data.offer && emailContent) {
       emailContent = emailContent.replace(/\{\{offer\.startDate\}\}/g, new Date().toLocaleDateString());
       emailContent = emailContent.replace(/\{\{offer\.salary\}\}/g, '₹15,00,000 per annum');
       emailContent = emailContent.replace(/\{\{offer\.benefits\}\}/g, 'Health Insurance, Flexible Work, Learning Budget');
@@ -962,7 +962,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Auto-set registration date for external candidates
       if (candidateData.candidateType === 'external') {
-        candidateData.registrationDate = new Date();
+        candidateData.registrationDate = new Date().toISOString();
       }
       
       const candidate = await storage.createCandidate(candidateData);
@@ -994,8 +994,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           let subject = candidateTemplate.subject;
           
           // Replace candidate placeholders
-          emailContent = emailContent.replace(/\{\{candidate\.name\}\}/g, candidate.name || 'Candidate');
-          subject = subject.replace(/\{\{candidate\.name\}\}/g, candidate.name || 'Candidate');
+          if (emailContent) {
+            emailContent = emailContent.replace(/\{\{candidate\.name\}\}/g, candidate.name || 'Candidate');
+            subject = subject.replace(/\{\{candidate\.name\}\}/g, candidate.name || 'Candidate');
+          }
           
           // Replace company placeholders
           emailContent = emailContent.replace(/\{\{company\.name\}\}/g, 'TalentFlow Technologies');
@@ -2883,7 +2885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/roles", requireRole(['director']), async (req, res) => {
     try {
-      const roleData = insertRoleSchema.parse(req.body);
+      const roleData = insertCustomRoleSchema.parse(req.body);
       const role = await storage.createRole(roleData);
       res.status(201).json(role);
     } catch (error) {
@@ -2897,7 +2899,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/roles/:id", requireRole(['director']), async (req, res) => {
     try {
-      const roleData = insertRoleSchema.partial().parse(req.body);
+      const roleData = insertCustomRoleSchema.partial().parse(req.body);
       const role = await storage.updateRole(req.params.id, roleData);
       res.json(role);
     } catch (error) {
@@ -3052,8 +3054,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userCount: "0",
       });
     } catch (error) {
-      console.error("Error creating custom role:", error);
-      if (error.message?.includes('unique')) {
+      console.error("Error creating custom role:", error instanceof Error ? error.message : String(error));
+      if (error instanceof Error && error.message?.includes('unique')) {
         return res.status(409).json({ message: "Role name already exists" });
       }
       res.status(500).json({ message: "Failed to create custom role" });

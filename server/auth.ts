@@ -14,12 +14,15 @@ interface GraphUser {
   officeLocation?: string;
 }
 
-// Extended request interface to include user
+// Extended request interface to include user and session
 declare global {
   namespace Express {
     interface Request {
       user?: User;
       isAuthenticated?: boolean;
+    }
+    interface Session {
+      userId?: string;
     }
   }
 }
@@ -178,7 +181,7 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
         }
       } catch (graphError) {
         // Graph API failed - continue to check if we should reject or allow
-        console.log('Graph API call failed:', graphError.message);
+        console.log('Graph API call failed:', graphError instanceof Error ? graphError.message : String(graphError));
       }
     }
 
@@ -195,7 +198,7 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
 // Role-based authorization middleware
 export const requireRole = (roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
+    if (!req.user || !req.user.roleId || !roles.includes(req.user.roleId)) {
       return res.status(403).json({ message: 'Insufficient permissions' });
     }
     next();
