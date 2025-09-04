@@ -149,7 +149,7 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
       }
     }
 
-    // Only try Office 365 if no session exists
+    // Only try Office 365 if no session exists AND has Bearer token
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const accessToken = authHeader.split(' ')[1];
@@ -177,12 +177,15 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
           return next();
         }
       } catch (graphError) {
-        // Don't fail if Graph API is down - this is expected for session users
-        console.log('Graph API unavailable, session-only authentication active');
+        // Graph API failed - continue to check if we should reject or allow
+        console.log('Graph API call failed:', graphError.message);
       }
     }
 
-    return res.status(401).json({ message: 'Authentication required' });
+    // If we get here and no valid authentication was found, reject
+    if (!req.user) {
+      return res.status(401).json({ message: 'Authentication required' });
+    }
   } catch (error) {
     console.error('Authentication error:', error);
     res.status(401).json({ message: 'Authentication failed' });
