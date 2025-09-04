@@ -571,7 +571,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clientId = process.env.AZURE_CLIENT_ID;
       const tenantId = process.env.AZURE_TENANT_ID;
-      const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/microsoft/callback`;
+      // Force HTTPS for Replit domains, otherwise use detected protocol
+      const host = req.get('host');
+      const protocol = host?.includes('.replit.dev') ? 'https' : req.protocol;
+      const redirectUri = `${protocol}://${host}/api/auth/microsoft/callback`;
       
       if (!clientId || !tenantId) {
         return res.status(500).json({ message: 'Microsoft authentication not configured' });
@@ -614,7 +617,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const clientId = process.env.AZURE_CLIENT_ID;
       const clientSecret = process.env.AZURE_CLIENT_SECRET;
       const tenantId = process.env.AZURE_TENANT_ID;
-      const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/microsoft/callback`;
+      // Force HTTPS for Replit domains, otherwise use detected protocol
+      const host = req.get('host');
+      const protocol = host?.includes('.replit.dev') ? 'https' : req.protocol;
+      const redirectUri = `${protocol}://${host}/api/auth/microsoft/callback`;
 
       const tokenResponse = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
         method: 'POST',
