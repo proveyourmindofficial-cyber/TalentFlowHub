@@ -27,10 +27,8 @@ export class ApplicationWorkflowService {
       // Generate unique response token
       const responseToken = nanoid();
       
-      // Create response URLs
-      const baseUrl = process.env.REPLIT_DOMAINS ? 
-        `https://${process.env.REPLIT_DOMAINS.split(',')[0]}` : 
-        'http://localhost:5000';
+      // Create response URLs - Always use localhost for development
+      const baseUrl = 'http://localhost:5000';
       
       const interestedUrl = `${baseUrl}/candidate-response?token=${responseToken}&response=interested`;
       const notInterestedUrl = `${baseUrl}/candidate-response?token=${responseToken}&response=not_interested`;
@@ -305,7 +303,7 @@ export class ApplicationWorkflowService {
             <h3 style="margin-top: 0;">Your Login Details:</h3>
             <p><strong>Email:</strong> ${candidate.email}</p>
             <p><strong>Temporary Password:</strong> ${tempPassword}</p>
-            <p><strong>Portal URL:</strong> <a href="${process.env.REPLIT_DEV_DOMAIN || 'http://localhost:5000'}/candidate-portal/login">Access Portal</a></p>
+            <p><strong>Portal URL:</strong> <a href="http://localhost:5000/candidate-portal/login">Access Portal</a></p>
         </div>
         
         <p><strong>Important:</strong> Please change your password after first login for security.</p>
