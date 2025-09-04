@@ -133,21 +133,19 @@ export default function UserManagementSettings() {
 
   const addUser = useMutation({
     mutationFn: async (userData: AddUserForm) => {
-      return apiRequest('POST', '/api/users', {
-        username: userData.email,
+      // Use invitation API for unified system
+      return apiRequest('POST', '/api/auth/invite-user', {
         email: userData.email,
         firstName: userData.firstName,
         lastName: userData.lastName,
-        customRoleId: userData.customRoleId === "none" ? null : userData.customRoleId,
-        department: userData.department,
-        isActive: true
+        department: userData.department
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users-with-custom-roles'] });
       toast({
-        title: "User Added",
-        description: "User added successfully and invitation email sent!",
+        title: "Invitation Sent",
+        description: `Password setup email sent to ${addUserForm.email}`,
       });
       setAddUserDialogOpen(false);
       setAddUserForm({
@@ -160,8 +158,8 @@ export default function UserManagementSettings() {
     },
     onError: () => {
       toast({
-        title: "Add User Failed",
-        description: "Failed to add new user. Please try again.",
+        title: "Invitation Failed",
+        description: "Failed to send invitation. Please try again.",
         variant: "destructive",
       });
     }
@@ -261,14 +259,14 @@ export default function UserManagementSettings() {
             </div>
             <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-green-600 hover:bg-green-700">
                   <UserPlus className="h-4 w-4 mr-2" />
-                  Add User
+                  Invite User
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add New User</DialogTitle>
+                  <DialogTitle>Invite New User</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -348,7 +346,7 @@ export default function UserManagementSettings() {
                       disabled={!addUserForm.email || !addUserForm.firstName || !addUserForm.lastName || addUser.isPending}
                       data-testid="button-add-user"
                     >
-                      {addUser.isPending ? "Adding..." : "Add User"}
+                      {addUser.isPending ? "Sending Invitation..." : "Send Invitation"}
                     </Button>
                   </div>
                 </div>
