@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Users, Shield, Edit, Search } from "lucide-react";
+import { Users, Shield, Edit, Search, UserPlus, Trash2 } from "lucide-react";
 import type { User } from "@shared/schema";
 
 const roleLabels = {
@@ -52,12 +52,26 @@ const roleColors = {
   bgc: "bg-red-100 text-red-800"
 };
 
+interface InviteUserForm {
+  email: string;
+  firstName: string;
+  lastName: string;
+  department: string;
+}
+
 export default function UserManagement() {
   const { toast } = useToast();
   const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newRole, setNewRole] = useState<string>("");
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteForm, setInviteForm] = useState<InviteUserForm>({
+    email: "",
+    firstName: "",
+    lastName: "",
+    department: ""
+  });
 
   // Only directors can access user management
   if (currentUser?.role !== 'director') {
@@ -101,6 +115,37 @@ export default function UserManagement() {
     }
   });
 
+  const inviteUser = useMutation({
+    mutationFn: async (userData: InviteUserForm) => {
+      return apiRequest('/api/auth/invite-user', {
+        method: 'POST',
+        body: JSON.stringify(userData),
+        headers: { 'Content-Type': 'application/json' }
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: "Invitation Sent",
+        description: `Password setup email sent to ${inviteForm.email}`,
+      });
+      setInviteDialogOpen(false);
+      setInviteForm({
+        email: "",
+        firstName: "",
+        lastName: "",
+        department: ""
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Invitation Failed",
+        description: "Failed to send invitation. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   const filteredUsers = users.filter((user: User) =>
     user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,6 +156,12 @@ export default function UserManagement() {
   const handleRoleUpdate = () => {
     if (editingUser && newRole) {
       updateUserRole.mutate({ userId: editingUser.id, role: newRole });
+    }
+  };
+
+  const handleInviteUser = () => {
+    if (inviteForm.email && inviteForm.firstName && inviteForm.lastName) {
+      inviteUser.mutate(inviteForm);
     }
   };
 
@@ -135,10 +186,95 @@ export default function UserManagement() {
           <h1 className="text-3xl font-bold">User Management</h1>
           <p className="text-gray-600 mt-1">Manage user roles and permissions</p>
         </div>
-        <Badge variant="outline" className="bg-purple-50 text-purple-700">
-          <Shield className="w-4 h-4 mr-1" />
-          Director Access
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700" data-testid="button-invite-user">
+                <UserPlus className="w-4 h-4 mr-2" />
+                Invite User
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Invite New User</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Email</label>
+                  <Input
+                    type="email"
+                    placeholder="user@company.com"
+                    value={inviteForm.email}
+                    onChange={(e) => setInviteForm(prev => ({...prev, email: e.target.value}))}
+                    data-testid="input-invite-email"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">First Name</label>
+                    <Input
+                      placeholder="John"
+                      value={inviteForm.firstName}
+                      onChange={(e) => setInviteForm(prev => ({...prev, firstName: e.target.value}))}
+                      data-testid="input-invite-firstname"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Last Name</label>
+                    <Input
+                      placeholder="Doe"
+                      value={inviteForm.lastName}
+                      onChange={(e) => setInviteForm(prev => ({...prev, lastName: e.target.value}))}
+                      data-testid="input-invite-lastname"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Department</label>
+                  <Input
+                    placeholder="HR, Engineering, Sales..."
+                    value={inviteForm.department}
+                    onChange={(e) => setInviteForm(prev => ({...prev, department: e.target.value}))}
+                    data-testid="input-invite-department"
+                  />
+                </div>
+
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <p className="text-blue-800 text-sm">
+                    <strong>📧 What happens next:</strong><br />
+                    User will receive an email with a link to set up their password and access the platform.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setInviteDialogOpen(false);
+                      setInviteForm({email: "", firstName: "", lastName: "", department: ""});
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleInviteUser}
+                    disabled={!inviteForm.email || !inviteForm.firstName || !inviteForm.lastName || inviteUser.isPending}
+                    data-testid="button-send-invitation"
+                  >
+                    {inviteUser.isPending ? "Sending..." : "Send Invitation"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+          
+          <Badge variant="outline" className="bg-purple-50 text-purple-700">
+            <Shield className="w-4 h-4 mr-1" />
+            Director Access
+          </Badge>
+        </div>
       </div>
 
       <Card>

@@ -27,40 +27,40 @@ async function sendUserInvitationEmail(email: string, firstName: string, lastNam
   
   <div style="text-align: center; margin-bottom: 30px;">
     <h1 style="font-size: 28px; margin: 0; color: #2c3e50;">Welcome to TalentFlowHub</h1>
-    <p style="font-size: 16px; margin: 10px 0; color: #6c757d;">Your account has been created successfully</p>
+    <p style="font-size: 16px; margin: 10px 0; color: #6c757d;">Set up your account to get started</p>
   </div>
 
   <div style="background: white; padding: 30px; border-radius: 8px; margin-bottom: 25px; text-align: center; border: 1px solid #e9ecef;">
     <h2 style="font-size: 22px; margin: 0 0 15px 0; color: #2c3e50;">Hello ${firstName},</h2>
     <p style="font-size: 16px; margin: 0; color: #495057; line-height: 1.6;">
-      You have been assigned the role of <strong style="color: #0d6efd;">${roleName}</strong>.<br>
-      Please access the platform to get started.
+      You have been invited to join TalentFlowHub as <strong style="color: #0d6efd;">${roleName}</strong>.<br>
+      Please set up your password to activate your account.
     </p>
   </div>
 
   <div style="background: white; padding: 25px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e9ecef;">
-    <h3 style="text-align: center; color: #2c3e50; font-size: 18px; margin: 0 0 20px 0;">Getting Started</h3>
+    <h3 style="text-align: center; color: #2c3e50; font-size: 18px; margin: 0 0 20px 0;">Account Setup</h3>
     
     <div style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #0d6efd;">
-      <span style="color: #495057;">1. Click the access button below</span>
+      <span style="color: #495057;">1. Click "Set Up Password" below</span>
     </div>
     
     <div style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #28a745;">
-      <span style="color: #495057;">2. Sign in with your email: ${email}</span>
+      <span style="color: #495057;">2. Create your secure password</span>
     </div>
     
     <div style="padding: 12px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #17a2b8;">
-      <span style="color: #495057;">3. Complete your profile setup</span>
+      <span style="color: #495057;">3. Login and explore the platform</span>
     </div>
   </div>
 
   <div style="text-align: center; margin: 30px 0;">
-    <a href="https://${process.env.REPLIT_DEV_DOMAIN}" 
-       style="display: inline-block; background: #0d6efd; color: white; text-decoration: none; font-weight: bold; font-size: 16px; padding: 12px 24px; border-radius: 6px; text-align: center;">
-      Access Dashboard
+    <a href="${setupUrl}" 
+       style="display: inline-block; background: #28a745; color: white; text-decoration: none; font-weight: bold; font-size: 16px; padding: 14px 28px; border-radius: 6px; text-align: center;">
+      Set Up Password
     </a>
     <p style="margin: 15px 0 0 0; font-size: 12px; color: #6c757d;">
-      Click the button above to access your account
+      This link will expire in 24 hours for security
     </p>
   </div>
 
