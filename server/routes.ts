@@ -681,8 +681,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
-      // Check password - for now using simple text comparison, should use bcrypt in production
-      const isValidPassword = user.passwordHash && password === user.passwordHash;
+      // Check password using bcrypt - secure comparison
+      const bcrypt = await import('bcrypt');
+      const isValidPassword = user.passwordHash && await bcrypt.compare(password, user.passwordHash);
       
       if (!isValidPassword) {
         return res.status(401).json({ message: 'Invalid email or password' });
