@@ -136,7 +136,7 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-// Session-based authentication middleware (temporary fix for permissions)
+// Session-based authentication middleware (fixed for proper session handling)
 export const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     // Check for session-based authentication first (current login method)
@@ -149,30 +149,36 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
       }
     }
 
-    // Fallback to Office 365 token authentication
+    // Only try Office 365 if no session exists
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const accessToken = authHeader.split(' ')[1];
-      const graphUser = await getUserFromGraph(accessToken);
       
-      if (graphUser) {
-        let user = await storage.getUserByEmail(graphUser.mail);
-        if (!user) {
-          user = await storage.createUser({
-            username: graphUser.mail,
-            email: graphUser.mail,
-            firstName: graphUser.givenName,
-            lastName: graphUser.surname,
-            roleId: null,
-            department: graphUser.department || 'Recruitment',
-            isActive: true
-          });
-          console.log(`🔐 New user auto-created from Office365: ${graphUser.mail}`);
-        }
+      try {
+        const graphUser = await getUserFromGraph(accessToken);
+        
+        if (graphUser) {
+          let user = await storage.getUserByEmail(graphUser.mail);
+          if (!user) {
+            user = await storage.createUser({
+              username: graphUser.mail,
+              email: graphUser.mail,
+              firstName: graphUser.givenName,
+              lastName: graphUser.surname,
+              roleId: null,
+              department: graphUser.department || 'Recruitment',
+              isActive: true
+            });
+            console.log(`🔐 New user auto-created from Office365: ${graphUser.mail}`);
+          }
 
-        req.user = user;
-        req.isAuthenticated = true;
-        return next();
+          req.user = user;
+          req.isAuthenticated = true;
+          return next();
+        }
+      } catch (graphError) {
+        // Don't fail if Graph API is down - this is expected for session users
+        console.log('Graph API unavailable, session-only authentication active');
       }
     }
 
