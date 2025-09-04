@@ -598,6 +598,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`📧 User invitation created: ${email}`);
 
+      // Send invitation email
+      const emailSent = await sendUserInvitationEmail(email, firstName || email.split('@')[0], lastName || 'User', roleId);
+      
+      if (!emailSent) {
+        console.error(`❌ Failed to send invitation email to ${email}`);
+        // Still return success since user was created, but note email failure
+      }
+
       res.json({
         message: 'Invitation sent successfully',
         inviteToken: inviteToken,

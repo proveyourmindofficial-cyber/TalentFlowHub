@@ -185,15 +185,25 @@ export default function UserManagementSettings() {
     }
   });
 
-  // Resend invitation email mutation
+  // Resend invitation email mutation - now uses proper invitation system
   const resendInvitation = useMutation({
     mutationFn: async (userId: string) => {
-      return apiRequest('POST', `/api/users/${userId}/resend-invitation`);
+      // Get user details first
+      const user = users.find((u: User) => u.id === userId);
+      if (!user) throw new Error('User not found');
+      
+      // Use invitation API instead of old resend endpoint
+      return apiRequest('POST', '/api/auth/invite-user', {
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        department: user.department
+      });
     },
     onSuccess: () => {
       toast({
         title: "Invitation Sent",
-        description: "Invitation email has been resent successfully.",
+        description: "Password setup email has been sent successfully.",
       });
     },
     onError: () => {
