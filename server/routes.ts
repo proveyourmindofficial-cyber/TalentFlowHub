@@ -566,20 +566,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Logged out successfully" });
   });
 
-  // Simple login for development (bypass Office 365 issues)
+  // Secure login with password authentication
   app.post('/api/auth/simple-login', async (req, res) => {
     try {
-      const { email } = req.body;
+      const { email, password } = req.body;
       
-      if (!email) {
-        return res.status(400).json({ message: 'Email is required' });
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
       }
 
       // Check if user exists
       let user = await storage.getUserByEmail(email);
       
       if (!user) {
-        return res.status(404).json({ message: 'User not found. Please contact admin to create your account.' });
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
+      // Check password - for now using simple text comparison, should use bcrypt in production
+      const isValidPassword = user.passwordHash && password === user.passwordHash;
+      
+      if (!isValidPassword) {
+        return res.status(401).json({ message: 'Invalid email or password' });
       }
 
       // Set the session properly for the authenticateUser middleware

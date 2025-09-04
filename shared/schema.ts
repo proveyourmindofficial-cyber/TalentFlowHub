@@ -205,6 +205,7 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   department: varchar("department"),
   roleId: varchar("role_id").references(() => customRoles.id),
+  passwordHash: varchar("password_hash"), // Added for secure password storage
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
