@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { SimpleLoginPage } from "@/components/auth/SimpleLoginPage";
+import { PasswordSetupPage } from "@/components/auth/PasswordSetupPage";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "@/pages/dashboard";
 import Jobs from "@/pages/jobs";
@@ -45,6 +46,7 @@ function Router() {
         <Route path="/portal" component={CandidatePortal} />
         <Route path="/candidate-portal/*" component={CandidatePortal} />
         <Route path="/candidate-response" component={CandidateResponse} />
+        <Route path="/setup-password" component={PasswordSetupPage} />
         
         {/* All other routes require authentication */}
         <Route component={() => {

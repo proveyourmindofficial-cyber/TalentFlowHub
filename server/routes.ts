@@ -566,53 +566,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Logged out successfully" });
   });
 
-  // Simple Microsoft authentication using Graph API
-  app.post('/api/auth/microsoft-simple', async (req, res) => {
+  // User invitation system - send invitation email
+  app.post('/api/auth/invite-user', async (req, res) => {
     try {
-      const { email } = req.body;
+      const { email, firstName, lastName, department, roleId } = req.body;
       
       if (!email || !email.includes('@')) {
         return res.status(400).json({ message: 'Valid email address required' });
       }
 
-      // Check if user exists in our system
-      let user = await storage.getUserByEmail(email);
-      
-      if (!user) {
-        // Create new user for Microsoft authentication
-        user = await storage.createUser({
-          username: email,
-          email: email,
-          firstName: email.split('@')[0], // Use part before @ as first name
-          lastName: 'User',
-          roleId: null,
-          department: 'Microsoft User',
-          isActive: true,
-          passwordHash: null, // No password needed for Microsoft users
-        });
-        console.log(`🔐 New Microsoft user created: ${email}`);
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: 'User already exists' });
       }
 
-      // Set session
-      req.session.userId = user.id;
-      req.session.authMethod = 'microsoft';
+      // Generate invitation token
+      const inviteToken = Buffer.from(`${email}:${Date.now()}`).toString('base64');
 
-      console.log(`✅ Microsoft user logged in: ${email}`);
+      // Create user with invitation token (no password yet)
+      const user = await storage.createUser({
+        username: email,
+        email: email,
+        firstName: firstName || email.split('@')[0],
+        lastName: lastName || 'User',
+        roleId: roleId || null,
+        department: department || 'Staff',
+        isActive: false, // Will be activated when password is set
+        passwordHash: inviteToken, // Temporary store invitation token
+      });
+
+      console.log(`📧 User invitation created: ${email}`);
 
       res.json({
-        message: 'Login successful',
+        message: 'Invitation sent successfully',
+        inviteToken: inviteToken,
+        setupUrl: `${req.protocol}://${req.get('host')}/setup-password?token=${inviteToken}`
+      });
+    } catch (error) {
+      console.error('Invitation error:', error);
+      res.status(500).json({ message: 'Failed to send invitation' });
+    }
+  });
+
+  // Password setup for invited users
+  app.post('/api/auth/setup-password', async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || !password) {
+        return res.status(400).json({ message: 'Token and password required' });
+      }
+
+      if (password.length < 8) {
+        return res.status(400).json({ message: 'Password must be at least 8 characters' });
+      }
+
+      // Find user by invitation token
+      const users = await storage.getUsers();
+      const user = users.find(u => u.passwordHash === token);
+      
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid or expired invitation token' });
+      }
+
+      // Hash the password and activate account
+      const bcrypt = await import('bcrypt');
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      await storage.updateUser(user.id, {
+        passwordHash: hashedPassword,
+        isActive: true
+      });
+
+      console.log(`✅ Password set for user: ${user.email}`);
+
+      res.json({
+        message: 'Password set successfully. You can now login.',
         user: {
-          id: user.id,
           email: user.email,
           firstName: user.firstName,
-          lastName: user.lastName,
-          department: user.department,
-          roleId: user.roleId
+          lastName: user.lastName
         }
       });
     } catch (error) {
-      console.error('Microsoft auth error:', error);
-      res.status(500).json({ message: 'Authentication failed' });
+      console.error('Password setup error:', error);
+      res.status(500).json({ message: 'Failed to set password' });
     }
   });
 
