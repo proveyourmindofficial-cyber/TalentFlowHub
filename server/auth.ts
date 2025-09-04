@@ -23,6 +23,8 @@ declare global {
     }
     interface Session {
       userId?: string;
+      oauthState?: string;
+      authMethod?: 'local' | 'microsoft';
     }
   }
 }
