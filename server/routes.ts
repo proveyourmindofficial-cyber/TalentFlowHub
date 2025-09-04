@@ -13,15 +13,9 @@ import { graphEmailService } from './services/graphEmailService';
 import { authenticateOffice365, authenticateUser, optionalAuth, requireRole } from "./auth";
 // Remove html-pdf-node import due to compatibility issues
 
-// User invitation email function
-async function sendUserInvitationEmail(email: string, firstName: string, lastName: string, customRoleId?: string) {
+// UNIFIED USER INVITATION SYSTEM - Clean implementation
+async function sendPasswordSetupEmail(email: string, firstName: string, lastName: string, setupUrl: string, roleName: string = 'Team Member') {
   try {
-    let roleName = 'Team Member';
-    if (customRoleId) {
-      const customRole = await storage.getCustomRole(customRoleId);
-      roleName = customRole?.name || 'Team Member';
-    }
-
     const emailBody = `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa; padding: 40px 20px; border-radius: 8px;">
   
@@ -81,16 +75,19 @@ async function sendUserInvitationEmail(email: string, firstName: string, lastNam
   
 </div>`;
 
+    console.log(`📧 Sending password setup email to: ${email}`);
+    
     await graphEmailService.sendEmail({
       to: email,
-      subject: '🎉 Welcome to TalentFlowHub - Your Gen-Z Account is Ready!',
+      subject: '🔐 Set Up Your TalentFlowHub Account Password',
       body: emailBody,
       isHtml: true,
     });
     
+    console.log(`✅ Email sent successfully to: ${email}`);
     return true;
   } catch (error) {
-    console.error('Failed to send user invitation email:', error);
+    console.error(`❌ Failed to send password setup email to ${email}:`, error);
     return false;
   }
 }
@@ -598,18 +595,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log(`📧 User invitation created: ${email}`);
 
-      // Send invitation email
-      const emailSent = await sendUserInvitationEmail(email, firstName || email.split('@')[0], lastName || 'User', roleId);
+      // Create the setup URL
+      const setupUrl = `https://${process.env.REPLIT_DEV_DOMAIN}/setup-password?token=${inviteToken}`;
       
-      if (!emailSent) {
-        console.error(`❌ Failed to send invitation email to ${email}`);
-        // Still return success since user was created, but note email failure
-      }
+      // Send password setup email using unified system
+      const emailSent = await sendPasswordSetupEmail(
+        email, 
+        firstName || email.split('@')[0], 
+        lastName || 'User', 
+        setupUrl,
+        'Team Member'
+      );
 
       res.json({
         message: 'Invitation sent successfully',
         inviteToken: inviteToken,
-        setupUrl: `https://${process.env.REPLIT_DEV_DOMAIN}/setup-password?token=${inviteToken}`
+        setupUrl: setupUrl
       });
     } catch (error) {
       console.error('Invitation error:', error);
@@ -762,14 +763,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isActive: isActive !== undefined ? isActive : true
       });
 
-      // Send welcome email invitation
-      try {
-        await sendUserInvitationEmail(email, firstName, lastName, customRoleId);
-        console.log(`📧 Welcome email sent to ${email}`);
-      } catch (emailError) {
-        console.error('Failed to send welcome email:', emailError);
-        // Don't fail user creation if email fails
-      }
+      // Note: This is direct user creation endpoint, not invitation
+      // For invitations, use /api/auth/invite-user instead
+      console.log(`👤 User created directly: ${email}`);
       
       res.status(201).json(user);
     } catch (error) {
@@ -893,31 +889,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Resend invitation email endpoint
-  app.post('/api/users/:id/resend-invitation', async (req, res) => {
-    try {
-      const user = await storage.getUser(req.params.id);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      // Send invitation email
-      const success = await sendUserInvitationEmail(
-        user.email || '', 
-        user.firstName || '', 
-        user.lastName || '', 
-        user.roleId || undefined
-      );
-
-      if (success) {
-        res.json({ message: "Invitation email sent successfully" });
-      } else {
-        res.status(500).json({ message: "Failed to send invitation email" });
-      }
-    } catch (error) {
-      console.error("Error resending invitation:", error);
-      res.status(500).json({ message: "Failed to resend invitation" });
-    }
-  });
+  // REMOVED OLD RESEND INVITATION ENDPOINT - Now handled by frontend calling /api/auth/invite-user
 
   app.delete('/api/users/:id', async (req, res) => {
     try {
