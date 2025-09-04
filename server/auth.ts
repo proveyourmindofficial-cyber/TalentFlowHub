@@ -136,6 +136,53 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
+// Session-based authentication middleware (temporary fix for permissions)
+export const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // Check for session-based authentication first (current login method)
+    if (req.session?.userId) {
+      const user = await storage.getUserById(req.session.userId);
+      if (user && user.isActive) {
+        req.user = user;
+        req.isAuthenticated = true;
+        return next();
+      }
+    }
+
+    // Fallback to Office 365 token authentication
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith('Bearer ')) {
+      const accessToken = authHeader.split(' ')[1];
+      const graphUser = await getUserFromGraph(accessToken);
+      
+      if (graphUser) {
+        let user = await storage.getUserByEmail(graphUser.mail);
+        if (!user) {
+          user = await storage.createUser({
+            username: graphUser.mail,
+            email: graphUser.mail,
+            firstName: graphUser.givenName,
+            lastName: graphUser.surname,
+            roleId: null,
+            department: graphUser.department || 'Recruitment',
+            isActive: true
+          });
+          console.log(`🔐 New user auto-created from Office365: ${graphUser.mail}`);
+        }
+
+        req.user = user;
+        req.isAuthenticated = true;
+        return next();
+      }
+    }
+
+    return res.status(401).json({ message: 'Authentication required' });
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(401).json({ message: 'Authentication failed' });
+  }
+};
+
 // Role-based authorization middleware
 export const requireRole = (roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
