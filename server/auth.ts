@@ -139,20 +139,21 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-// Session-based authentication middleware (fixed for proper session handling)
+// Enhanced authentication middleware - supports both local login and Microsoft SSO
 export const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Check for session-based authentication first (current login method)
+    // Check for session-based authentication first (local password login)
     if (req.session?.userId) {
       const user = await storage.getUserById(req.session.userId);
       if (user && user.isActive) {
         req.user = user;
         req.isAuthenticated = true;
+        req.authMethod = 'local';
         return next();
       }
     }
 
-    // Only try Office 365 if no session exists AND has Bearer token
+    // Microsoft SSO authentication via Bearer token
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const accessToken = authHeader.split(' ')[1];
@@ -163,6 +164,7 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
         if (graphUser) {
           let user = await storage.getUserByEmail(graphUser.mail);
           if (!user) {
+            // Auto-create user from Microsoft account
             user = await storage.createUser({
               username: graphUser.mail,
               email: graphUser.mail,
@@ -170,25 +172,26 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
               lastName: graphUser.surname,
               roleId: null,
               department: graphUser.department || 'Recruitment',
-              isActive: true
+              isActive: true,
+              passwordHash: null, // Microsoft users don't need local passwords
             });
             console.log(`🔐 New user auto-created from Office365: ${graphUser.mail}`);
           }
 
+          // Set session for Microsoft users too (hybrid approach)
+          req.session.userId = user.id;
           req.user = user;
           req.isAuthenticated = true;
+          req.authMethod = 'microsoft';
           return next();
         }
       } catch (graphError) {
-        // Graph API failed - continue to check if we should reject or allow
         console.log('Graph API call failed:', graphError instanceof Error ? graphError.message : String(graphError));
       }
     }
 
-    // If we get here and no valid authentication was found, reject
-    if (!req.user) {
-      return res.status(401).json({ message: 'Authentication required' });
-    }
+    // No valid authentication found
+    return res.status(401).json({ message: 'Authentication required' });
   } catch (error) {
     console.error('Authentication error:', error);
     res.status(401).json({ message: 'Authentication failed' });
