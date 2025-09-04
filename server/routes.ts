@@ -10,7 +10,7 @@ import graphEmailRoutes from "./routes/graphEmailRoutes";
 import emailTemplateRoutes from "./routes/emailTemplateRoutes";
 import moduleTemplateRoutes from "./routes/moduleTemplateRoutes";
 import { graphEmailService } from './services/graphEmailService';
-import { authenticateOffice365, optionalAuth, requireRole } from "./auth";
+import { authenticateOffice365, authenticateUser, optionalAuth, requireRole } from "./auth";
 // Remove html-pdf-node import due to compatibility issues
 
 // User invitation email function
@@ -3109,7 +3109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get current user's permissions
-  app.get("/api/user/permissions", authenticateOffice365, async (req, res) => {
+  app.get("/api/user/permissions", authenticateUser, async (req, res) => {
     try {
       if (!req.user) {
         return res.status(401).json({ message: "Not authenticated" });
