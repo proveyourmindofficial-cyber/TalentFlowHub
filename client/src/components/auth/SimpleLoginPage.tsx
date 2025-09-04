@@ -138,6 +138,36 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
           </form>
 
 
+          <div className="mt-6 space-y-4">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">Or continue with</span>
+              </div>
+            </div>
+            
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-12 border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-300"
+              onClick={() => {
+                // Microsoft SSO login - will be handled by your existing Office 365 integration
+                window.location.href = '/api/auth/microsoft'; // This would need to be implemented
+              }}
+              data-testid="button-microsoft-sso"
+            >
+              <svg className="h-5 w-5 mr-3" viewBox="0 0 24 24">
+                <path fill="#f35325" d="M1 1h10.5v10.5H1z"/>
+                <path fill="#81bc06" d="M12.5 1H23v10.5H12.5z"/>
+                <path fill="#05a6f0" d="M1 12.5h10.5V23H1z"/>
+                <path fill="#ffba08" d="M12.5 12.5H23V23H12.5z"/>
+              </svg>
+              <span className="font-medium">Sign in with Microsoft</span>
+            </Button>
+          </div>
+
           <div className="mt-6 text-center">
             <div className="bg-gradient-to-r from-violet-50 to-purple-50 p-4 rounded-xl border border-violet-100">
               <p className="text-xs text-violet-800 leading-relaxed">

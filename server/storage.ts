@@ -68,6 +68,7 @@ export interface IStorage {
   getUsers(): Promise<User[]>;
   getUsersWithCustomRoles(): Promise<any[]>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  updateUserPassword(id: string, password: string): Promise<void>;
   deleteUser(id: string): Promise<void>;
 
   // Job operations
@@ -258,6 +259,12 @@ export class DatabaseStorage implements IStorage {
   async updateUser(id: string, userData: Partial<InsertUser>): Promise<User | undefined> {
     const [user] = await db.update(users).set(userData).where(eq(users.id, id)).returning();
     return user;
+  }
+
+  async updateUserPassword(id: string, password: string): Promise<void> {
+    await db.update(users)
+      .set({ passwordHash: password })
+      .where(eq(users.id, id));
   }
 
   async deleteUser(id: string): Promise<void> {

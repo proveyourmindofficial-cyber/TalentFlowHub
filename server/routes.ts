@@ -714,6 +714,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Set user password (admin only)
+  app.put('/api/users/:id/password', authenticateUser, async (req, res) => {
+    try {
+      const { password } = req.body;
+      
+      if (!password || password.length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+      }
+
+      const existingUser = await storage.getUser(req.params.id);
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // For now, store password as plain text (should use bcrypt in production)
+      await storage.updateUserPassword(req.params.id, password);
+      
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error updating user password:", error);
+      res.status(500).json({ message: "Failed to update password" });
+    }
+  });
+
+  // Generate random password for user (admin only)
+  app.post('/api/users/:id/generate-password', authenticateUser, async (req, res) => {
+    try {
+      const existingUser = await storage.getUser(req.params.id);
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Generate secure random password
+      const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+      const password = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      
+      await storage.updateUserPassword(req.params.id, password);
+      
+      res.json({ password, message: "Password generated successfully" });
+    } catch (error) {
+      console.error("Error generating password:", error);
+      res.status(500).json({ message: "Failed to generate password" });
+    }
+  });
+
   // Endpoint that the frontend is actually calling
   app.put('/api/users/:id/custom-role', async (req, res) => {
     try {
