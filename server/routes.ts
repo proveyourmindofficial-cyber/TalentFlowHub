@@ -571,9 +571,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clientId = process.env.AZURE_CLIENT_ID;
       const tenantId = process.env.AZURE_TENANT_ID;
-      // Force HTTPS for Replit domains, otherwise use detected protocol
+      // Force HTTPS for Replit domains, otherwise use detected protocol  
       const host = req.get('host');
-      const protocol = host?.includes('.replit.dev') ? 'https' : req.protocol;
+      const isReplit = host?.includes('.replit.dev') || host?.includes('replit');
+      const protocol = isReplit ? 'https' : req.protocol;
       const redirectUri = `${protocol}://${host}/api/auth/microsoft/callback`;
       
       if (!clientId || !tenantId) {
@@ -619,7 +620,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tenantId = process.env.AZURE_TENANT_ID;
       // Force HTTPS for Replit domains, otherwise use detected protocol
       const host = req.get('host');
-      const protocol = host?.includes('.replit.dev') ? 'https' : req.protocol;
+      const isReplit = host?.includes('.replit.dev') || host?.includes('replit');
+      const protocol = isReplit ? 'https' : req.protocol;
       const redirectUri = `${protocol}://${host}/api/auth/microsoft/callback`;
 
       const tokenResponse = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
