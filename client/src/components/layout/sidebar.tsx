@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, logout } from "@/hooks/useAuth";
 import { 
   ChartPie, 
   Briefcase, 
@@ -12,8 +12,10 @@ import {
   Shield, 
   BarChart3,
   Mail,
-  Settings 
+  Settings,
+  LogOut
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const baseNavigation = [
   { name: "Dashboard", href: "/", icon: ChartPie, module: "dashboard" },
@@ -173,6 +175,19 @@ export default function Sidebar() {
           })}
         </div>
       </nav>
+
+      {/* Logout Section */}
+      <div className="p-4 border-t border-violet-100">
+        <Button
+          onClick={logout}
+          variant="outline"
+          className="w-full justify-start text-gray-700 hover:text-red-600 hover:bg-red-50 border-gray-200 hover:border-red-200"
+          data-testid="button-logout"
+        >
+          <LogOut className="w-4 h-4 mr-3" />
+          Sign Out
+        </Button>
+      </div>
     </aside>
   );
 }
