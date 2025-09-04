@@ -68,9 +68,10 @@ class ClientCredentialAuthProvider implements AuthenticationProvider {
 }
 
 export class GraphEmailService {
-  private authProvider: ClientCredentialAuthProvider;
-  private graphClient: Client;
+  private authProvider: ClientCredentialAuthProvider | null = null;
+  private graphClient: Client | null = null;
   private config: GraphEmailConfig;
+  private isConfigured: boolean = false;
 
   constructor() {
     // Load configuration from environment variables
@@ -80,12 +81,33 @@ export class GraphEmailService {
       clientSecret: process.env.AZURE_CLIENT_SECRET || '',
     };
 
-    this.validateConfig();
+    // Only initialize if all required credentials are present
+    this.isConfigured = this.checkConfiguration();
+    if (this.isConfigured) {
+      try {
+        this.authProvider = new ClientCredentialAuthProvider(this.config);
+        this.graphClient = Client.initWithMiddleware({
+          authProvider: this.authProvider,
+        });
+      } catch (error) {
+        console.warn('Failed to initialize Graph Email Service:', error);
+        this.isConfigured = false;
+      }
+    }
+  }
+
+  private checkConfiguration(): boolean {
+    const required = ['AZURE_TENANT_ID', 'AZURE_CLIENT_ID', 'AZURE_CLIENT_SECRET'];
+    const missing = required.filter(key => !process.env[key]);
     
-    this.authProvider = new ClientCredentialAuthProvider(this.config);
-    this.graphClient = Client.initWithMiddleware({
-      authProvider: this.authProvider,
-    });
+    if (missing.length > 0) {
+      console.warn(
+        `Microsoft Graph Email Service not configured. Missing: ${missing.join(', ')}. ` +
+        `Email functionality will be disabled until these environment variables are set.`
+      );
+      return false;
+    }
+    return true;
   }
 
   private validateConfig(): void {
@@ -101,6 +123,11 @@ export class GraphEmailService {
   }
 
   async sendEmail(emailData: EmailMessage): Promise<boolean> {
+    if (!this.isConfigured || !this.graphClient) {
+      console.warn('Microsoft Graph Email Service is not configured. Email not sent.');
+      return false;
+    }
+
     try {
       const { to, subject, body, fromEmail, isHtml = false } = emailData;
 
@@ -176,6 +203,11 @@ export class GraphEmailService {
   }
 
   async testConnection(): Promise<boolean> {
+    if (!this.isConfigured || !this.authProvider) {
+      console.warn('Microsoft Graph Email Service is not configured.');
+      return false;
+    }
+
     try {
       const token = await this.authProvider.getAccessToken();
       return !!token;
