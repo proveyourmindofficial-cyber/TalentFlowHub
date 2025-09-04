@@ -84,47 +84,14 @@ export const logout = () => {
   window.location.reload();
 };
 
-// Simple Microsoft login using email verification
-export const initiateO365Login = async () => {
-  const email = prompt('Enter your Office 365 email address:');
+// Simple invitation-based access for new users
+export const requestAccess = async () => {
+  const email = prompt('Enter your email address to request access:');
   
   if (!email || !email.includes('@')) {
     alert('Please enter a valid email address');
     return;
   }
 
-  try {
-    const response = await fetch('/api/auth/microsoft-simple', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email }),
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      // Successful login - redirect to main app
-      const userData = {
-        id: data.user.id,
-        email: data.user.email,
-        firstName: data.user.firstName,
-        lastName: data.user.lastName,
-        role: data.user.roleId || 'user',
-        department: data.user.department
-      };
-      
-      localStorage.setItem('authToken', 'microsoft-authenticated');
-      localStorage.setItem('userData', JSON.stringify(userData));
-      
-      // Reload to trigger auth state update
-      window.location.href = '/';
-    } else {
-      alert(data.message || 'Login failed');
-    }
-  } catch (error) {
-    console.error('Microsoft login error:', error);
-    alert('Login failed. Please try again.');
-  }
+  alert('Access requests are handled by administrators. Please contact your system administrator to get an invitation email with setup instructions.');
 };
