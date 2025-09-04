@@ -35,7 +35,7 @@ const sendEmailSchema = z.object({
   candidateName: z.string().default('John Doe'),
   jobTitle: z.string().default('Software Developer'),
   clientName: z.string().default('TechCorp Inc'),
-  portalLink: z.string().url().default('http://localhost:5000'),
+  portalLink: z.string().url().default('https://d5e39f9d-2243-48e9-b99e-642cf80de1c8-00-3nrpx0ddmkv7z.janeway.replit.dev'),
 });
 
 type TemplateFormData = z.infer<typeof templateSchema>;
