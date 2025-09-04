@@ -55,7 +55,7 @@ async function sendUserInvitationEmail(email: string, firstName: string, lastNam
   </div>
 
   <div style="text-align: center; margin: 30px 0;">
-    <a href="http://localhost:5000" 
+    <a href="https://${process.env.REPLIT_DEV_DOMAIN}" 
        style="display: inline-block; background: #0d6efd; color: white; text-decoration: none; font-weight: bold; font-size: 16px; padding: 12px 24px; border-radius: 6px; text-align: center;">
       Access Dashboard
     </a>
@@ -601,7 +601,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         message: 'Invitation sent successfully',
         inviteToken: inviteToken,
-        setupUrl: `http://localhost:5000/setup-password?token=${inviteToken}`
+        setupUrl: `https://${process.env.REPLIT_DEV_DOMAIN}/setup-password?token=${inviteToken}`
       });
     } catch (error) {
       console.error('Invitation error:', error);
