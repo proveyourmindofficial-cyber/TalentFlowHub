@@ -685,11 +685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Prevent changing super admin role
       const existingUser = await storage.getUser(req.params.id);
-      if (existingUser?.email === 'itsupport@o2finfosolutions.com') {
-        return res.status(403).json({ message: "Cannot change super admin role" });
-      }
       if (!existingUser) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -724,11 +720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Prevent changing super admin role
       const existingUser = await storage.getUser(req.params.id);
-      if (existingUser?.email === 'itsupport@o2finfosolutions.com') {
-        return res.status(403).json({ message: "Cannot change super admin role" });
-      }
 
       if (!existingUser) {
         return res.status(404).json({ message: "User not found" });
@@ -779,11 +771,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/users/:id', async (req, res) => {
     try {
-      // Prevent deleting super admin
       const existingUser = await storage.getUser(req.params.id);
-      if (existingUser?.email === 'itsupport@o2finfosolutions.com') {
-        return res.status(403).json({ message: "Cannot delete super admin account" });
-      }
 
       await storage.deleteUser(req.params.id);
       res.json({ message: "User deleted successfully" });
