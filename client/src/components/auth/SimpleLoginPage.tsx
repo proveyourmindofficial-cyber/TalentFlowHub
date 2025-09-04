@@ -14,16 +14,17 @@ interface SimpleLoginPageProps {
 
 export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const { toast } = useToast();
 
   const login = useMutation({
-    mutationFn: async (email: string) => {
+    mutationFn: async ({ email, password }: { email: string; password: string }) => {
       const response = await fetch('/api/auth/simple-login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, password }),
       });
       
       if (!response.ok) {
@@ -51,18 +52,11 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.trim()) {
-      login.mutate(email.trim());
+    if (email.trim() && password.trim()) {
+      login.mutate({ email: email.trim(), password: password.trim() });
     }
   };
 
-  const handleQuickLogin = () => {
-    setEmail("itsupport@o2finfosolutions.com");
-    // Auto-submit after setting email
-    setTimeout(() => {
-      login.mutate("itsupport@o2finfosolutions.com");
-    }, 100);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-100 via-purple-50 to-cyan-100 flex items-center justify-center p-4 relative overflow-hidden">
@@ -105,10 +99,29 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-gray-700 font-medium">Password</Label>
+              <div className="relative">
+                <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 text-violet-400 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  className="pl-12 h-12 bg-gradient-to-r from-gray-50 to-white border-2 border-gray-200 focus:border-violet-400 rounded-xl transition-all duration-300"
+                  required
+                  data-testid="input-password"
+                />
+              </div>
+            </div>
+
             <Button
               type="submit"
               className="w-full h-12 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
-              disabled={login.isPending}
+              disabled={login.isPending || !email.trim() || !password.trim()}
               data-testid="button-login"
             >
               {login.isPending ? (
@@ -124,21 +137,6 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
             </Button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-gray-100">
-            <div className="text-center">
-              <p className="text-sm text-gray-600 mb-4">🚀 Quick access for testing:</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleQuickLogin}
-                className="text-violet-600 hover:text-violet-700 border-violet-200 hover:border-violet-300 bg-gradient-to-r from-violet-50 to-purple-50 hover:from-violet-100 hover:to-purple-100 rounded-xl transform transition-all duration-300 hover:scale-105"
-                data-testid="button-quick-login"
-              >
-                <User className="h-4 w-4 mr-2" />
-                🔥 Super Admin Access
-              </Button>
-            </div>
-          </div>
 
           <div className="mt-6 text-center">
             <div className="bg-gradient-to-r from-violet-50 to-purple-50 p-4 rounded-xl border border-violet-100">
