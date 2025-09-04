@@ -555,6 +555,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post('/api/auth/logout', async (req, res) => {
+    // Clear the session
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Session destruction error:', err);
+        }
+      });
+    }
     res.json({ message: "Logged out successfully" });
   });
 
@@ -574,8 +582,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'User not found. Please contact admin to create your account.' });
       }
 
-      // Create a simple session token
+      // Set the session properly for the authenticateUser middleware
+      req.session.userId = user.id;
+      
+      // Create a simple session token for the frontend
       const token = Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64');
+      
+      console.log('Login called with:', user, token);
       
       res.json({ 
         user,
