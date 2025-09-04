@@ -566,126 +566,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Logged out successfully" });
   });
 
-  // Microsoft OAuth2 login initiation
-  app.get('/api/auth/microsoft', async (req, res) => {
+  // Simple Microsoft authentication using Graph API
+  app.post('/api/auth/microsoft-simple', async (req, res) => {
     try {
-      const clientId = process.env.AZURE_CLIENT_ID;
-      const tenantId = process.env.AZURE_TENANT_ID;
-      // Force HTTPS for Replit domains, otherwise use detected protocol  
-      const host = req.get('host');
-      const isReplit = host?.includes('.replit.dev') || host?.includes('replit');
-      const protocol = isReplit ? 'https' : req.protocol;
-      const redirectUri = `${protocol}://${host}/api/auth/microsoft/callback`;
+      const { email } = req.body;
       
-      if (!clientId || !tenantId) {
-        return res.status(500).json({ message: 'Microsoft authentication not configured' });
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ message: 'Valid email address required' });
       }
 
-      // Generate state parameter for security
-      const state = Buffer.from(JSON.stringify({ timestamp: Date.now() })).toString('base64');
-      req.session.oauthState = state;
-
-      const authUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?` +
-        `client_id=${clientId}&` +
-        `response_type=code&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `scope=${encodeURIComponent('openid profile email User.Read')}&` +
-        `state=${state}&` +
-        `response_mode=query`;
-
-      res.redirect(authUrl);
-    } catch (error) {
-      console.error('Microsoft auth error:', error);
-      res.status(500).json({ message: 'Authentication failed' });
-    }
-  });
-
-  // Microsoft OAuth2 callback handler
-  app.get('/api/auth/microsoft/callback', async (req, res) => {
-    try {
-      const { code, state, error } = req.query;
-
-      if (error) {
-        console.error('Microsoft OAuth error:', error);
-        return res.redirect('/?error=oauth_failed');
-      }
-
-      if (!code || !state || state !== req.session.oauthState) {
-        return res.redirect('/?error=invalid_state');
-      }
-
-      // Exchange code for token
-      const clientId = process.env.AZURE_CLIENT_ID;
-      const clientSecret = process.env.AZURE_CLIENT_SECRET;
-      const tenantId = process.env.AZURE_TENANT_ID;
-      // Force HTTPS for Replit domains, otherwise use detected protocol
-      const host = req.get('host');
-      const isReplit = host?.includes('.replit.dev') || host?.includes('replit');
-      const protocol = isReplit ? 'https' : req.protocol;
-      const redirectUri = `${protocol}://${host}/api/auth/microsoft/callback`;
-
-      const tokenResponse = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: clientId!,
-          client_secret: clientSecret!,
-          code: code as string,
-          redirect_uri: redirectUri,
-          grant_type: 'authorization_code',
-        }),
-      });
-
-      const tokenData = await tokenResponse.json();
+      // Check if user exists in our system
+      let user = await storage.getUserByEmail(email);
       
-      if (!tokenData.access_token) {
-        console.error('No access token received:', tokenData);
-        return res.redirect('/?error=token_failed');
-      }
-
-      // Get user info from Microsoft Graph
-      const userResponse = await fetch('https://graph.microsoft.com/v1.0/me', {
-        headers: { Authorization: `Bearer ${tokenData.access_token}` },
-      });
-
-      const microsoftUser = await userResponse.json();
-      
-      if (!microsoftUser.mail && !microsoftUser.userPrincipalName) {
-        return res.redirect('/?error=no_email');
-      }
-
-      const userEmail = microsoftUser.mail || microsoftUser.userPrincipalName;
-
-      // Find or create user
-      let user = await storage.getUserByEmail(userEmail);
       if (!user) {
+        // Create new user for Microsoft authentication
         user = await storage.createUser({
-          username: userEmail,
-          email: userEmail,
-          firstName: microsoftUser.givenName,
-          lastName: microsoftUser.surname,
+          username: email,
+          email: email,
+          firstName: email.split('@')[0], // Use part before @ as first name
+          lastName: 'User',
           roleId: null,
-          department: microsoftUser.department || 'Microsoft User',
+          department: 'Microsoft User',
           isActive: true,
-          passwordHash: null, // Microsoft users don't need local passwords
+          passwordHash: null, // No password needed for Microsoft users
         });
-        console.log(`🔐 New user auto-created from Microsoft SSO: ${userEmail}`);
+        console.log(`🔐 New Microsoft user created: ${email}`);
       }
 
       // Set session
       req.session.userId = user.id;
       req.session.authMethod = 'microsoft';
 
-      // Clean up OAuth state
-      delete req.session.oauthState;
+      console.log(`✅ Microsoft user logged in: ${email}`);
 
-      // Redirect to main app
-      res.redirect('/');
+      res.json({
+        message: 'Login successful',
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          department: user.department,
+          roleId: user.roleId
+        }
+      });
     } catch (error) {
-      console.error('Microsoft callback error:', error);
-      res.redirect('/?error=callback_failed');
+      console.error('Microsoft auth error:', error);
+      res.status(500).json({ message: 'Authentication failed' });
     }
   });
+
 
   // Secure login with password authentication
   app.post('/api/auth/simple-login', async (req, res) => {
