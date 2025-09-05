@@ -11,6 +11,7 @@ import emailTemplateRoutes from "./routes/emailTemplateRoutes";
 import moduleTemplateRoutes from "./routes/moduleTemplateRoutes";
 import { graphEmailService } from './services/graphEmailService';
 import { authenticateUser, requireRole } from "./auth";
+import bcrypt from "bcrypt";
 // Remove html-pdf-node import due to compatibility issues
 
 // UNIFIED USER INVITATION SYSTEM - Clean implementation
