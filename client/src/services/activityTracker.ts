@@ -271,7 +271,10 @@ class ActivityTracker {
   private async sendBatch() {
     if (this.batchQueue.length === 0) return;
 
-    const events = [...this.batchQueue];
+    const events = [...this.batchQueue].map(event => ({
+      ...event,
+      userId: this.userId // Add userId to each event
+    }));
     this.batchQueue = [];
 
     if (this.batchTimeout) {
@@ -323,9 +326,14 @@ class ActivityTracker {
     // Track when user leaves page
     window.addEventListener('beforeunload', () => {
       if (this.batchQueue.length > 0) {
+        // Add userId to events before sending
+        const events = this.batchQueue.map(event => ({
+          ...event,
+          userId: this.userId
+        }));
         // Send final batch synchronously
         navigator.sendBeacon('/api/activity-logs/batch', JSON.stringify({
-          events: this.batchQueue
+          events
         }));
       }
     });
