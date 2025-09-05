@@ -79,29 +79,34 @@ export default function Sidebar() {
   const secondaryNav = filteredSecondaryNavigation;
 
   return (
-    <aside className="w-64 bg-gradient-to-b from-white via-blue-50/30 to-teal-50/30 shadow-2xl border-r border-blue-100 flex flex-col backdrop-blur-lg" data-testid="sidebar">
+    <aside className="w-64 bg-gradient-to-b from-white via-blue-50/50 to-blue-100/30 shadow-xl border-r border-blue-200/50 flex flex-col min-h-screen" data-testid="sidebar">
       {/* Logo Section */}
-      <div className="p-6 border-b border-blue-100">
+      <div className="p-6 border-b border-blue-100 bg-white/50">
         <div className="flex items-center space-x-3">
-          <div>
+          <div className="flex-shrink-0">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-lg">O2F</span>
+            </div>
+          </div>
+          <div className="flex-1 min-w-0">
             {companyLogo ? (
               <img 
                 src={companyLogo} 
                 alt={companyName}
-                className="h-8 w-auto max-w-32 object-contain"
+                className="h-8 w-auto max-w-32 object-contain mb-1"
               />
             ) : (
-              <h1 className="text-xl font-black bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-                {companyLoading ? 'Loading...' : companyName}
+              <h1 className="text-lg font-bold text-gray-900 truncate">
+                {companyLoading ? 'Loading...' : (companyName || 'O2F TalentFlow')}
               </h1>
             )}
-            <p className="text-xs text-blue-600 font-medium">{tagline}</p>
+            <p className="text-xs text-blue-600 font-medium truncate">{tagline || 'Professional ATS Platform'}</p>
           </div>
         </div>
       </div>
 
       {/* User Profile */}
-      <div className="p-4 border-b border-blue-100">
+      <div className="p-4 border-b border-blue-100/50 bg-white/30">
         <UserProfileDropdown userRole={userRole} user={user} />
       </div>
 
@@ -113,20 +118,21 @@ export default function Sidebar() {
             <Link key={item.name} href={item.href} data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}>
               <div
                 className={cn(
-                  "flex items-center space-x-3 p-3 rounded-lg transition-colors sidebar-item",
+                  "flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 sidebar-item relative",
                   isActive
-                    ? "bg-blue-50 border-l-4 border-primary"
-                    : "text-gray-700 hover:text-primary"
+                    ? "bg-blue-600 text-white shadow-lg transform scale-[1.02]"
+                    : "text-gray-700 hover:bg-white/60 hover:text-blue-600 hover:shadow-md"
                 )}
               >
                 <item.icon 
                   className={cn(
-                    "w-5 h-5",
-                    isActive ? "text-primary" : "text-gray-400"
+                    "w-5 h-5 transition-colors",
+                    isActive ? "text-white" : "text-gray-500"
                   )} 
                 />
                 <span className={cn(
-                  isActive ? "text-primary font-medium" : ""
+                  "transition-colors font-medium",
+                  isActive ? "text-white" : "text-gray-700"
                 )}>
                   {item.name}
                 </span>
