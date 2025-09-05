@@ -5,11 +5,12 @@ import { insertJobSchema, insertCandidateSchema, insertApplicationSchema, insert
 import { z } from "zod";
 import { validateCandidateTypeFields, uanNumberSchema, aadhaarNumberSchema, linkedinUrlSchema } from "./validationUtils";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
-import emailRoutes from "./routes/emailRoutes";
+// emailRoutes removed - functionality consolidated into EmailTemplateService
 import graphEmailRoutes from "./routes/graphEmailRoutes";
 import emailTemplateRoutes from "./routes/emailTemplateRoutes";
 import moduleTemplateRoutes from "./routes/moduleTemplateRoutes";
 import { graphEmailService } from './services/graphEmailService';
+import { emailTemplateService } from './services/emailTemplateService';
 import { authenticateUser, requireRole } from "./auth";
 import bcrypt from "bcrypt";
 // Remove html-pdf-node import due to compatibility issues
@@ -789,7 +790,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Set the session properly for the authenticateUser middleware
-      req.session.userId = user.id;
+      if (req.session) {
+        (req.session as any).userId = user.id;
+      }
       
       // Create a simple session token for the frontend
       const token = Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64');
@@ -1325,7 +1328,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Replace company placeholders
-          emailContent = emailContent.replace(/\{\{company\.name\}\}/g, 'TalentFlow Technologies');
+          if (emailContent) {
+            emailContent = emailContent.replace(/\{\{company\.name\}\}/g, 'TalentFlow Technologies');
+          }
           subject = subject.replace(/\{\{company\.name\}\}/g, 'TalentFlow Technologies');
           
           // Add other placeholders
@@ -3299,7 +3304,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Email service routes
-  app.use('/api/emails', emailRoutes);
+  // /api/emails routes removed - functionality moved to EmailTemplateService
   app.use('/api/graph-email', graphEmailRoutes);
   app.use('/api/email-templates', emailTemplateRoutes);
   app.use('/api/module-templates', moduleTemplateRoutes);
