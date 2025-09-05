@@ -3652,8 +3652,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const event of events) {
         try {
+          // Skip anonymous users to avoid foreign key constraint violations
+          if (!event.userId || event.userId === 'anonymous') {
+            errorCount++;
+            continue;
+          }
+          
           await ActivityLogger.logCustomActivity(
-            event.userId || 'anonymous',
+            event.userId,
             event.action,
             `Frontend activity: ${event.action}`,
             req,
@@ -3677,6 +3683,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error processing activity batch:", error);
       res.status(500).json({ message: "Failed to process activity batch" });
+    }
+  });
+
+  // Admin endpoints for monitoring
+  app.get('/api/admin/user-journeys', authenticateUser, async (req, res) => {
+    try {
+      // Mock user journey data for now - will be enhanced with real data processing
+      const journeys = [
+        {
+          userId: req.user?.id || 'demo-user',
+          userEmail: req.user?.email || 'demo@example.com',
+          currentStage: 'Active Usage',
+          startedAt: new Date(Date.now() - 3600000).toISOString(),
+          lastActivity: new Date().toISOString(),
+          totalSteps: 5,
+          completedSteps: 4,
+          status: 'active',
+          steps: [
+            {
+              id: '1',
+              step: 'Email Invitation',
+              action: 'invitation_sent',
+              timestamp: new Date(Date.now() - 3600000).toISOString(),
+              status: 'completed',
+              duration: '1 min'
+            },
+            {
+              id: '2', 
+              step: 'Account Setup',
+              action: 'login',
+              timestamp: new Date(Date.now() - 3000000).toISOString(),
+              status: 'completed',
+              duration: '5 min'
+            },
+            {
+              id: '3',
+              step: 'Dashboard Access',
+              action: 'page_view',
+              timestamp: new Date(Date.now() - 1800000).toISOString(),
+              status: 'completed',
+              duration: '2 min'
+            },
+            {
+              id: '4',
+              step: 'Feature Usage',
+              action: 'create',
+              timestamp: new Date(Date.now() - 600000).toISOString(),
+              status: 'current',
+              duration: '10 min'
+            }
+          ]
+        }
+      ];
+      res.json(journeys);
+    } catch (error) {
+      console.error("Error fetching user journeys:", error);
+      res.status(500).json({ message: "Failed to fetch user journeys" });
+    }
+  });
+
+  app.get('/api/admin/system/metrics', authenticateUser, async (req, res) => {
+    try {
+      // Mock system metrics - will be enhanced with real system monitoring
+      const metrics = {
+        status: 'healthy',
+        uptime: '2d 4h 15m',
+        responseTime: 150,
+        database: {
+          status: 'connected',
+          connections: 5,
+          maxConnections: 100,
+          queryTime: 25
+        },
+        server: {
+          cpuUsage: 35,
+          memoryUsage: 62,
+          diskUsage: 45,
+          load: [0.5, 0.8, 1.2]
+        },
+        errors: {
+          last24h: 3,
+          lastHour: 0,
+          trend: 'down'
+        },
+        performance: {
+          avgResponseTime: 180,
+          slowQueries: 2,
+          cacheHitRate: 95
+        }
+      };
+      res.json(metrics);
+    } catch (error) {
+      console.error("Error fetching system metrics:", error);
+      res.status(500).json({ message: "Failed to fetch system metrics" });
+    }
+  });
+
+  app.get('/api/admin/system/errors', authenticateUser, async (req, res) => {
+    try {
+      // Mock error logs - will be enhanced with real error tracking
+      const errors = [
+        {
+          id: '1',
+          timestamp: new Date(Date.now() - 7200000).toISOString(),
+          severity: 'warning',
+          message: 'Database query took longer than expected',
+          component: 'Database',
+          count: 1,
+          userAffected: req.user?.email || 'system'
+        },
+        {
+          id: '2',
+          timestamp: new Date(Date.now() - 14400000).toISOString(),
+          severity: 'error',
+          message: 'Failed to send email notification',
+          component: 'Email Service',
+          count: 2,
+          userAffected: 'notifications@example.com'
+        }
+      ];
+      res.json(errors);
+    } catch (error) {
+      console.error("Error fetching system errors:", error);
+      res.status(500).json({ message: "Failed to fetch system errors" });
     }
   });
 
