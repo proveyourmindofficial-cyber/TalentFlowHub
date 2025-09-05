@@ -177,18 +177,6 @@ export default function Sidebar() {
         </div>
       </nav>
 
-      {/* Logout Section */}
-      <div className="p-4 border-t border-blue-100">
-        <Button
-          onClick={logout}
-          variant="outline"
-          className="w-full justify-start text-gray-700 hover:text-red-600 hover:bg-red-50 border-gray-200 hover:border-red-200"
-          data-testid="button-logout"
-        >
-          <LogOut className="w-4 h-4 mr-3" />
-          Sign Out
-        </Button>
-      </div>
     </aside>
   );
 }
