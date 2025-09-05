@@ -1,10 +1,12 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, Mail, Settings as SettingsIcon, Shield, Users } from "lucide-react";
+import { Building2, Mail, Settings as SettingsIcon, Shield, Users, Activity, MessageSquare } from "lucide-react";
 import Header from "@/components/layout/header";
 import CompanyProfile from "./company-profile";
 import ComprehensiveEmailManagement from "@/components/email/comprehensive-email-management";
 import UserManagementSettings from "@/components/settings/UserManagementSettings";
 import RoleManagementHub from "@/components/roles/RoleManagementHub";
+import { ActivityLogs } from "@/components/settings/activity-logs";
+import { FeedbackManagement } from "@/components/feedback/feedback-management";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Settings() {
@@ -22,7 +24,7 @@ export default function Settings() {
             </div>
 
             <Tabs defaultValue="company" className="space-y-4">
-              <TabsList className={`${isDirector ? 'grid-cols-4' : 'grid-cols-2'} grid w-full bg-gray-100 p-1 rounded-lg`}>
+              <TabsList className={`${isDirector ? 'grid-cols-6' : 'grid-cols-2'} grid w-full bg-gray-100 p-1 rounded-lg`}>
                 <TabsTrigger 
                   value="company" 
                   className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm data-[state=active]:font-medium transition-all hover:text-blue-600" 
@@ -59,6 +61,26 @@ export default function Settings() {
                     Role Management
                   </TabsTrigger>
                 )}
+                {isDirector && (
+                  <TabsTrigger 
+                    value="activity" 
+                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm data-[state=active]:font-medium transition-all hover:text-blue-600" 
+                    data-testid="tab-activity-logs"
+                  >
+                    <Activity className="h-4 w-4" />
+                    Activity Logs
+                  </TabsTrigger>
+                )}
+                {isDirector && (
+                  <TabsTrigger 
+                    value="feedback" 
+                    className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm data-[state=active]:font-medium transition-all hover:text-blue-600" 
+                    data-testid="tab-feedback-management"
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Feedback
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="company" className="space-y-4">
@@ -78,6 +100,18 @@ export default function Settings() {
               {isDirector && (
                 <TabsContent value="roles" className="space-y-4">
                   <RoleManagementHub />
+                </TabsContent>
+              )}
+
+              {isDirector && (
+                <TabsContent value="activity" className="space-y-4">
+                  <ActivityLogs />
+                </TabsContent>
+              )}
+
+              {isDirector && (
+                <TabsContent value="feedback" className="space-y-4">
+                  <FeedbackManagement />
                 </TabsContent>
               )}
             </Tabs>

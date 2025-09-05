@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertJobSchema, insertCandidateSchema, insertApplicationSchema, insertInterviewSchema, insertOfferLetterSchema, insertClientSchema, insertClientRequirementSchema, insertCompanyProfileSchema, insertCustomRoleSchema } from "@shared/schema";
+import { insertJobSchema, insertCandidateSchema, insertApplicationSchema, insertInterviewSchema, insertOfferLetterSchema, insertClientSchema, insertClientRequirementSchema, insertCompanyProfileSchema, insertCustomRoleSchema, insertNotificationSchema, insertActivityLogSchema, insertFeedbackSchema } from "@shared/schema";
+import { ActivityLogger } from './activityLogger';
 import { z } from "zod";
 import { validateCandidateTypeFields, uanNumberSchema, aadhaarNumberSchema, linkedinUrlSchema } from "./validationUtils";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
@@ -3525,6 +3526,243 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error assigning custom role:", error);
       res.status(500).json({ message: "Failed to assign custom role" });
+    }
+  });
+
+  // Notification routes
+  app.get('/api/notifications', authenticateUser, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const notifications = await storage.getNotifications(req.user.id);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get('/api/notifications/unread', authenticateUser, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const notifications = await storage.getUnreadNotifications(req.user.id);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching unread notifications:", error);
+      res.status(500).json({ message: "Failed to fetch unread notifications" });
+    }
+  });
+
+  app.get('/api/notifications/unread/count', authenticateUser, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const count = await storage.getUnreadNotificationCount(req.user.id);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread notification count:", error);
+      res.status(500).json({ message: "Failed to fetch unread notification count" });
+    }
+  });
+
+  app.put('/api/notifications/:id/read', authenticateUser, async (req, res) => {
+    try {
+      await storage.markNotificationAsRead(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.put('/api/notifications/mark-all-read', authenticateUser, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      await storage.markAllNotificationsAsRead(req.user.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
+    }
+  });
+
+  app.delete('/api/notifications/:id', authenticateUser, async (req, res) => {
+    try {
+      await storage.deleteNotification(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      res.status(500).json({ message: "Failed to delete notification" });
+    }
+  });
+
+  // Activity Log routes
+  app.get('/api/activity-logs', authenticateUser, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      const logs = await storage.getActivityLogs(limit, offset);
+      const totalCount = await storage.getActivityLogsCount();
+      
+      res.json({
+        logs,
+        totalCount,
+        limit,
+        offset
+      });
+    } catch (error) {
+      console.error("Error fetching activity logs:", error);
+      res.status(500).json({ message: "Failed to fetch activity logs" });
+    }
+  });
+
+  app.get('/api/activity-logs/user/:userId', authenticateUser, async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 50;
+      const logs = await storage.getActivityLogsByUser(req.params.userId, limit);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching user activity logs:", error);
+      res.status(500).json({ message: "Failed to fetch user activity logs" });
+    }
+  });
+
+  // Feedback system endpoints
+  app.post('/api/feedback', authenticateUser, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const feedbackData = insertFeedbackSchema.parse(req.body);
+      const feedback = await storage.createFeedback({
+        ...feedbackData,
+        userId: req.user.id,
+      });
+
+      // Log the feedback submission
+      await ActivityLogger.logSystemAction(
+        req.user.id,
+        'create',
+        `Submitted ${feedbackData.type} feedback: ${feedbackData.title}`,
+        req,
+        true
+      );
+
+      res.status(201).json(feedback);
+    } catch (error) {
+      console.error('Error creating feedback:', error);
+      res.status(500).json({ message: "Failed to create feedback" });
+    }
+  });
+
+  app.get('/api/feedback', authenticateUser, async (req, res) => {
+    try {
+      const { status, type, priority } = req.query;
+      const filters = { status, type, priority };
+      const feedbackList = await storage.getFeedbackList(filters);
+      res.json(feedbackList);
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+  });
+
+  app.get('/api/feedback/:id', authenticateUser, async (req, res) => {
+    try {
+      const feedback = await storage.getFeedback(req.params.id);
+      if (!feedback) {
+        return res.status(404).json({ message: "Feedback not found" });
+      }
+      res.json(feedback);
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      res.status(500).json({ message: "Failed to fetch feedback" });
+    }
+  });
+
+  app.put('/api/feedback/:id', authenticateUser, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const feedbackData = insertFeedbackSchema.partial().parse(req.body);
+      const feedback = await storage.updateFeedback(req.params.id, feedbackData);
+      
+      await ActivityLogger.logSystemAction(
+        req.user.id,
+        'update',
+        `Updated feedback: ${feedback.title}`,
+        req,
+        true
+      );
+
+      res.json(feedback);
+    } catch (error) {
+      console.error('Error updating feedback:', error);
+      res.status(500).json({ message: "Failed to update feedback" });
+    }
+  });
+
+  app.delete('/api/feedback/:id', authenticateUser, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const feedback = await storage.getFeedback(req.params.id);
+      if (!feedback) {
+        return res.status(404).json({ message: "Feedback not found" });
+      }
+
+      await storage.deleteFeedback(req.params.id);
+      
+      await ActivityLogger.logSystemAction(
+        req.user.id,
+        'delete',
+        `Deleted feedback: ${feedback.title}`,
+        req,
+        true
+      );
+
+      res.json({ message: "Feedback deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting feedback:', error);
+      res.status(500).json({ message: "Failed to delete feedback" });
+    }
+  });
+
+  // Test notification system endpoint
+  app.post('/api/test-notifications', authenticateUser, async (req, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
+      const { createSampleNotifications, createSampleActivityLogs } = await import('./test-notifications');
+      
+      const notificationsResult = await createSampleNotifications(req.user.id);
+      const activityLogsResult = await createSampleActivityLogs(req.user.id);
+      
+      res.json({ 
+        success: notificationsResult && activityLogsResult,
+        message: "Sample notifications and activity logs created successfully"
+      });
+    } catch (error) {
+      console.error('Error creating test notifications:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
     }
   });
 

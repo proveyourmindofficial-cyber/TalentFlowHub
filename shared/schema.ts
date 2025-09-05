@@ -20,6 +20,11 @@ export const clientRequirementStatusEnum = pgEnum('client_requirement_status', [
 export const emailProviderEnum = pgEnum('email_provider', ['smtp', 'sendgrid', 'outlook', 'gmail']);
 export const emailStatusEnum = pgEnum('email_status', ['sent', 'delivered', 'failed', 'bounced', 'complained']);
 export const permissionActionEnum = pgEnum('permission_action', ['view', 'add', 'edit', 'delete', 'approve', 'export', 'download', 'manage_workflow']);
+export const notificationTypeEnum = pgEnum('notification_type', ['info', 'success', 'warning', 'error', 'system']);
+export const activityActionEnum = pgEnum('activity_action', ['login', 'logout', 'create', 'update', 'delete', 'view', 'email_sent', 'export', 'import', 'status_change']);
+export const feedbackTypeEnum = pgEnum('feedback_type', ['bug', 'feature', 'improvement', 'question', 'other']);
+export const feedbackStatusEnum = pgEnum('feedback_status', ['open', 'in_progress', 'resolved', 'closed']);
+export const feedbackPriorityEnum = pgEnum('feedback_priority', ['low', 'medium', 'high', 'urgent']);
 
 // Remove old role system enum - we ONLY use custom roles now
 
@@ -209,6 +214,63 @@ export const users = pgTable("users", {
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Notifications table
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  type: notificationTypeEnum("type").notNull().default('info'),
+  isRead: boolean("is_read").notNull().default(false),
+  readAt: timestamp("read_at"),
+  actionUrl: varchar("action_url"), // Optional URL for clickable notifications
+  metadata: text("metadata"), // JSON string for additional data
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Activity Logs table
+export const activityLogs = pgTable("activity_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'set null' }),
+  action: activityActionEnum("action").notNull(),
+  resourceType: varchar("resource_type"), // 'job', 'candidate', 'application', 'user', etc.
+  resourceId: varchar("resource_id"), // ID of the affected resource
+  resourceName: varchar("resource_name"), // Name/title of the affected resource
+  description: text("description").notNull(),
+  ipAddress: varchar("ip_address"),
+  userAgent: varchar("user_agent"),
+  success: boolean("success").notNull().default(true),
+  errorMessage: text("error_message"),
+  metadata: text("metadata"), // JSON string for additional context
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Feedback System Tables
+export const feedback = pgTable("feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'set null' }),
+  type: feedbackTypeEnum("type").notNull(),
+  priority: feedbackPriorityEnum("priority").notNull(),
+  status: feedbackStatusEnum("status").default("open").notNull(),
+  title: varchar("title").notNull(),
+  description: text("description").notNull(),
+  page: varchar("page"),
+  userAgent: text("user_agent"),
+  assignedTo: varchar("assigned_to").references(() => users.id, { onDelete: 'set null' }),
+  resolution: text("resolution"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const feedbackComments = pgTable("feedback_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  feedbackId: varchar("feedback_id").references(() => feedback.id, { onDelete: 'cascade' }).notNull(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  comment: text("comment").notNull(),
+  isInternal: boolean("is_internal").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Jobs table
@@ -707,3 +769,38 @@ export type InsertCustomRolePermission = z.infer<typeof insertCustomRolePermissi
 export type CustomRolePermission = typeof customRolePermissions.$inferSelect;
 export type InsertUserCustomRole = z.infer<typeof insertUserCustomRoleSchema>;
 export type UserCustomRole = typeof userCustomRoles.$inferSelect;
+
+// Notification schemas
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type Notification = typeof notifications.$inferSelect;
+
+// Activity log schemas
+export const insertActivityLogSchema = createInsertSchema(activityLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertActivityLog = z.infer<typeof insertActivityLogSchema>;
+export type ActivityLog = typeof activityLogs.$inferSelect;
+
+// Feedback schemas
+export const insertFeedbackSchema = createInsertSchema(feedback).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFeedbackCommentSchema = createInsertSchema(feedbackComments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
+export type Feedback = typeof feedback.$inferSelect;
+export type InsertFeedbackComment = z.infer<typeof insertFeedbackCommentSchema>;
+export type FeedbackComment = typeof feedbackComments.$inferSelect;

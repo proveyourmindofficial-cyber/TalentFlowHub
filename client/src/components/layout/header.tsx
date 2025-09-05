@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Bell } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Link } from "wouter";
 import { ReactNode } from "react";
+import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
 
 interface HeaderProps {
   title: string;
@@ -40,19 +41,7 @@ export default function Header({
           )}
           
           {/* Notifications */}
-          <div className="relative">
-            <Button 
-              variant="outline" 
-              size="icon"
-              className="relative border-blue-200 hover:border-blue-300 bg-white/80 hover:bg-blue-50 rounded-xl transform transition-all duration-300 hover:scale-110"
-              data-testid="button-notifications"
-            >
-              <Bell className="w-4 h-4 text-blue-600" />
-              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-pink-500 to-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center animate-pulse">
-                3
-              </span>
-            </Button>
-          </div>
+          <NotificationDropdown />
         </div>
       </div>
     </header>
