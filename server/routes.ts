@@ -3638,6 +3638,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Batch activity logging endpoint for frontend tracking
+  app.post('/api/activity-logs/batch', async (req, res) => {
+    try {
+      const { events } = req.body;
+      
+      if (!Array.isArray(events) || events.length === 0) {
+        return res.status(400).json({ message: "Events array is required" });
+      }
+
+      let processedCount = 0;
+      let errorCount = 0;
+
+      for (const event of events) {
+        try {
+          await ActivityLogger.logCustomActivity(
+            event.userId || 'anonymous',
+            event.action,
+            `Frontend activity: ${event.action}`,
+            req,
+            true,
+            event.entityType,
+            event.entityId,
+            event.metadata
+          );
+          processedCount++;
+        } catch (error) {
+          console.error('Failed to process activity event:', error);
+          errorCount++;
+        }
+      }
+
+      res.json({ 
+        processed: processedCount, 
+        errors: errorCount,
+        total: events.length
+      });
+    } catch (error) {
+      console.error("Error processing activity batch:", error);
+      res.status(500).json({ message: "Failed to process activity batch" });
+    }
+  });
+
   // Feedback system endpoints
   app.post('/api/feedback', authenticateUser, async (req, res) => {
     try {
@@ -3651,13 +3693,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user.id,
       });
 
-      // Log the feedback submission
-      await ActivityLogger.logSystemAction(
+      // Log the feedback submission with comprehensive tracking
+      await ActivityLogger.logFeedbackSubmitted(
         req.user.id,
-        'create',
-        `Submitted ${feedbackData.type} feedback: ${feedbackData.title}`,
-        req,
-        true
+        feedback.id,
+        feedbackData.type,
+        feedbackData.title,
+        feedbackData.priority,
+        req
       );
 
       res.status(201).json(feedback);
@@ -3701,12 +3744,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const feedbackData = insertFeedbackSchema.partial().parse(req.body);
       const feedback = await storage.updateFeedback(req.params.id, feedbackData);
       
-      await ActivityLogger.logSystemAction(
+      await ActivityLogger.logFeedbackUpdated(
         req.user.id,
-        'update',
-        `Updated feedback: ${feedback.title}`,
-        req,
-        true
+        req.params.id,
+        feedback.title,
+        feedbackData.status || feedback.status,
+        req
       );
 
       res.json(feedback);

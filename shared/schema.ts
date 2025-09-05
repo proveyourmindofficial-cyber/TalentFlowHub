@@ -21,7 +21,18 @@ export const emailProviderEnum = pgEnum('email_provider', ['smtp', 'sendgrid', '
 export const emailStatusEnum = pgEnum('email_status', ['sent', 'delivered', 'failed', 'bounced', 'complained']);
 export const permissionActionEnum = pgEnum('permission_action', ['view', 'add', 'edit', 'delete', 'approve', 'export', 'download', 'manage_workflow']);
 export const notificationTypeEnum = pgEnum('notification_type', ['info', 'success', 'warning', 'error', 'system']);
-export const activityActionEnum = pgEnum('activity_action', ['login', 'logout', 'create', 'update', 'delete', 'view', 'email_sent', 'export', 'import', 'status_change']);
+export const activityActionEnum = pgEnum('activity_action', [
+  // Authentication & User Management
+  'login', 'logout', 'login_failed', 'password_setup', 'password_reset', 'account_locked', 'account_unlocked',
+  // Email & Communication
+  'email_sent', 'email_delivered', 'email_bounced', 'email_opened', 'email_failed', 'invitation_sent', 'invitation_resent',
+  // Data Operations
+  'create', 'update', 'delete', 'view', 'export', 'import', 'status_change',
+  // User Journey & Session
+  'page_accessed', 'session_started', 'session_ended', 'error_encountered', 'feedback_submitted',
+  // Admin Actions
+  'user_invited', 'user_activated', 'user_deactivated', 'role_assigned', 'permission_changed'
+]);
 export const feedbackTypeEnum = pgEnum('feedback_type', ['bug', 'feature', 'improvement', 'question', 'other']);
 export const feedbackStatusEnum = pgEnum('feedback_status', ['open', 'in_progress', 'resolved', 'closed']);
 export const feedbackPriorityEnum = pgEnum('feedback_priority', ['low', 'medium', 'high', 'urgent']);
@@ -230,21 +241,154 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// Activity Logs table
+// Activity Logs table - Enhanced for comprehensive user journey tracking
 export const activityLogs = pgTable("activity_logs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id, { onDelete: 'set null' }),
+  sessionId: varchar("session_id"), // Track user sessions
   action: activityActionEnum("action").notNull(),
-  resourceType: varchar("resource_type"), // 'job', 'candidate', 'application', 'user', etc.
+  
+  // Resource Information
+  resourceType: varchar("resource_type"), // 'job', 'candidate', 'application', 'user', 'email', 'page', etc.
   resourceId: varchar("resource_id"), // ID of the affected resource
   resourceName: varchar("resource_name"), // Name/title of the affected resource
+  
+  // Activity Details
   description: text("description").notNull(),
+  category: varchar("category"), // 'authentication', 'email', 'data', 'navigation', 'error', 'feedback'
+  severity: varchar("severity").default('info'), // 'info', 'warning', 'error', 'critical'
+  
+  // Technical Context
   ipAddress: varchar("ip_address"),
   userAgent: varchar("user_agent"),
+  browserInfo: text("browser_info"), // JSON with browser details
+  deviceInfo: text("device_info"), // JSON with device details
+  
+  // Result & Error Information
   success: boolean("success").notNull().default(true),
+  errorCode: varchar("error_code"), // Specific error codes for categorization
   errorMessage: text("error_message"),
+  stackTrace: text("stack_trace"), // For debugging critical errors
+  
+  // Email Specific Fields
+  emailRecipient: varchar("email_recipient"),
+  emailSubject: text("email_subject"),
+  emailProvider: varchar("email_provider"),
+  emailMessageId: varchar("email_message_id"),
+  
+  // Performance & Metrics
+  responseTime: integer("response_time"), // API response time in ms
+  pageLoadTime: integer("page_load_time"), // Frontend page load time in ms
+  
+  // User Journey Context
+  previousPage: varchar("previous_page"), // Where user came from
+  currentPage: varchar("current_page"), // Current page/route
+  nextAction: varchar("next_action"), // Expected next action
+  userFlow: varchar("user_flow"), // 'onboarding', 'daily_usage', 'troubleshooting'
+  
+  // Additional Context
   metadata: text("metadata"), // JSON string for additional context
+  tags: text("tags").array(), // Searchable tags for categorization
+  
+  // System Context
+  environment: varchar("environment").default('production'), // 'development', 'staging', 'production'
+  version: varchar("version"), // App version when activity occurred
+  
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User Journey Tracking - For monitoring complete user onboarding flow
+export const userJourneyStates = pgTable("user_journey_states", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  
+  // Journey Stage Tracking
+  currentStage: varchar("current_stage").notNull(), // 'invited', 'email_sent', 'password_setup', 'first_login', 'active', 'stuck', 'inactive'
+  previousStage: varchar("previous_stage"),
+  stageStartedAt: timestamp("stage_started_at").defaultNow(),
+  stageCompletedAt: timestamp("stage_completed_at"),
+  
+  // Email Flow Tracking
+  invitationSent: boolean("invitation_sent").default(false),
+  invitationSentAt: timestamp("invitation_sent_at"),
+  invitationEmailId: varchar("invitation_email_id"), // Reference to email logs
+  emailDelivered: boolean("email_delivered").default(false),
+  emailDeliveredAt: timestamp("email_delivered_at"),
+  emailOpened: boolean("email_opened").default(false),
+  emailOpenedAt: timestamp("email_opened_at"),
+  linkClicked: boolean("link_clicked").default(false),
+  linkClickedAt: timestamp("link_clicked_at"),
+  
+  // Authentication Flow
+  passwordSetupStarted: boolean("password_setup_started").default(false),
+  passwordSetupStartedAt: timestamp("password_setup_started_at"),
+  passwordSetupCompleted: boolean("password_setup_completed").default(false),
+  passwordSetupCompletedAt: timestamp("password_setup_completed_at"),
+  firstLoginAttempt: timestamp("first_login_attempt"),
+  firstLoginSuccess: timestamp("first_login_success"),
+  
+  // Error & Issue Tracking
+  errorCount: integer("error_count").default(0),
+  lastErrorAt: timestamp("last_error_at"),
+  lastErrorType: varchar("last_error_type"), // 'email_bounce', 'login_failed', 'password_setup_failed', 'page_error'
+  lastErrorMessage: text("last_error_message"),
+  isStuck: boolean("is_stuck").default(false), // Auto-flagged if stuck in a stage too long
+  stuckSince: timestamp("stuck_since"),
+  stuckReason: text("stuck_reason"),
+  
+  // Admin Intervention Tracking
+  adminNotified: boolean("admin_notified").default(false),
+  adminNotifiedAt: timestamp("admin_notified_at"),
+  adminActionTaken: varchar("admin_action_taken"), // 'invitation_resent', 'password_reset', 'manual_unlock'
+  adminActionAt: timestamp("admin_action_at"),
+  adminNotes: text("admin_notes"),
+  
+  // Usage Metrics
+  totalSessions: integer("total_sessions").default(0),
+  totalPageViews: integer("total_page_views").default(0),
+  lastActivityAt: timestamp("last_activity_at"),
+  averageSessionDuration: integer("average_session_duration"), // in minutes
+  
+  // Journey Completion
+  journeyCompleted: boolean("journey_completed").default(false),
+  journeyCompletedAt: timestamp("journey_completed_at"),
+  timeToComplete: integer("time_to_complete"), // Total time from invitation to active use (in hours)
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Email Delivery Status Tracking - Enhanced for monitoring
+export const emailDeliveryStatus = pgTable("email_delivery_status", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  emailLogId: varchar("email_log_id").notNull().references(() => emailLogs.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").references(() => users.id, { onDelete: 'set null' }),
+  
+  // Delivery Tracking
+  status: emailStatusEnum("status").notNull(),
+  deliveryAttempts: integer("delivery_attempts").default(1),
+  lastAttemptAt: timestamp("last_attempt_at").defaultNow(),
+  deliveredAt: timestamp("delivered_at"),
+  
+  // Engagement Tracking
+  opened: boolean("opened").default(false),
+  openedAt: timestamp("opened_at"),
+  openCount: integer("open_count").default(0),
+  clicked: boolean("clicked").default(false),
+  clickedAt: timestamp("clicked_at"),
+  clickCount: integer("click_count").default(0),
+  
+  // Error Information
+  bounceReason: text("bounce_reason"),
+  bounceType: varchar("bounce_type"), // 'hard', 'soft', 'complaint'
+  errorDetails: text("error_details"),
+  
+  // Provider Response
+  providerMessageId: varchar("provider_message_id"),
+  providerResponse: text("provider_response"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Feedback System Tables
@@ -804,3 +948,23 @@ export type InsertFeedback = z.infer<typeof insertFeedbackSchema>;
 export type Feedback = typeof feedback.$inferSelect;
 export type InsertFeedbackComment = z.infer<typeof insertFeedbackCommentSchema>;
 export type FeedbackComment = typeof feedbackComments.$inferSelect;
+
+// User Journey State schemas
+export const insertUserJourneyStateSchema = createInsertSchema(userJourneyStates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertUserJourneyState = z.infer<typeof insertUserJourneyStateSchema>;
+export type UserJourneyState = typeof userJourneyStates.$inferSelect;
+
+// Email Delivery Status schemas
+export const insertEmailDeliveryStatusSchema = createInsertSchema(emailDeliveryStatus).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type InsertEmailDeliveryStatus = z.infer<typeof insertEmailDeliveryStatusSchema>;
+export type EmailDeliveryStatus = typeof emailDeliveryStatus.$inferSelect;

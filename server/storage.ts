@@ -53,6 +53,9 @@ import {
   companyProfiles,
   type CompanyProfile,
   type InsertCompanyProfile,
+  userJourneyStates,
+  type UserJourneyState,
+  type InsertUserJourneyState,
   dropdownOptions,
   type DropdownOption,
   type InsertDropdownOption,
@@ -172,6 +175,7 @@ export interface IStorage {
   
   // Email Log operations
   createEmailLog(log: InsertEmailLog): Promise<EmailLog>;
+  updateEmailLog(id: string, log: Partial<InsertEmailLog>): Promise<EmailLog>;
   
   // Company Profile operations
   getCompanyProfile(): Promise<CompanyProfile | undefined>;
@@ -194,6 +198,11 @@ export interface IStorage {
   getActivityLogs(limit?: number, offset?: number): Promise<ActivityLog[]>;
   getActivityLogsByUser(userId: string, limit?: number): Promise<ActivityLog[]>;
   getActivityLogsCount(): Promise<number>;
+
+  // User Journey State operations
+  createUserJourneyState(state: InsertUserJourneyState): Promise<UserJourneyState>;
+  getUserJourneyState(userId: string): Promise<UserJourneyState | undefined>;
+  updateUserJourneyState(userId: string, state: Partial<InsertUserJourneyState>): Promise<UserJourneyState>;
 
   // Dashboard statistics
   getDashboardStats(): Promise<{
@@ -810,21 +819,7 @@ export class DatabaseStorage implements IStorage {
     await db.delete(emailTemplates).where(eq(emailTemplates.id, id));
   }
 
-  // Email Log operations
-  async createEmailLog(logData: InsertEmailLog): Promise<EmailLog> {
-    const [log] = await db.insert(emailLogs).values(logData).returning();
-    return log;
-  }
-
-  async getEmailLog(id: string): Promise<EmailLog | undefined> {
-    const [log] = await db.select().from(emailLogs).where(eq(emailLogs.id, id));
-    return log;
-  }
-
-  async getEmailLogs(): Promise<EmailLog[]> {
-    // For now, return empty array until we fix the schema mismatch
-    return [];
-  }
+  // Email Log operations (implemented at end of class)
 
   // Additional relation methods for email service
   async getApplicationWithRelations(id: string): Promise<ApplicationWithRelations | undefined> {
@@ -1183,6 +1178,50 @@ export class DatabaseStorage implements IStorage {
 
   async deleteFeedbackComment(id: string): Promise<void> {
     await db.delete(feedbackComments).where(eq(feedbackComments.id, id));
+  }
+
+  // Email Log operations implementation
+  async createEmailLog(logData: InsertEmailLog): Promise<EmailLog> {
+    const [log] = await db.insert(emailLogs).values(logData).returning();
+    return log;
+  }
+
+  async updateEmailLog(id: string, logData: Partial<InsertEmailLog>): Promise<EmailLog> {
+    const [log] = await db.update(emailLogs)
+      .set(logData)
+      .where(eq(emailLogs.id, id))
+      .returning();
+    return log;
+  }
+
+  async getEmailLog(id: string): Promise<EmailLog | undefined> {
+    const [log] = await db.select().from(emailLogs).where(eq(emailLogs.id, id));
+    return log;
+  }
+
+  async getEmailLogs(): Promise<EmailLog[]> {
+    return await db.select().from(emailLogs).orderBy(desc(emailLogs.createdAt));
+  }
+
+  // User Journey State operations implementation
+  async createUserJourneyState(stateData: InsertUserJourneyState): Promise<UserJourneyState> {
+    const [state] = await db.insert(userJourneyStates).values(stateData).returning();
+    return state;
+  }
+
+  async getUserJourneyState(userId: string): Promise<UserJourneyState | undefined> {
+    const [state] = await db.select()
+      .from(userJourneyStates)
+      .where(eq(userJourneyStates.userId, userId));
+    return state;
+  }
+
+  async updateUserJourneyState(userId: string, stateData: Partial<InsertUserJourneyState>): Promise<UserJourneyState> {
+    const [state] = await db.update(userJourneyStates)
+      .set({ ...stateData, updatedAt: new Date() })
+      .where(eq(userJourneyStates.userId, userId))
+      .returning();
+    return state;
   }
 }
 
