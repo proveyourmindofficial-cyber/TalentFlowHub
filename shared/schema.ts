@@ -29,7 +29,7 @@ export const activityActionEnum = pgEnum('activity_action', [
   // Data Operations
   'create', 'update', 'delete', 'view', 'export', 'import', 'status_change',
   // User Journey & Session
-  'page_accessed', 'session_started', 'session_ended', 'error_encountered', 'feedback_submitted',
+  'page_accessed', 'page_view', 'session_started', 'session_ended', 'session_heartbeat', 'error_encountered', 'feedback_submitted', 'performance_issue',
   // Admin Actions
   'user_invited', 'user_activated', 'user_deactivated', 'role_assigned', 'permission_changed'
 ]);
