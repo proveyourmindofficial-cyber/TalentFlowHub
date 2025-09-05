@@ -4,7 +4,8 @@ import type { CompanyProfile } from '@shared/schema';
 export function useCompanyProfile() {
   return useQuery<CompanyProfile>({
     queryKey: ['/api/company-profile'],
-    staleTime: 5 * 60 * 1000, // 5 minutes - company data changes rarely
+    staleTime: 0, // Always fetch fresh data to ensure logo appears immediately
+    gcTime: 0, // Don't cache the response
   });
 }
 
