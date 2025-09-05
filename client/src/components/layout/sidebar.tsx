@@ -84,23 +84,17 @@ export default function Sidebar() {
       <div className="p-6 border-b border-blue-100 bg-white/50">
         <div className="flex items-center space-x-3">
           <div className="flex-shrink-0">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-lg">O2F</span>
-            </div>
+            <img 
+              src="/attached_assets/Logo tm 1_1757076341265.png"
+              alt="O2F InfoSolutions Logo"
+              className="w-12 h-12 object-contain"
+            />
           </div>
           <div className="flex-1 min-w-0">
-            {companyLogo ? (
-              <img 
-                src={companyLogo} 
-                alt={companyName}
-                className="h-8 w-auto max-w-32 object-contain mb-1"
-              />
-            ) : (
-              <h1 className="text-lg font-bold text-gray-900 truncate">
-                {companyLoading ? 'Loading...' : (companyName || 'O2F TalentFlow')}
-              </h1>
-            )}
-            <p className="text-xs text-blue-600 font-medium truncate">{tagline || 'Professional ATS Platform'}</p>
+            <h1 className="text-lg font-bold text-gray-900 truncate">
+              O2F InfoSolutions
+            </h1>
+            <p className="text-xs text-blue-600 font-medium truncate">TalentFlow ATS Platform</p>
           </div>
         </div>
       </div>
