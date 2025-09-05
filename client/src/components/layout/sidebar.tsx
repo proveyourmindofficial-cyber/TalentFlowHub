@@ -77,9 +77,9 @@ export default function Sidebar() {
   const secondaryNav = filteredSecondaryNavigation;
 
   return (
-    <aside className="w-64 bg-gradient-to-b from-white via-violet-50/30 to-purple-50/30 shadow-2xl border-r border-violet-100 flex flex-col backdrop-blur-lg" data-testid="sidebar">
+    <aside className="w-64 bg-gradient-to-b from-white via-blue-50/30 to-teal-50/30 shadow-2xl border-r border-blue-100 flex flex-col backdrop-blur-lg" data-testid="sidebar">
       {/* Logo Section */}
-      <div className="p-6 border-b border-violet-100">
+      <div className="p-6 border-b border-blue-100">
         <div className="flex items-center space-x-3">
           <div>
             {companyLogo ? (
@@ -89,26 +89,26 @@ export default function Sidebar() {
                 className="h-8 w-auto max-w-32 object-contain"
               />
             ) : (
-              <h1 className="text-xl font-black bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-xl font-black bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
                 {companyLoading ? 'Loading...' : companyName}
               </h1>
             )}
-            <p className="text-xs text-violet-600 font-medium">{tagline}</p>
+            <p className="text-xs text-blue-600 font-medium">{tagline}</p>
           </div>
         </div>
       </div>
 
       {/* User Profile */}
-      <div className="p-4 border-b border-violet-100">
-        <div className="flex items-center space-x-3 bg-gradient-to-r from-violet-50 to-purple-50 p-3 rounded-xl border border-violet-100">
-          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-500 rounded-xl flex items-center justify-center">
+      <div className="p-4 border-b border-blue-100">
+        <div className="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-teal-50 p-3 rounded-xl border border-blue-100">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-teal-500 rounded-xl flex items-center justify-center">
             <Users className="text-white w-5 h-5" />
           </div>
           <div className="flex-1">
             <p className="text-sm font-bold text-gray-900">{userRole?.name || 'User'} {userRole?.name === 'Super Admin' ? '🔥' : '⚡'}</p>
-            <p className="text-xs text-violet-600 font-medium">{user?.firstName} {user?.lastName}</p>
+            <p className="text-xs text-blue-600 font-medium">{user?.firstName} {user?.lastName}</p>
           </div>
-          <Settings className="text-violet-500 w-4 h-4 cursor-pointer hover:text-violet-700 transform transition-all duration-300 hover:rotate-90" />
+          <Settings className="text-blue-500 w-4 h-4 cursor-pointer hover:text-blue-700 transform transition-all duration-300 hover:rotate-90" />
         </div>
       </div>
 
@@ -186,7 +186,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout Section */}
-      <div className="p-4 border-t border-violet-100">
+      <div className="p-4 border-t border-blue-100">
         <Button
           onClick={logout}
           variant="outline"
