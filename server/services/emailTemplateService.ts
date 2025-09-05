@@ -201,7 +201,8 @@ export class EmailTemplateService {
 
   // Get template by key
   async getTemplate(key: string): Promise<EmailTemplate | null> {
-    return await storage.getEmailTemplateByKey(key);
+    const template = await storage.getEmailTemplateByKey(key);
+    return template || null;
   }
 
   // Send email using template
@@ -235,7 +236,7 @@ export class EmailTemplateService {
         isHtml: true,
       });
 
-      return result;
+      return { success: result, messageId: undefined, error: result ? undefined : 'Failed to send email' };
     } catch (error) {
       console.error('Error sending template email:', error);
       return { success: false, error: 'Failed to send email' };

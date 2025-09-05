@@ -1,6 +1,7 @@
 import { storage } from './storage';
 import { nanoid } from 'nanoid';
 import type { Application, Job, Candidate } from '@shared/schema';
+import { emailTemplateService } from './services/emailTemplateService';
 
 export class ApplicationWorkflowService {
   /**
@@ -33,32 +34,36 @@ export class ApplicationWorkflowService {
       const interestedUrl = `${baseUrl}/candidate-response?token=${responseToken}&response=interested`;
       const notInterestedUrl = `${baseUrl}/candidate-response?token=${responseToken}&response=not_interested`;
 
-      // Prepare template data
+      // Prepare template data for database template
       const templateData = {
-        candidateName: candidate.name || 'Candidate',
-        jobTitle: job.title,
-        jobDetails: {
+        candidate: {
+          name: candidate.name || 'Candidate'
+        },
+        job: {
           title: job.title,
-          department: job.department,
+          department: job.department || 'Not specified',
           location: job.location || 'Not specified',
-          description: job.description,
-          requirements: job.requirements,
+          description: job.description || 'Job description not provided',
+          requirements: job.requirements || 'Requirements not specified',
           salaryRange: job.salaryMin && job.salaryMax ? `₹${job.salaryMin} - ₹${job.salaryMax}` : 'Competitive'
         },
-        companyName: 'TalentFlow Solutions',
-        interestedUrl,
-        notInterestedUrl
+        company: {
+          name: 'TalentFlow Solutions'
+        },
+        application: {
+          interestedUrl,
+          notInterestedUrl
+        }
       };
-
-      // Create JD email content
-      const htmlContent = this.generateJDEmailHtml(templateData);
       
-      // Send email using Microsoft Graph or available email service
-      const emailSent = await this.sendEmailViaAvailableService({
-        to: candidate.email,
-        subject: `Job Opportunity: ${job.title} - TalentFlow Solutions`,
-        htmlContent
-      });
+      // Send email using database template through EmailTemplateService
+      const emailResult = await emailTemplateService.sendEmail(
+        'job_description',
+        candidate.email,
+        templateData
+      );
+      
+      const emailSent = emailResult.success;
 
       if (emailSent) {
         // Update application with response token and email status
@@ -87,7 +92,7 @@ export class ApplicationWorkflowService {
     response: 'interested' | 'not_interested', 
     feedback?: string, 
     rating?: number
-  ): Promise<{ success: boolean; message: string; jobDetails?: any; portalUrl?: string }> {
+  ): Promise<{ success: boolean; message: string; jobDetails?: any; portalUrl?: string; alreadyResponded?: boolean }> {
     try {
       // Find application by response token
       const applications = await storage.getApplications();
@@ -326,11 +331,16 @@ export class ApplicationWorkflowService {
 </body>
 </html>`;
 
-      await this.sendEmailViaAvailableService({
-        to: candidate.email,
-        subject: 'Welcome to TalentFlow Candidate Portal - Access Your Account',
-        htmlContent: emailContent
-      });
+      // Send via EmailTemplateService for consistency
+      const result = await emailTemplateService.sendEmail(
+        'candidate_registration', 
+        candidate.email,
+        {
+          candidate: { name: candidate.name || 'Candidate' },
+          company: { name: 'TalentFlow Solutions' },
+          candidate: { portalLink: 'https://talentflow.tech/portal' }
+        }
+      );
 
       console.log(`✅ Portal welcome email sent to ${candidate.email}`);
     } catch (error) {
@@ -338,107 +348,7 @@ export class ApplicationWorkflowService {
     }
   }
 
-  /**
-   * Generate HTML content for JD email
-   */
-  private generateJDEmailHtml(data: any): string {
-    return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Opportunity - ${data.jobTitle}</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f8f9fa; }
-        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-        .content { padding: 30px; }
-        .button { display: inline-block; padding: 15px 30px; margin: 10px; border-radius: 5px; text-decoration: none; font-weight: bold; text-align: center; }
-        .btn-primary { background-color: #28a745; color: white; }
-        .btn-secondary { background-color: #dc3545; color: white; }
-        .job-details { background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; }
-        .footer { background: #f8f9fa; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; font-size: 14px; color: #666; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🎯 Job Opportunity</h1>
-            <p>Hi ${data.candidateName}, we have an exciting opportunity for you!</p>
-        </div>
-        
-        <div class="content">
-            <h2>Thank you for applying!</h2>
-            <p>We're excited to share details about the <strong>${data.jobTitle}</strong> position at ${data.companyName}.</p>
-            
-            <div class="job-details">
-                <h3>📋 Job Description</h3>
-                <p><strong>Position:</strong> ${data.jobDetails.title}</p>
-                <p><strong>Department:</strong> ${data.jobDetails.department}</p>
-                <p><strong>Location:</strong> ${data.jobDetails.location}</p>
-                <p><strong>Salary:</strong> ${data.jobDetails.salaryRange}</p>
-                
-                <h4>Role Description:</h4>
-                <p>${data.jobDetails.description}</p>
-                
-                ${data.jobDetails.requirements ? `
-                <h4>Requirements:</h4>
-                <p>${data.jobDetails.requirements}</p>
-                ` : ''}
-            </div>
-            
-            <h3>🤔 Are you interested in this opportunity?</h3>
-            <p>Please review the job description and let us know your interest:</p>
-            
-            <div style="text-align: center; margin: 30px 0;">
-                <a href="${data.interestedUrl}" class="button btn-primary">✅ Yes, I'm Interested!</a>
-                <a href="${data.notInterestedUrl}" class="button btn-secondary">❌ Not Interested</a>
-            </div>
-            
-            <p><em>This link will expire in 7 days. Please respond at your earliest convenience.</em></p>
-        </div>
-        
-        <div class="footer">
-            <p><strong>${data.companyName}</strong></p>
-            <p>Building careers, connecting talent</p>
-            <p>This is an automated email. Please do not reply to this email.</p>
-        </div>
-    </div>
-</body>
-</html>`;
-  }
 
-  /**
-   * Send email via available service (Microsoft Graph or fallback)
-   */
-  private async sendEmailViaAvailableService(emailData: { to: string; subject: string; htmlContent: string }): Promise<boolean> {
-    try {
-      // Try Microsoft Graph first
-      const { GraphEmailService } = await import('./services/graphEmailService');
-      const graphService = new GraphEmailService();
-      
-      const result = await graphService.sendEmail({
-        to: emailData.to,
-        subject: emailData.subject,
-        body: emailData.htmlContent,
-        isHtml: true
-      });
-      
-      return result;
-    } catch (error) {
-      console.error('Error sending email via Microsoft Graph, trying alternative:', error);
-      
-      // Fallback: Log email details for manual sending
-      console.log('📧 Email Details (for manual verification):');
-      console.log('To:', emailData.to);
-      console.log('Subject:', emailData.subject);
-      console.log('Content available - check workflow');
-      
-      // Return true for development/testing
-      return true;
-    }
-  }
 }
 
 export const applicationWorkflowService = new ApplicationWorkflowService();
