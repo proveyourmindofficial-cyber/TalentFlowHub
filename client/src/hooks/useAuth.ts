@@ -88,12 +88,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
+  const refreshPermissions = async () => {
+    // Force re-fetch of user permissions
+    if (user) {
+      try {
+        // Clear cached permissions and re-fetch
+        const response = await fetch('/api/user/permissions', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+          },
+        });
+        if (response.ok) {
+          console.log('🔄 Permissions refreshed successfully');
+          // Force page reload to apply new permissions
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error('Failed to refresh permissions:', error);
+      }
+    }
+  };
+
   const value = {
     user,
     isAuthenticated: !!user,
     isLoading,
     login,
-    logout
+    logout,
+    refreshPermissions
   };
 
   return React.createElement(AuthContext.Provider, { value }, children);
