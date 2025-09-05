@@ -8,6 +8,10 @@ import {
   offerLetters,
   clients,
   clientRequirements,
+  notifications,
+  activityLogs,
+  feedback,
+  feedbackComments,
   type User,
   type InsertUser,
   type Job,
@@ -29,6 +33,14 @@ import {
   type ClientRequirement,
   type InsertClientRequirement,
   type ClientRequirementWithRelations,
+  type Notification,
+  type InsertNotification,
+  type ActivityLog,
+  type InsertActivityLog,
+  type Feedback,
+  type InsertFeedback,
+  type FeedbackComment,
+  type InsertFeedbackComment,
   emailProviders,
   type EmailProvider,
   type InsertEmailProvider,
@@ -168,6 +180,21 @@ export interface IStorage {
   getEmailLog(id: string): Promise<EmailLog | undefined>;
   getEmailLogs(): Promise<EmailLog[]>;
 
+  // Notification operations
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getNotifications(userId: string): Promise<Notification[]>;
+  getUnreadNotifications(userId: string): Promise<Notification[]>;
+  getUnreadNotificationCount(userId: string): Promise<number>;
+  markNotificationAsRead(id: string): Promise<void>;
+  markAllNotificationsAsRead(userId: string): Promise<void>;
+  deleteNotification(id: string): Promise<void>;
+
+  // Activity Log operations
+  createActivityLog(log: InsertActivityLog): Promise<ActivityLog>;
+  getActivityLogs(limit?: number, offset?: number): Promise<ActivityLog[]>;
+  getActivityLogsByUser(userId: string, limit?: number): Promise<ActivityLog[]>;
+  getActivityLogsCount(): Promise<number>;
+
   // Dashboard statistics
   getDashboardStats(): Promise<{
     activeJobs: number;
@@ -176,15 +203,6 @@ export interface IStorage {
     todayInterviews: number;
   }>;
 
-  // Role Permission operations
-  getRoles(): Promise<Role[]>;
-  createRole(role: InsertRole): Promise<Role>;
-  updateRole(id: string, role: Partial<InsertRole>): Promise<Role>;
-  deleteRole(id: string): Promise<void>;
-  getPermissions(): Promise<Permission[]>;
-  getRolePermissions(roleId: string): Promise<Permission[]>;
-  assignRolePermissions(roleId: string, permissionIds: string[]): Promise<void>;
-  removeRolePermissions(roleId: string, permissionIds: string[]): Promise<void>;
 
   // Custom Roles operations
   getCustomRoles(): Promise<CustomRole[]>;
@@ -205,6 +223,18 @@ export interface IStorage {
   removeCustomRoleFromUser(userId: string): Promise<void>;
   getUserCustomRole(userId: string): Promise<UserCustomRole | undefined>;
   getUsersByCustomRole(roleId: string): Promise<User[]>;
+
+  // Feedback operations
+  createFeedback(feedback: InsertFeedback): Promise<Feedback>;
+  getFeedback(id: string): Promise<Feedback | undefined>;
+  getFeedbackList(filters?: any): Promise<Feedback[]>;
+  updateFeedback(id: string, feedback: Partial<InsertFeedback>): Promise<Feedback>;
+  deleteFeedback(id: string): Promise<void>;
+
+  // Feedback comments operations
+  createFeedbackComment(comment: InsertFeedbackComment): Promise<FeedbackComment>;
+  getFeedbackComments(feedbackId: string): Promise<FeedbackComment[]>;
+  deleteFeedbackComment(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -332,8 +362,15 @@ export class DatabaseStorage implements IStorage {
     
     // Auto-generate serial number for external candidates
     if (candidateData.candidateType === 'external') {
-      const [result] = await db.execute(sql`SELECT nextval('external_candidate_seq') as serial`);
-      data.serialNumber = result.serial as number;
+      // Get the next serial number based on existing candidates
+      const [lastCandidate] = await db
+        .select({ serialNumber: candidates.serialNumber })
+        .from(candidates)
+        .where(eq(candidates.candidateType, 'external'))
+        .orderBy(desc(candidates.serialNumber))
+        .limit(1);
+      
+      data.serialNumber = (lastCandidate?.serialNumber || 0) + 1;
     }
     
     const [candidate] = await db.insert(candidates).values(data).returning();
@@ -876,69 +913,92 @@ export class DatabaseStorage implements IStorage {
     return profile;
   }
 
-  // Role Permission operations
-  async getRoles(): Promise<Role[]> {
-    return await db.select().from(roles).orderBy(roles.name);
+  // Notification operations
+  async createNotification(notificationData: InsertNotification): Promise<Notification> {
+    const [notification] = await db.insert(notifications).values(notificationData).returning();
+    return notification;
   }
 
-  async createRole(roleData: InsertRole): Promise<Role> {
-    const [role] = await db.insert(roles).values(roleData).returning();
-    return role;
+  async getNotifications(userId: string): Promise<Notification[]> {
+    return await db.select()
+      .from(notifications)
+      .where(eq(notifications.userId, userId))
+      .orderBy(desc(notifications.createdAt));
   }
 
-  async updateRole(id: string, roleData: Partial<InsertRole>): Promise<Role> {
-    const [role] = await db.update(roles).set(roleData).where(eq(roles.id, id)).returning();
-    return role;
+  async getUnreadNotifications(userId: string): Promise<Notification[]> {
+    return await db.select()
+      .from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.isRead, false)
+      ))
+      .orderBy(desc(notifications.createdAt));
   }
 
-  async deleteRole(id: string): Promise<void> {
-    // Only allow deletion of non-system roles
-    await db.delete(roles).where(and(eq(roles.id, id), eq(roles.isSystemRole, false)));
+  async getUnreadNotificationCount(userId: string): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.isRead, false)
+      ));
+    return result.count;
   }
 
-  async getPermissions(): Promise<Permission[]> {
-    return await db.select().from(permissions).orderBy(permissions.module, permissions.action);
-  }
-
-  async getRolePermissions(roleId: string): Promise<Permission[]> {
-    const result = await db
-      .select({
-        id: permissions.id,
-        module: permissions.module,
-        action: permissions.action,
-        name: permissions.name,
-        description: permissions.description,
-        isActive: permissions.isActive,
-        createdAt: permissions.createdAt,
+  async markNotificationAsRead(id: string): Promise<void> {
+    await db.update(notifications)
+      .set({ 
+        isRead: true,
+        readAt: new Date()
       })
-      .from(rolePermissions)
-      .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
-      .where(eq(rolePermissions.roleId, roleId));
-    
-    return result;
+      .where(eq(notifications.id, id));
   }
 
-  async assignRolePermissions(roleId: string, permissionIds: string[]): Promise<void> {
-    if (permissionIds.length === 0) return;
-    
-    const values = permissionIds.map(permissionId => ({
-      roleId,
-      permissionId,
-    }));
-    
-    await db.insert(rolePermissions).values(values).onConflictDoNothing();
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    await db.update(notifications)
+      .set({ 
+        isRead: true,
+        readAt: new Date()
+      })
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.isRead, false)
+      ));
   }
 
-  async removeRolePermissions(roleId: string, permissionIds: string[]): Promise<void> {
-    if (permissionIds.length === 0) return;
-    
-    await db.delete(rolePermissions)
-      .where(
-        and(
-          eq(rolePermissions.roleId, roleId),
-          inArray(rolePermissions.permissionId, permissionIds)
-        )
-      );
+  async deleteNotification(id: string): Promise<void> {
+    await db.delete(notifications).where(eq(notifications.id, id));
+  }
+
+  // Activity Log operations
+  async createActivityLog(logData: InsertActivityLog): Promise<ActivityLog> {
+    const [log] = await db.insert(activityLogs).values(logData).returning();
+    return log;
+  }
+
+  async getActivityLogs(limit: number = 100, offset: number = 0): Promise<ActivityLog[]> {
+    return await db.select()
+      .from(activityLogs)
+      .orderBy(desc(activityLogs.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getActivityLogsByUser(userId: string, limit: number = 50): Promise<ActivityLog[]> {
+    return await db.select()
+      .from(activityLogs)
+      .where(eq(activityLogs.userId, userId))
+      .orderBy(desc(activityLogs.createdAt))
+      .limit(limit);
+  }
+
+  async getActivityLogsCount(): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(activityLogs);
+    return result.count;
   }
 
   // Custom Roles operations
@@ -1051,10 +1111,15 @@ export class DatabaseStorage implements IStorage {
       id: users.id,
       username: users.username,
       email: users.email,
-      role: users.role,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      profileImageUrl: users.profileImageUrl,
       department: users.department,
+      roleId: users.roleId,
+      passwordHash: users.passwordHash,
       isActive: users.isActive,
       createdAt: users.createdAt,
+      updatedAt: users.updatedAt,
     })
     .from(users)
     .innerJoin(userCustomRoles, eq(users.id, userCustomRoles.userId))
@@ -1062,6 +1127,62 @@ export class DatabaseStorage implements IStorage {
       eq(userCustomRoles.customRoleId, roleId),
       eq(userCustomRoles.isActive, true)
     ));
+  }
+
+  // Feedback operations
+  async createFeedback(feedbackData: InsertFeedback): Promise<Feedback> {
+    const [feedbackItem] = await db.insert(feedback).values(feedbackData).returning();
+    return feedbackItem;
+  }
+
+  async getFeedback(id: string): Promise<Feedback | undefined> {
+    const [feedbackItem] = await db.select().from(feedback).where(eq(feedback.id, id));
+    return feedbackItem;
+  }
+
+  async getFeedbackList(filters?: any): Promise<Feedback[]> {
+    let query = db.select().from(feedback);
+    
+    if (filters?.status) {
+      query = query.where(eq(feedback.status, filters.status));
+    }
+    if (filters?.type) {
+      query = query.where(eq(feedback.type, filters.type));
+    }
+    if (filters?.priority) {
+      query = query.where(eq(feedback.priority, filters.priority));
+    }
+    
+    return await query.orderBy(desc(feedback.createdAt));
+  }
+
+  async updateFeedback(id: string, feedbackData: Partial<InsertFeedback>): Promise<Feedback> {
+    const [updated] = await db.update(feedback)
+      .set({ ...feedbackData, updatedAt: new Date() })
+      .where(eq(feedback.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteFeedback(id: string): Promise<void> {
+    await db.delete(feedback).where(eq(feedback.id, id));
+  }
+
+  // Feedback comments operations
+  async createFeedbackComment(commentData: InsertFeedbackComment): Promise<FeedbackComment> {
+    const [comment] = await db.insert(feedbackComments).values(commentData).returning();
+    return comment;
+  }
+
+  async getFeedbackComments(feedbackId: string): Promise<FeedbackComment[]> {
+    return await db.select()
+      .from(feedbackComments)
+      .where(eq(feedbackComments.feedbackId, feedbackId))
+      .orderBy(feedbackComments.createdAt);
+  }
+
+  async deleteFeedbackComment(id: string): Promise<void> {
+    await db.delete(feedbackComments).where(eq(feedbackComments.id, id));
   }
 }
 
