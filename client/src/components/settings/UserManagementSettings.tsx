@@ -206,12 +206,23 @@ export default function UserManagementSettings() {
         description: "Password setup email has been sent successfully.",
       });
     },
-    onError: () => {
-      toast({
-        title: "Send Failed",
-        description: "Failed to send invitation. Please try again.",
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      const errorMessage = error?.message || "Failed to send invitation. Please try again.";
+      
+      // Show informational message for user who already has account
+      if (errorMessage.includes("already has an account")) {
+        toast({
+          title: "User Already Registered",
+          description: errorMessage,
+          variant: "default", // Not destructive since it's informational
+        });
+      } else {
+        toast({
+          title: "Send Failed",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
     }
   });
 

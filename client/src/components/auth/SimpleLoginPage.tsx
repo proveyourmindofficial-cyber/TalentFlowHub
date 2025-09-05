@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Mail, User } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface SimpleLoginPageProps {
   onLoginSuccess: (user: any, token: string) => void;
@@ -16,6 +17,7 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const login = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
@@ -137,7 +139,18 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
             </Button>
           </form>
 
-
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              className="text-sm text-violet-600 hover:text-violet-800 underline transition-colors duration-300"
+              onClick={() => {
+                setLocation('/forgot-password');
+              }}
+              data-testid="link-forgot-password"
+            >
+              Forgot your password?
+            </button>
+          </div>
 
           <div className="mt-6 text-center">
             <div className="bg-gradient-to-r from-violet-50 to-purple-50 p-4 rounded-xl border border-violet-100">
