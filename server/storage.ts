@@ -974,16 +974,98 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getActivityLogs(limit: number = 100, offset: number = 0): Promise<ActivityLog[]> {
-    return await db.select()
+    return await db.select({
+      id: activityLogs.id,
+      userId: activityLogs.userId,
+      sessionId: activityLogs.sessionId,
+      action: activityLogs.action,
+      resourceType: activityLogs.resourceType,
+      resourceId: activityLogs.resourceId,
+      resourceName: activityLogs.resourceName,
+      description: activityLogs.description,
+      category: activityLogs.category,
+      severity: activityLogs.severity,
+      ipAddress: activityLogs.ipAddress,
+      userAgent: activityLogs.userAgent,
+      browserInfo: activityLogs.browserInfo,
+      deviceInfo: activityLogs.deviceInfo,
+      success: activityLogs.success,
+      errorCode: activityLogs.errorCode,
+      errorMessage: activityLogs.errorMessage,
+      stackTrace: activityLogs.stackTrace,
+      emailRecipient: activityLogs.emailRecipient,
+      emailSubject: activityLogs.emailSubject,
+      emailProvider: activityLogs.emailProvider,
+      emailMessageId: activityLogs.emailMessageId,
+      responseTime: activityLogs.responseTime,
+      pageLoadTime: activityLogs.pageLoadTime,
+      previousPage: activityLogs.previousPage,
+      currentPage: activityLogs.currentPage,
+      referrer: activityLogs.referrer,
+      metadata: activityLogs.metadata,
+      tags: activityLogs.tags,
+      userFlow: activityLogs.userFlow,
+      createdAt: activityLogs.createdAt,
+      // User information
+      user: {
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      }
+    })
       .from(activityLogs)
+      .leftJoin(users, eq(activityLogs.userId, users.id))
       .orderBy(desc(activityLogs.createdAt))
       .limit(limit)
       .offset(offset);
   }
 
   async getActivityLogsByUser(userId: string, limit: number = 50): Promise<ActivityLog[]> {
-    return await db.select()
+    return await db.select({
+      id: activityLogs.id,
+      userId: activityLogs.userId,
+      sessionId: activityLogs.sessionId,
+      action: activityLogs.action,
+      resourceType: activityLogs.resourceType,
+      resourceId: activityLogs.resourceId,
+      resourceName: activityLogs.resourceName,
+      description: activityLogs.description,
+      category: activityLogs.category,
+      severity: activityLogs.severity,
+      ipAddress: activityLogs.ipAddress,
+      userAgent: activityLogs.userAgent,
+      browserInfo: activityLogs.browserInfo,
+      deviceInfo: activityLogs.deviceInfo,
+      success: activityLogs.success,
+      errorCode: activityLogs.errorCode,
+      errorMessage: activityLogs.errorMessage,
+      stackTrace: activityLogs.stackTrace,
+      emailRecipient: activityLogs.emailRecipient,
+      emailSubject: activityLogs.emailSubject,
+      emailProvider: activityLogs.emailProvider,
+      emailMessageId: activityLogs.emailMessageId,
+      responseTime: activityLogs.responseTime,
+      pageLoadTime: activityLogs.pageLoadTime,
+      previousPage: activityLogs.previousPage,
+      currentPage: activityLogs.currentPage,
+      referrer: activityLogs.referrer,
+      metadata: activityLogs.metadata,
+      tags: activityLogs.tags,
+      userFlow: activityLogs.userFlow,
+      createdAt: activityLogs.createdAt,
+      // User information
+      user: {
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      }
+    })
       .from(activityLogs)
+      .leftJoin(users, eq(activityLogs.userId, users.id))
       .where(eq(activityLogs.userId, userId))
       .orderBy(desc(activityLogs.createdAt))
       .limit(limit);
