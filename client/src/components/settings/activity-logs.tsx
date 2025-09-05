@@ -31,7 +31,7 @@ interface ActivityLog {
 }
 
 const getActionIcon = (action: string) => {
-  switch (action.toLowerCase()) {
+  switch (action?.toLowerCase()) {
     case 'login':
     case 'logout':
       return <User className="w-4 h-4" />;
@@ -49,7 +49,7 @@ const getActionIcon = (action: string) => {
 const getActionColor = (action: string, success: boolean) => {
   if (!success) return "bg-red-100 text-red-800 border-red-200";
   
-  switch (action.toLowerCase()) {
+  switch (action?.toLowerCase()) {
     case 'login':
       return "bg-green-100 text-green-800 border-green-200";
     case 'logout':
@@ -308,12 +308,12 @@ export function ActivityLogs() {
                     data-testid={`log-row-${log.id}`}
                   >
                     <TableCell className="font-mono text-sm">
-                      <div>{new Date(log.createdAt).toLocaleDateString()}</div>
+                      <div>{log.createdAt ? new Date(log.createdAt).toLocaleDateString() : 'Unknown date'}</div>
                       <div className="text-xs text-gray-500">
-                        {new Date(log.createdAt).toLocaleTimeString()}
+                        {log.createdAt ? new Date(log.createdAt).toLocaleTimeString() : 'Unknown time'}
                       </div>
                       <div className="text-xs text-gray-400">
-                        {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}
+                        {log.createdAt ? formatDistanceToNow(new Date(log.createdAt), { addSuffix: true }) : 'Unknown time'}
                       </div>
                     </TableCell>
                     <TableCell>
