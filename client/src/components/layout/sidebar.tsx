@@ -13,7 +13,8 @@ import {
   BarChart3,
   Mail,
   Settings,
-  LogOut
+  LogOut,
+  Monitor
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCompanyBranding } from "@/hooks/useCompanyProfile";
@@ -31,6 +32,7 @@ const baseNavigation = [
 
 const secondaryNavigation = [
   { name: "Reports", href: "/reports", icon: BarChart3, module: "reports" },
+  { name: "System Monitoring", href: "/admin/monitoring", icon: Monitor, module: "admin" },
   { name: "Settings", href: "/settings", icon: Settings, module: "settings" },
 ];
 
