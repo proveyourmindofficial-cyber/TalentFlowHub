@@ -99,7 +99,7 @@ export function ActivityLogs() {
     refetchInterval: 30000, // Refresh every 30 seconds for real-time monitoring
   });
 
-  const filteredLogs = (activityLogs as ActivityLog[])?.filter(log => {
+  const filteredLogs = (activityLogs as any)?.logs?.filter((log: ActivityLog) => {
     const matchesSearch = !searchQuery || 
       log.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.resourceName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
