@@ -75,7 +75,27 @@ export function ActivityLogs() {
 
   // Fetch activity logs
   const { data: activityLogs, isLoading, error } = useQuery({
-    queryKey: ['/api/activity-logs', { search: searchQuery, action: actionFilter, resource: resourceFilter, days: dateRange }],
+    queryKey: ['/api/activity-logs', searchQuery, actionFilter, resourceFilter, dateRange],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchQuery) params.set('search', searchQuery);
+      if (actionFilter !== 'all') params.set('action', actionFilter);
+      if (resourceFilter !== 'all') params.set('resource', resourceFilter);
+      if (dateRange) params.set('days', dateRange);
+      
+      const url = `/api/activity-logs${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch activity logs');
+      }
+      
+      return response.json();
+    },
     refetchInterval: 30000, // Refresh every 30 seconds for real-time monitoring
   });
 
