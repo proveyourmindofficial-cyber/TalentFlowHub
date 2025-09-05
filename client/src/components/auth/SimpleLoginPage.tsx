@@ -10,6 +10,8 @@ import { Building2, Mail, User } from "lucide-react";
 import { useLocation } from "wouter";
 import { useCompanyBranding } from "@/hooks/useCompanyProfile";
 
+import Logo_tm_1 from "@assets/Logo tm 1.png";
+
 interface SimpleLoginPageProps {
   onLoginSuccess: (user: any, token: string) => void;
 }
@@ -69,14 +71,13 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
         <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-r from-blue-400/10 to-teal-400/10 rounded-full animate-pulse"></div>
         <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-r from-teal-400/10 to-cyan-400/10 rounded-full animate-pulse delay-1000"></div>
       </div>
-      
       <Card className="w-full max-w-md backdrop-blur-lg bg-white/95 border border-blue-100/50 shadow-2xl relative z-10 transform transition-all duration-300 hover:scale-105">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-8">
             {companyLogo ? (
               <div className="bg-gradient-to-br from-blue-50 to-teal-50 p-6 rounded-3xl shadow-lg transform transition-all duration-300 hover:scale-110 border border-blue-100">
                 <img 
-                  src={companyLogo} 
+                  src={Logo_tm_1} 
                   alt={companyName}
                   className="h-20 w-auto max-w-40 object-contain"
                 />
