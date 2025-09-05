@@ -20,10 +20,28 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Initialize state immediately with localStorage data to prevent auth loss during HMR
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const userData = localStorage.getItem('userData');
+      
+      if (token && userData) {
+        return JSON.parse(userData);
+      }
+      return null;
+    } catch (error) {
+      console.error('Initial auth check failed:', error);
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+      return null;
+    }
+  });
+  
+  const [isLoading, setIsLoading] = useState(false); // No loading needed since we initialize immediately
 
   useEffect(() => {
+    // Double-check auth status on mount (for edge cases)
     checkAuthStatus();
   }, []);
 
@@ -35,11 +53,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (token && userData) {
         const parsedUser = JSON.parse(userData);
         setUser(parsedUser);
+      } else {
+        setUser(null);
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
