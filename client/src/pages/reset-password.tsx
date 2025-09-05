@@ -19,10 +19,20 @@ export default function ResetPasswordPage() {
 
   // Extract token from URL on component mount
   useEffect(() => {
-    const params = new URLSearchParams(location.split('?')[1]);
-    const urlToken = params.get('token');
+    // Get the full URL with query parameters
+    const fullUrl = window.location.href;
+    const url = new URL(fullUrl);
+    const urlToken = url.searchParams.get('token');
+    
+    console.log('Full URL:', fullUrl);
+    console.log('Extracted token:', urlToken);
+    
     if (urlToken) {
       setToken(urlToken);
+      toast({
+        title: "Reset Link Valid",
+        description: "Token found successfully. You can now set your new password.",
+      });
     } else {
       toast({
         title: "Invalid Reset Link",
@@ -30,7 +40,7 @@ export default function ResetPasswordPage() {
         variant: "destructive",
       });
     }
-  }, [location]);
+  }, []);
 
   const resetPassword = useMutation({
     mutationFn: async ({ token, newPassword }: { token: string; newPassword: string }) => {
