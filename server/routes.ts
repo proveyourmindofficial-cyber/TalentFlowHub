@@ -574,8 +574,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
+      
+      // If user exists and already has a proper password, they don't need invitation
+      if (existingUser && existingUser.passwordHash && existingUser.passwordHash.length > 20) {
+        return res.status(400).json({ message: 'User already has an account and can login directly' });
+      }
+      
+      // If user exists but no proper password (old invite), allow resend
       if (existingUser) {
-        return res.status(400).json({ message: 'User already exists' });
+        console.log(`📧 Resending invitation to existing user: ${email}`);
+        
+        // Generate new invitation token
+        const inviteToken = Buffer.from(`${email}:${Date.now()}`).toString('base64');
+        
+        // Update user with new invitation token
+        await storage.updateUser(existingUser.id, {
+          passwordHash: inviteToken, // Replace old token
+          isActive: false // Still inactive until password is set
+        });
+        
+        // Create the setup URL
+        const setupUrl = `https://${process.env.REPLIT_DEV_DOMAIN}/setup-password?token=${inviteToken}`;
+        
+        // Send password setup email
+        const emailSent = await sendPasswordSetupEmail(
+          email, 
+          firstName || existingUser.firstName || email.split('@')[0], 
+          lastName || existingUser.lastName || 'User', 
+          setupUrl,
+          'Team Member'
+        );
+        
+        return res.json({
+          message: 'Invitation resent successfully',
+          inviteToken: inviteToken,
+          setupUrl: setupUrl
+        });
       }
 
       // Generate invitation token
@@ -695,7 +729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create a simple session token for the frontend
       const token = Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64');
       
-      console.log('Login called with:', user, token);
+      console.log(`✅ Login successful for: ${user.email}`);
       
       res.json({ 
         user,
