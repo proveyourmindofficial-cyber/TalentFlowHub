@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Building2, Mail, User } from "lucide-react";
 import { useLocation } from "wouter";
+import { useCompanyBranding } from "@/hooks/useCompanyProfile";
 
 interface SimpleLoginPageProps {
   onLoginSuccess: (user: any, token: string) => void;
@@ -18,6 +19,7 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
   const [password, setPassword] = useState("");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { companyName, companyLogo, tagline, isLoading: companyLoading } = useCompanyBranding();
 
   const login = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
@@ -71,15 +73,25 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
       <Card className="w-full max-w-md backdrop-blur-lg bg-white/90 border-0 shadow-2xl relative z-10 transform transition-all duration-300 hover:scale-105">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-6">
-            <div className="bg-gradient-to-r from-violet-600 to-purple-600 p-4 rounded-2xl shadow-lg transform transition-all duration-300 hover:rotate-6">
-              <Building2 className="h-10 w-10 text-white" />
-            </div>
+            {companyLogo ? (
+              <div className="p-4 rounded-2xl shadow-lg transform transition-all duration-300 hover:rotate-6">
+                <img 
+                  src={companyLogo} 
+                  alt={companyName}
+                  className="h-16 w-auto max-w-32 object-contain"
+                />
+              </div>
+            ) : (
+              <div className="bg-gradient-to-r from-violet-600 to-purple-600 p-4 rounded-2xl shadow-lg transform transition-all duration-300 hover:rotate-6">
+                <Building2 className="h-10 w-10 text-white" />
+              </div>
+            )}
           </div>
           <CardTitle className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-            TalentFlowHub ⚡
+            {companyLoading ? 'Loading...' : companyName} ⚡
           </CardTitle>
           <p className="text-gray-600 mt-3 font-medium">
-            Welcome to the future of recruitment 🚀
+            {tagline || 'Welcome to your recruitment platform'} 🚀
           </p>
         </CardHeader>
         <CardContent>
