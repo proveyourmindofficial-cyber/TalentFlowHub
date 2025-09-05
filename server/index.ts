@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { ActivityLogger } from "./activityLogger";
 
 const app = express();
 app.use(express.json());
@@ -30,8 +31,10 @@ app.use((req, res, next) => {
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
-  res.on("finish", () => {
+  res.on("finish", async () => {
     const duration = Date.now() - start;
+    const userId = (req as any).session?.user?.id;
+    
     if (path.startsWith("/api")) {
       let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
       if (capturedJsonResponse) {
@@ -43,6 +46,32 @@ app.use((req, res, next) => {
       }
 
       log(logLine);
+
+      // Log API calls as user activities (excluding auth endpoints to avoid loops)
+      if (userId && !path.includes('/auth') && !path.includes('/activity-logs')) {
+        try {
+          await ActivityLogger.logActivity({
+            userId,
+            action: 'api_call',
+            entityType: 'api',
+            entityId: path,
+            metadata: {
+              method: req.method,
+              statusCode: res.statusCode,
+              duration,
+              path,
+              userAgent: req.get('User-Agent')
+            },
+            req,
+            userJourneyContext: {
+              flow: 'daily_usage',
+              stage: 'notification'
+            }
+          });
+        } catch (error) {
+          // Silent fail for activity logging to not interrupt app flow
+        }
+      }
     }
   });
 
@@ -52,9 +81,37 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  app.use(async (err: any, req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
+
+    // Log comprehensive error information
+    try {
+      await ActivityLogger.logActivity({
+        userId: (req as any).session?.user?.id,
+        action: 'api_error',
+        entityType: 'system',
+        entityId: req.path,
+        metadata: {
+          statusCode: status,
+          errorMessage: message,
+          errorStack: err.stack,
+          path: req.path,
+          method: req.method,
+          userAgent: req.get('User-Agent'),
+          body: req.body,
+          query: req.query,
+          params: req.params,
+        },
+        req,
+        userJourneyContext: {
+          flow: 'daily_usage',
+          stage: 'notification'
+        }
+      });
+    } catch (logError) {
+      console.error('Failed to log error activity:', logError);
+    }
 
     res.status(status).json({ message });
     throw err;

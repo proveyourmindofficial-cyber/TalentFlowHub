@@ -25,9 +25,13 @@ import ProfilePage from "@/pages/profile";
 import CandidatePortal from "@/pages/candidate-portal";
 import CandidateResponse from "@/pages/candidate-response";
 import NotFound from "@/pages/not-found";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
 function Router() {
   const { isAuthenticated, isLoading, login } = useAuth();
+  
+  // Track page views automatically
+  usePageTracking();
 
   // Show loading state while checking authentication
   if (isLoading) {

@@ -1,0 +1,44 @@
+What I mean by Activity Log is this:
+
+As an Admin (production level), I should be able to see step by step what is happening with users in real-time — similar to how I can debug and check errors during development.
+
+Example: If I create a new user in production and ask them to test the app with a role, I should be able to track:
+
+Email flow – Did the user receive the invitation email? If not, what failed?
+
+Link check – If they got the email, did the link work correctly or fail?
+
+Login errors – If they tried logging in, did they get “username/password wrong,” “account not found,” or other explicit errors?
+
+App glitches – If they face issues after login (e.g., page not loading, error popups, restricted access).
+
+Feedback reports – If they use the built-in feedback form (I see the tab in the middle, but I’m not sure if it works fully for end users), that feedback/error should also be logged.
+
+Basically, I want all of these flows (emails, alerts, login, usage, errors) to be trackable from the admin panel. Not just from backend console logs, but also from the frontend/admin side, so I can clearly see what issues users are facing in production.
+
+Why?
+Right now, you can see backend console logs and debug errors, but I, as the admin, don’t get exact visibility of what’s going wrong for users. If we capture this as activity logs and alerts, I can quickly identify problems at the admin level without needing to come back to you for every user issue.
+
+What I Need:
+
+A proper Activity Log or Log Reports Page that tracks:
+
+User creation, invitation emails, password setup
+
+Login attempts (success/failure, reasons for failure)
+
+App usage (what modules they accessed, what failed)
+
+Errors/glitches encountered by the user
+
+Feedback submitted by users
+
+Ideally, allow some basic admin controls here, like resending invites, resetting passwords, or unlocking accounts.
+
+Your Input Needed:
+
+What is the best plan/approach to implement this?
+
+Can this be built by you directly in the application, or do we need to use some dynamic search / advanced agent / external monitoring tool?
+
+First, I want to confirm if you have clearly understood my requirement. Once confirmed, we can finalize the plan and build it step by step.

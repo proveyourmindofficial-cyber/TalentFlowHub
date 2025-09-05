@@ -1,4 +1,5 @@
 import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { activityTracker } from '../services/activityTracker';
 
 interface User {
   id: string;
@@ -53,6 +54,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (token && userData) {
         const parsedUser = JSON.parse(userData);
         setUser(parsedUser);
+        // Initialize activity tracking for existing session
+        activityTracker.setUser(parsedUser.id);
       } else {
         setUser(null);
       }
@@ -71,9 +74,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('authToken', token);
     localStorage.setItem('userData', JSON.stringify(userData));
     setUser(userData);
+    
+    // Start activity tracking for this user
+    activityTracker.setUser(userData.id);
   };
 
   const logout = () => {
+    // Clear activity tracking before logout
+    activityTracker.clearUser();
+    
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
     setUser(null);

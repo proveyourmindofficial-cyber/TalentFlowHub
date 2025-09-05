@@ -29,7 +29,7 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = candidateLoginSchema.parse(req.body);
     
-    const result = await candidateAuth.authenticateCandidate(email, password);
+    const result = await candidateAuth.authenticateCandidate(email, password, req);
     
     if (!result) {
       return res.status(401).json({ message: 'Invalid email or password' });

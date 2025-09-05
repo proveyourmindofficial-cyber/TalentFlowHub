@@ -1,6 +1,9 @@
 import { ConfidentialClientApplication, ClientCredentialRequest } from '@azure/msal-node';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { AuthenticationProvider } from '@microsoft/microsoft-graph-client';
+import { ActivityLogger } from '../activityLogger';
+import { storage } from '../storage';
+import type { Request } from 'express';
 
 interface GraphEmailConfig {
   tenantId: string;
@@ -14,6 +17,13 @@ interface EmailMessage {
   body: string;
   fromEmail?: string;
   isHtml?: boolean;
+  userId?: string; // For activity logging
+  req?: Request; // For context logging
+  userJourneyContext?: {
+    flow: 'onboarding' | 'daily_usage' | 'troubleshooting';
+    stage: 'invitation' | 'password_setup' | 'notification' | 'reminder';
+    userTargetId?: string; // ID of user being invited/notified
+  };
 }
 
 interface EmailTemplate {
@@ -122,18 +132,49 @@ export class GraphEmailService {
     }
   }
 
-  async sendEmail(emailData: EmailMessage): Promise<boolean> {
+  async sendEmail(emailData: EmailMessage): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    const startTime = Date.now();
+    const { to, subject, body, fromEmail, isHtml = false, userId, req, userJourneyContext } = emailData;
+    const fromAddress = fromEmail || process.env.GRAPH_FROM_EMAIL || 'noreply@yourdomain.com';
+    
+    // Create initial email log entry
+    let emailLogId: string | undefined;
+    try {
+      const emailLog = await storage.createEmailLog({
+        to,
+        subject,
+        htmlContent: isHtml ? body : undefined,
+        textContent: !isHtml ? body : undefined,
+        provider: 'outlook',
+        status: 'sent',
+        sentAt: new Date(),
+      });
+      emailLogId = emailLog.id;
+    } catch (logError) {
+      console.error('Failed to create email log:', logError);
+    }
+
     if (!this.isConfigured || !this.graphClient) {
-      console.warn('Microsoft Graph Email Service is not configured. Email not sent.');
-      return false;
+      const errorMsg = 'Microsoft Graph Email Service is not configured. Email not sent.';
+      console.warn(errorMsg);
+      
+      // Log failed email attempt
+      if (userId) {
+        await ActivityLogger.logEmailSent(
+          userId, 
+          to, 
+          subject, 
+          'microsoft-graph', 
+          undefined, 
+          req, 
+          false
+        );
+      }
+      
+      return { success: false, error: errorMsg };
     }
 
     try {
-      const { to, subject, body, fromEmail, isHtml = false } = emailData;
-
-      // Default from email (you can customize this based on your domain)
-      const fromAddress = fromEmail || process.env.GRAPH_FROM_EMAIL || 'noreply@yourdomain.com';
-
       const message = {
         message: {
           subject: subject,
@@ -156,16 +197,113 @@ export class GraphEmailService {
         },
       };
 
-      // Send email using Graph API with proper endpoint for application permissions
-      // Use /users/{user-id}/sendMail for application permissions instead of /me/sendMail
+      // Send email using Graph API
       const userEmail = fromAddress;
-      await this.graphClient.api(`/users/${userEmail}/sendMail`).post(message);
+      const response = await this.graphClient.api(`/users/${userEmail}/sendMail`).post(message);
+      
+      const responseTime = Date.now() - startTime;
+      const messageId = response?.id || `graph-${Date.now()}`;
 
-      console.log(`Email sent successfully to: ${to}`);
-      return true;
+      // Log successful email sending
+      if (userId) {
+        // Determine action based on context
+        const action = userJourneyContext?.stage === 'invitation' ? 'invitation_sent' : 'email_sent';
+        
+        if (action === 'invitation_sent' && userJourneyContext?.userTargetId) {
+          await ActivityLogger.logInvitationSent(
+            userId, 
+            userJourneyContext.userTargetId,
+            to, 
+            'microsoft-graph', 
+            messageId, 
+            req
+          );
+        } else {
+          await ActivityLogger.logEmailSent(
+            userId, 
+            to, 
+            subject, 
+            'microsoft-graph', 
+            messageId, 
+            req, 
+            true
+          );
+        }
+        
+        // Create user journey state if this is an invitation
+        if (userJourneyContext?.stage === 'invitation' && userJourneyContext?.userTargetId) {
+          try {
+            await storage.createUserJourneyState({
+              userId: userJourneyContext.userTargetId,
+              currentStage: 'email_sent',
+              invitationSent: true,
+              invitationSentAt: new Date(),
+              invitationEmailId: emailLogId,
+            });
+          } catch (journeyError) {
+            console.error('Failed to create user journey state:', journeyError);
+          }
+        }
+      }
+
+      // Update email log with success
+      if (emailLogId) {
+        try {
+          await storage.updateEmailLog(emailLogId, {
+            messageId,
+            status: 'sent',
+            metadata: JSON.stringify({ 
+              responseTime, 
+              provider: 'microsoft-graph',
+              userJourneyContext 
+            }),
+          });
+        } catch (updateError) {
+          console.error('Failed to update email log:', updateError);
+        }
+      }
+
+      console.log(`✅ Email sent successfully to: ${to} (${responseTime}ms)`);
+      return { success: true, messageId };
+      
     } catch (error) {
-      console.error('Error sending email via Graph API:', error);
-      throw new Error(`Failed to send email: ${error}`);
+      const responseTime = Date.now() - startTime;
+      const errorMessage = `Failed to send email: ${error}`;
+      
+      console.error('❌ Error sending email via Graph API:', error);
+      
+      // Log failed email attempt
+      if (userId) {
+        await ActivityLogger.logEmailSent(
+          userId, 
+          to, 
+          subject, 
+          'microsoft-graph', 
+          undefined, 
+          req, 
+          false
+        );
+      }
+
+      // Update email log with failure
+      if (emailLogId) {
+        try {
+          await storage.updateEmailLog(emailLogId, {
+            status: 'failed',
+            errorMessage: error instanceof Error ? error.message : String(error),
+            metadata: JSON.stringify({ 
+              responseTime, 
+              provider: 'microsoft-graph',
+              userJourneyContext,
+              error: error instanceof Error ? error.message : String(error)
+            }),
+          });
+        } catch (updateError) {
+          console.error('Failed to update email log with error:', updateError);
+        }
+      }
+
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -173,8 +311,15 @@ export class GraphEmailService {
     to: string,
     templateName: string,
     variables: Record<string, string> = {},
-    fromEmail?: string
-  ): Promise<boolean> {
+    fromEmail?: string,
+    userId?: string,
+    req?: Request,
+    userJourneyContext?: {
+      flow: 'onboarding' | 'daily_usage' | 'troubleshooting';
+      stage: 'invitation' | 'password_setup' | 'notification' | 'reminder';
+      userTargetId?: string;
+    }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
       // This will be integrated with your email templates later
       const template = await this.getEmailTemplate(templateName);
@@ -195,10 +340,13 @@ export class GraphEmailService {
         body,
         fromEmail,
         isHtml: true,
+        userId,
+        req,
+        userJourneyContext,
       });
     } catch (error) {
       console.error('Error sending templated email:', error);
-      throw error;
+      return { success: false, error: `Failed to send templated email: ${error}` };
     }
   }
 
