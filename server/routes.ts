@@ -22,14 +22,14 @@ async function sendPasswordSetupEmail(email: string, firstName: string, lastName
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa; padding: 40px 20px; border-radius: 8px;">
   
   <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="font-size: 28px; margin: 0; color: #2c3e50;">Welcome to TalentFlowHub</h1>
+    <h1 style="font-size: 28px; margin: 0; color: #2c3e50;">Welcome to {{company.name}}</h1>
     <p style="font-size: 16px; margin: 10px 0; color: #6c757d;">Set up your account to get started</p>
   </div>
 
   <div style="background: white; padding: 30px; border-radius: 8px; margin-bottom: 25px; text-align: center; border: 1px solid #e9ecef;">
     <h2 style="font-size: 22px; margin: 0 0 15px 0; color: #2c3e50;">Hello ${firstName},</h2>
     <p style="font-size: 16px; margin: 0; color: #495057; line-height: 1.6;">
-      You have been invited to join TalentFlowHub as <strong style="color: #0d6efd;">${roleName}</strong>.<br>
+      You have been invited to join {{company.name}} as <strong style="color: #0d6efd;">${roleName}</strong>.<br>
       Please set up your password to activate your account.
     </p>
   </div>
@@ -71,7 +71,7 @@ async function sendPasswordSetupEmail(email: string, firstName: string, lastName
       Need assistance? Reply to this email for support
     </p>
     <p style="color: #2c3e50; font-weight: bold; font-size: 14px; margin: 0;">
-      TalentFlowHub Team
+      {{company.name}} Team
     </p>
   </div>
   
@@ -79,10 +79,15 @@ async function sendPasswordSetupEmail(email: string, firstName: string, lastName
 
     console.log(`📧 Sending password setup email to: ${email}`);
     
+    // Replace company placeholders in email
+    const companyData = await getCompanyData();
+    const processedSubject = '🔐 Set Up Your {{company.name}} Account Password'.replace(/\{\{company\.name\}\}/g, companyData.name);
+    const processedBody = emailBody.replace(/\{\{company\.name\}\}/g, companyData.name);
+    
     await graphEmailService.sendEmail({
       to: email,
-      subject: '🔐 Set Up Your TalentFlowHub Account Password',
-      body: emailBody,
+      subject: processedSubject,
+      body: processedBody,
       isHtml: true,
     });
     
@@ -102,13 +107,13 @@ async function sendPasswordResetEmail(email: string, firstName: string, lastName
   
   <div style="text-align: center; margin-bottom: 30px;">
     <h1 style="font-size: 28px; margin: 0; color: #2c3e50;">Password Reset Request</h1>
-    <p style="font-size: 16px; margin: 10px 0; color: #6c757d;">Reset your TalentFlowHub password</p>
+    <p style="font-size: 16px; margin: 10px 0; color: #6c757d;">Reset your {{company.name}} password</p>
   </div>
 
   <div style="background: white; padding: 30px; border-radius: 8px; margin-bottom: 25px; text-align: center; border: 1px solid #e9ecef;">
     <h2 style="font-size: 22px; margin: 0 0 15px 0; color: #2c3e50;">Hello ${firstName},</h2>
     <p style="font-size: 16px; margin: 0; color: #495057; line-height: 1.6;">
-      You requested a password reset for your TalentFlowHub account.<br>
+      You requested a password reset for your {{company.name}} account.<br>
       Click the button below to create a new password.
     </p>
   </div>
@@ -150,7 +155,7 @@ async function sendPasswordResetEmail(email: string, firstName: string, lastName
       Need assistance? Reply to this email for support
     </p>
     <p style="color: #2c3e50; font-weight: bold; font-size: 14px; margin: 0;">
-      TalentFlowHub Team
+      {{company.name}} Team
     </p>
   </div>
   
@@ -158,10 +163,15 @@ async function sendPasswordResetEmail(email: string, firstName: string, lastName
 
     console.log(`📧 Sending password reset email to: ${email}`);
     
+    // Replace company placeholders in email
+    const companyData = await getCompanyData();
+    const processedSubject = '🔑 Reset Your {{company.name}} Password'.replace(/\{\{company\.name\}\}/g, companyData.name);
+    const processedBody = emailBody.replace(/\{\{company\.name\}\}/g, companyData.name);
+    
     await graphEmailService.sendEmail({
       to: email,
-      subject: '🔑 Reset Your TalentFlowHub Password',
-      body: emailBody,
+      subject: processedSubject,
+      body: processedBody,
       isHtml: true,
     });
     
@@ -170,6 +180,19 @@ async function sendPasswordResetEmail(email: string, firstName: string, lastName
   } catch (error) {
     console.error(`❌ Failed to send password reset email to ${email}:`, error);
     return false;
+  }
+}
+
+// Get company data for email placeholders
+async function getCompanyData() {
+  try {
+    const profile = await storage.getCompanyProfile();
+    return {
+      name: profile?.companyName || 'ATS System'
+    };
+  } catch (error) {
+    console.error('Error fetching company profile:', error);
+    return { name: 'ATS System' };
   }
 }
 
@@ -203,9 +226,10 @@ async function sendModuleEmail(templateKey: string, recipientEmail: string, data
     }
     
     // Replace company placeholders
+    const companyData = await getCompanyData();
     if (emailContent) {
-      emailContent = emailContent.replace(/\{\{company\.name\}\}/g, 'TalentFlow Technologies');
-      subject = subject.replace(/\{\{company\.name\}\}/g, 'TalentFlow Technologies');
+      emailContent = emailContent.replace(/\{\{company\.name\}\}/g, companyData.name);
+      subject = subject.replace(/\{\{company\.name\}\}/g, companyData.name);
     }
     
     // Replace application placeholders
@@ -1328,10 +1352,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Replace company placeholders
+          const companyData = await getCompanyData();
           if (emailContent) {
-            emailContent = emailContent.replace(/\{\{company\.name\}\}/g, 'TalentFlow Technologies');
+            emailContent = emailContent.replace(/\{\{company\.name\}\}/g, companyData.name);
           }
-          subject = subject.replace(/\{\{company\.name\}\}/g, 'TalentFlow Technologies');
+          subject = subject.replace(/\{\{company\.name\}\}/g, companyData.name);
           
           // Add other placeholders
           emailContent = emailContent.replace(/\{\{candidate\.portalLink\}\}/g, 'https://talentflow.tech/portal');

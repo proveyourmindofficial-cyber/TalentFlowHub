@@ -1,6 +1,6 @@
 import { storage } from '../storage';
 import { graphEmailService } from './graphEmailService';
-import type { EmailTemplate, InsertEmailTemplate } from '@shared/schema';
+import type { EmailTemplate, InsertEmailTemplate, CompanyProfile } from '@shared/schema';
 
 // Email configuration interface
 interface EmailConfig {
@@ -11,13 +11,36 @@ interface EmailConfig {
   senderEmail?: string;
 }
 
-// Default email configuration
+// Default email configuration (fallback values)
 const DEFAULT_EMAIL_CONFIG: EmailConfig = {
   primaryColor: '#2563eb',
-  companyName: 'TalentFlowHub',
-  senderName: 'TalentFlow Team',
-  senderEmail: 'itsupport@o2finfosolutions.com'
+  companyName: 'ATS System',
+  senderName: 'HR Team',
+  senderEmail: 'noreply@company.com'
 };
+
+// Get company profile data for email configuration
+async function getCompanyEmailConfig(): Promise<EmailConfig> {
+  try {
+    const profile = await storage.getCompanyProfile();
+    
+    if (!profile) {
+      console.warn('No company profile found, using default email config');
+      return DEFAULT_EMAIL_CONFIG;
+    }
+    
+    return {
+      primaryColor: DEFAULT_EMAIL_CONFIG.primaryColor, // Use default for now
+      companyName: profile.companyName,
+      senderName: profile.emailFromName || profile.companyName,
+      senderEmail: profile.emailFromAddress || DEFAULT_EMAIL_CONFIG.senderEmail,
+      logoUrl: profile.companyLogo || undefined
+    };
+  } catch (error) {
+    console.error('Error fetching company profile for email config:', error);
+    return DEFAULT_EMAIL_CONFIG;
+  }
+}
 
 // Template placeholder replacement
 export function replacePlaceholders(template: string, data: Record<string, any>): string {
@@ -218,12 +241,15 @@ export class EmailTemplateService {
         return { success: false, error: `Template '${templateKey}' not found` };
       }
 
+      // Get company profile data for branding
+      const companyConfig = await getCompanyEmailConfig();
+
       // Replace placeholders in subject and body
       const subject = replacePlaceholders(template.subject, data);
       const bodyContent = replacePlaceholders(template.htmlContent || '', data);
 
-      // Use custom config if provided
-      const emailConfig = customConfig ? { ...this.config, ...customConfig } : this.config;
+      // Use company config merged with custom config if provided
+      const emailConfig = customConfig ? { ...companyConfig, ...customConfig } : companyConfig;
 
       // Generate HTML email
       const htmlContent = generateModernEmailHTML(subject, bodyContent, emailConfig);
@@ -249,11 +275,11 @@ export class EmailTemplateService {
       {
         key: 'candidate_registration',
         name: 'Candidate Registration Welcome',
-        subject: 'Welcome to TalentFlowHub – Your Profile is Created 🎉',
+        subject: 'Welcome to {{company.name}} – Your Profile is Created 🎉',
         htmlContent: `
           <div class="greeting">Hi {{candidate.name}}! 👋</div>
           <div class="body-text">
-            Welcome to <strong>TalentFlowHub</strong>! Your candidate profile has been successfully created.
+            Welcome to <strong>{{company.name}}</strong>! Your candidate profile has been successfully created.
           </div>
           <div class="highlight">
             <strong>🚀 Next Step:</strong><br>
@@ -272,16 +298,16 @@ export class EmailTemplateService {
       {
         key: 'application_submission',
         name: 'Application Received Confirmation',
-        subject: 'Application Received – {{job.title}} at {{client.name}}',
+        subject: 'Application Received – {{job.title}} at {{company.name}}',
         htmlContent: `
           <div class="greeting">Hi {{candidate.name}},</div>
           <div class="body-text">
-            Thank you for applying for the role of <strong>{{job.title}}</strong> at <strong>{{client.name}}</strong>.
+            Thank you for applying for the role of <strong>{{job.title}}</strong> at <strong>{{company.name}}</strong>.
           </div>
           <div class="highlight">
             <strong>📋 Application Details:</strong><br>
             Position: {{job.title}}<br>
-            Company: {{client.name}}<br>
+            Company: {{company.name}}<br>
             Applied on: {{application.submittedAt}}<br>
             Reference ID: {{application.id}}
           </div>
@@ -301,11 +327,11 @@ export class EmailTemplateService {
       {
         key: 'interview_invitation',
         name: 'Interview Invitation',
-        subject: 'Interview Invitation – {{job.title}} at {{client.name}}',
+        subject: 'Interview Invitation – {{job.title}} at {{company.name}}',
         htmlContent: `
           <div class="greeting">Hi {{candidate.name}},</div>
           <div class="body-text">
-            Great news! We'd like to invite you for an interview for the <strong>{{job.title}}</strong> position at <strong>{{client.name}}</strong>.
+            Great news! We'd like to invite you for an interview for the <strong>{{job.title}}</strong> position at <strong>{{company.name}}</strong>.
           </div>
           <div class="highlight">
             <strong>📅 Interview Details:</strong><br>
@@ -331,16 +357,16 @@ export class EmailTemplateService {
       {
         key: 'offer_letter',
         name: 'Job Offer Letter',
-        subject: 'Job Offer – {{job.title}} at {{client.name}} 🎉',
+        subject: 'Job Offer – {{job.title}} at {{company.name}} 🎉',
         htmlContent: `
           <div class="greeting">Congratulations {{candidate.name}}! 🎉</div>
           <div class="body-text">
-            We are excited to offer you the position of <strong>{{job.title}}</strong> at <strong>{{client.name}}</strong>.
+            We are excited to offer you the position of <strong>{{job.title}}</strong> at <strong>{{company.name}}</strong>.
           </div>
           <div class="highlight">
             <strong>📋 Offer Summary:</strong><br>
             Position: {{job.title}}<br>
-            Company: {{client.name}}<br>
+            Company: {{company.name}}<br>
             Start Date: {{offer.startDate}}<br>
             Annual Salary: {{offer.salary}}<br>
             Benefits: {{offer.benefits}}

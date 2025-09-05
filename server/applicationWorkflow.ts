@@ -1,9 +1,23 @@
 import { storage } from './storage';
 import { nanoid } from 'nanoid';
-import type { Application, Job, Candidate } from '@shared/schema';
+import type { Application, Job, Candidate, CompanyProfile } from '@shared/schema';
 import { emailTemplateService } from './services/emailTemplateService';
 
 export class ApplicationWorkflowService {
+  /**
+   * Get company data for email templates
+   */
+  private async getCompanyData(): Promise<{ name: string }> {
+    try {
+      const profile = await storage.getCompanyProfile();
+      return {
+        name: profile?.companyName || 'ATS System'
+      };
+    } catch (error) {
+      console.error('Error fetching company profile:', error);
+      return { name: 'ATS System' };
+    }
+  }
   /**
    * Send JD email to candidate when application is created
    */
@@ -47,9 +61,7 @@ export class ApplicationWorkflowService {
           requirements: job.requirements || 'Requirements not specified',
           salaryRange: job.salaryMin && job.salaryMax ? `₹${job.salaryMin} - ₹${job.salaryMax}` : 'Competitive'
         },
-        company: {
-          name: 'TalentFlow Solutions'
-        },
+        company: await this.getCompanyData(),
         application: {
           interestedUrl,
           notInterestedUrl
@@ -124,7 +136,7 @@ export class ApplicationWorkflowService {
             message: 'You have already responded to this job. Redirecting to your portal...',
             jobDetails: {
               title: job?.title || 'Job Position',
-              companyName: 'TalentFlow Solutions',
+              companyName: (await this.getCompanyData()).name,
               department: job?.department,
               location: job?.location
             },
@@ -172,7 +184,7 @@ export class ApplicationWorkflowService {
           message: 'Thank you for your interest! Redirecting to your candidate portal...',
           jobDetails: {
             title: job.title,
-            companyName: 'TalentFlow Solutions',
+            companyName: (await this.getCompanyData()).name,
             department: job.department,
             location: job.location
           },
@@ -189,7 +201,7 @@ export class ApplicationWorkflowService {
           message: 'Thank you for your response. We appreciate your feedback and will keep your profile for future opportunities.',
           jobDetails: {
             title: job.title,
-            companyName: 'TalentFlow Solutions',
+            companyName: (await this.getCompanyData()).name,
             department: job.department,
             location: job.location
           }
@@ -232,7 +244,7 @@ export class ApplicationWorkflowService {
         success: true,
         jobDetails: {
           title: job.title,
-          companyName: 'TalentFlow Solutions',
+          companyName: (await this.getCompanyData()).name,
           department: job.department,
           location: job.location,
           description: job.description
@@ -294,7 +306,7 @@ export class ApplicationWorkflowService {
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Welcome to TalentFlow Candidate Portal</title>
+    <title>Welcome to {{company.name}} Candidate Portal</title>
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
     <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -325,7 +337,7 @@ export class ApplicationWorkflowService {
         <p>Our recruitment team will review your application and contact you within 2-3 business days with next steps.</p>
         
         <p>Best regards,<br>
-        TalentFlow Solutions<br>
+        {{company.name}}<br>
         Building careers, connecting talent</p>
     </div>
 </body>
@@ -336,9 +348,11 @@ export class ApplicationWorkflowService {
         'candidate_registration', 
         candidate.email,
         {
-          candidate: { name: candidate.name || 'Candidate' },
-          company: { name: 'TalentFlow Solutions' },
-          candidate: { portalLink: 'https://talentflow.tech/portal' }
+          candidate: { 
+            name: candidate.name || 'Candidate',
+            portalLink: 'https://talentflow.tech/portal'
+          },
+          company: await this.getCompanyData()
         }
       );
 

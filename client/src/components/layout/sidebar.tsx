@@ -16,6 +16,7 @@ import {
   LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useCompanyBranding } from "@/hooks/useCompanyProfile";
 
 const baseNavigation = [
   { name: "Dashboard", href: "/", icon: ChartPie, module: "dashboard" },
@@ -35,6 +36,7 @@ const secondaryNavigation = [
 export default function Sidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
+  const { companyName, companyLogo, tagline, isLoading: companyLoading } = useCompanyBranding();
 
   // Fetch live navigation counts
   const { data: counts } = useQuery({
@@ -83,8 +85,18 @@ export default function Sidebar() {
             <Users className="text-white w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-black bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">TalentFlowHub</h1>
-            <p className="text-xs text-violet-600 font-medium">⚡ ATS System</p>
+            {companyLogo ? (
+              <img 
+                src={companyLogo} 
+                alt={companyName}
+                className="h-8 w-auto max-w-32 object-contain"
+              />
+            ) : (
+              <h1 className="text-xl font-black bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+                {companyLoading ? 'Loading...' : companyName}
+              </h1>
+            )}
+            <p className="text-xs text-violet-600 font-medium">{tagline}</p>
           </div>
         </div>
       </div>
