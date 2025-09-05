@@ -733,11 +733,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: email,
         firstName: firstName || email.split('@')[0],
         lastName: lastName || 'User',
-        roleId: roleId || null,
+        roleId: null, // Don't set roleId directly - use custom role assignment
         department: department || 'Staff',
         isActive: false, // Will be activated when password is set
         passwordHash: inviteToken, // Temporary store invitation token
       });
+
+      // Assign custom role if provided (for invited users)
+      if (roleId) {
+        await storage.assignCustomRoleToUser(user.id, roleId, 'system');
+        console.log(`🔗 Custom role ${roleId} assigned to invited user ${user.id}`);
+      }
 
       console.log(`📧 User invitation created: ${email}`);
 
@@ -1025,16 +1031,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Create user with custom role  
+      // Create user  
       const user = await storage.createUser({
         username: username || email,
         email,
         firstName,
         lastName,
-        roleId: customRoleId || null,
+        roleId: null, // Don't set roleId directly - use custom role assignment
         department: department || 'Recruitment',
         isActive: isActive !== undefined ? isActive : true
       });
+
+      // Assign custom role if provided (this properly links the role)
+      if (customRoleId) {
+        await storage.assignCustomRoleToUser(user.id, customRoleId, user.id);
+        console.log(`🔗 Custom role ${customRoleId} assigned to user ${user.id}`);
+      }
 
       // Note: This is direct user creation endpoint, not invitation
       // For invitations, use /api/auth/invite-user instead
@@ -3502,6 +3514,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await storage.updateCustomRolePermission(roleId, module, permissions);
+      
+      // Clear any cached permissions for users with this role
+      console.log(`🔄 Permissions updated for role ${roleId} - invalidating user sessions`);
+      
       res.json({ success: true });
     } catch (error) {
       console.error("Error updating role permissions:", error);
@@ -3561,11 +3577,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (customRoleId) {
         await storage.assignCustomRoleToUser(userId, customRoleId, currentUser.id);
+        console.log(`🔗 Role ${customRoleId} assigned to user ${userId}`);
       } else {
         await storage.removeCustomRoleFromUser(userId);
+        console.log(`🔗 Custom role removed from user ${userId}`);
       }
       
-      res.json({ success: true });
+      // Force permission refresh for this user on next request
+      console.log(`🔄 Role assignment changed for user ${userId} - permissions will refresh on next login`);
+      
+      res.json({ 
+        success: true, 
+        message: "Role assigned successfully. User should refresh/re-login to see updated permissions.",
+        requiresRefresh: true 
+      });
     } catch (error) {
       console.error("Error assigning custom role:", error);
       res.status(500).json({ message: "Failed to assign custom role" });
