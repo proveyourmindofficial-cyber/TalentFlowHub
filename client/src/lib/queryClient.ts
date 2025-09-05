@@ -2,6 +2,15 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
+    // Handle 401 errors by clearing auth state
+    if (res.status === 401) {
+      console.log('❌ Session expired, clearing auth state');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+      // Force page reload to trigger login flow
+      window.location.reload();
+    }
+    
     const text = (await res.text()) || res.statusText;
     throw new Error(`${res.status}: ${text}`);
   }

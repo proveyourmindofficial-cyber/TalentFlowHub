@@ -52,10 +52,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userData = localStorage.getItem('userData');
       
       if (token && userData) {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-        // Initialize activity tracking for existing session
-        activityTracker.setUser(parsedUser.id);
+        // Validate the session with the server before trusting localStorage
+        try {
+          const response = await fetch('/api/user/permissions', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          
+          if (response.ok) {
+            // Session is valid, use cached user data
+            const parsedUser = JSON.parse(userData);
+            setUser(parsedUser);
+            activityTracker.setUser(parsedUser.id);
+            console.log('✅ Session validated successfully');
+          } else {
+            // Session is invalid, clear cached data
+            console.log('❌ Session validation failed, clearing cached auth data');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            setUser(null);
+          }
+        } catch (validateError) {
+          // Network error or server unavailable, clear auth data to be safe
+          console.log('❌ Session validation error, clearing cached auth data');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userData');
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
