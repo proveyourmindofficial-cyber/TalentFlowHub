@@ -10,7 +10,7 @@ import graphEmailRoutes from "./routes/graphEmailRoutes";
 import emailTemplateRoutes from "./routes/emailTemplateRoutes";
 import moduleTemplateRoutes from "./routes/moduleTemplateRoutes";
 import { graphEmailService } from './services/graphEmailService';
-import { authenticateOffice365, authenticateUser, optionalAuth, requireRole } from "./auth";
+import { authenticateUser, requireRole } from "./auth";
 // Remove html-pdf-node import due to compatibility issues
 
 // UNIFIED USER INVITATION SYSTEM - Clean implementation
@@ -535,21 +535,6 @@ function generateOfferLetterHTML(offerData: any) {
 export async function registerRoutes(app: Express): Promise<Server> {
   
   // Authentication routes
-  app.get('/api/auth/user', authenticateOffice365, async (req, res) => {
-    try {
-      res.json(req.user);
-    } catch (error) {
-      console.error("Error fetching current user:", error);
-      res.status(500).json({ message: "Failed to fetch user information" });
-    }
-  });
-
-  app.post('/api/auth/login', async (req, res) => {
-    res.json({ 
-      message: "Please authenticate with Office 365",
-      authUrl: "Use your organization's Office 365 login"
-    });
-  });
 
   app.post('/api/auth/logout', async (req, res) => {
     // Clear the session
