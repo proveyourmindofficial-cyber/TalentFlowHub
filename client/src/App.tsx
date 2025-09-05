@@ -22,7 +22,6 @@ import ClientRequirements from "@/pages/client-requirements";
 import Settings from "@/pages/settings";
 import UserManagement from "@/pages/user-management";
 import ProfilePage from "@/pages/profile";
-import AdminMonitoring from "@/pages/admin-monitoring";
 import CandidatePortal from "@/pages/candidate-portal";
 import CandidateResponse from "@/pages/candidate-response";
 import NotFound from "@/pages/not-found";
@@ -86,7 +85,6 @@ function Router() {
         <Route path="/profile" component={ProfilePage} />
         <Route path="/settings" component={Settings} />
         <Route path="/user-management" component={UserManagement} />
-        <Route path="/admin/monitoring" component={AdminMonitoring} />
 
         {/* Candidate Portal Routes */}
         <Route path="/portal" component={CandidatePortal} />

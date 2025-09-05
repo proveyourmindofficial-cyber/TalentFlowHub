@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Mail, Settings as SettingsIcon, Shield, Users, Activity, MessageSquare, ArrowRight, ChevronLeft } from "lucide-react";
+import { Building2, Mail, Settings as SettingsIcon, Shield, Users, Activity, MessageSquare, ArrowRight, ChevronLeft, Monitor, TrendingUp } from "lucide-react";
 import Header from "@/components/layout/header";
 import CompanyProfile from "./company-profile";
 import ComprehensiveEmailManagement from "@/components/email/comprehensive-email-management";
@@ -10,6 +10,8 @@ import UserManagementSettings from "@/components/settings/UserManagementSettings
 import RoleManagementHub from "@/components/roles/RoleManagementHub";
 import { ActivityLogs } from "@/components/settings/activity-logs";
 import { FeedbackManagement } from "@/components/feedback/feedback-management";
+import { UserJourneyVisualization } from "@/components/admin/UserJourneyVisualization";
+import { SystemDiagnostics } from "@/components/admin/SystemDiagnostics";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -83,6 +85,28 @@ export default function Settings() {
       adminOnly: true,
       color: 'text-teal-600',
       bgColor: 'bg-teal-50 hover:bg-teal-100',
+    },
+    {
+      id: 'journeys',
+      label: 'User Journey Tracking',
+      description: 'Visualize user flows from invitation to active usage',
+      icon: TrendingUp,
+      component: UserJourneyVisualization,
+      category: 'admin',
+      adminOnly: true,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50 hover:bg-indigo-100',
+    },
+    {
+      id: 'diagnostics',
+      label: 'System Diagnostics',
+      description: 'Monitor system health, performance, and error tracking',
+      icon: Monitor,
+      component: SystemDiagnostics,
+      category: 'admin',
+      adminOnly: true,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50 hover:bg-red-100',
     },
     {
       id: 'feedback',
