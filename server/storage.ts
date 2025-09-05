@@ -973,13 +973,26 @@ export class DatabaseStorage implements IStorage {
     return log;
   }
 
-  async getActivityLogs(limit: number = 100, offset: number = 0): Promise<ActivityLog[]> {
-    return await db.select()
+  async getActivityLogs(limit: number = 100, offset: number = 0): Promise<any[]> {
+    const result = await db.select({
+      activity_logs: activityLogs,
+      users: users
+    })
       .from(activityLogs)
       .leftJoin(users, eq(activityLogs.userId, users.id))
       .orderBy(desc(activityLogs.createdAt))
       .limit(limit)
       .offset(offset);
+    
+    return result.map(row => ({
+      ...row.activity_logs,
+      user: row.users ? {
+        id: row.users.id,
+        username: `${row.users.firstName} ${row.users.lastName}`,
+        email: row.users.email,
+        role: row.users.department || 'Unknown'
+      } : null
+    }));
   }
 
   async getActivityLogsByUser(userId: string, limit: number = 50): Promise<ActivityLog[]> {
