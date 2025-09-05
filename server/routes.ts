@@ -92,6 +92,85 @@ async function sendPasswordSetupEmail(email: string, firstName: string, lastName
   }
 }
 
+// Password reset email function
+async function sendPasswordResetEmail(email: string, firstName: string, lastName: string, resetUrl: string) {
+  try {
+    const emailBody = `
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8f9fa; padding: 40px 20px; border-radius: 8px;">
+  
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="font-size: 28px; margin: 0; color: #2c3e50;">Password Reset Request</h1>
+    <p style="font-size: 16px; margin: 10px 0; color: #6c757d;">Reset your TalentFlowHub password</p>
+  </div>
+
+  <div style="background: white; padding: 30px; border-radius: 8px; margin-bottom: 25px; text-align: center; border: 1px solid #e9ecef;">
+    <h2 style="font-size: 22px; margin: 0 0 15px 0; color: #2c3e50;">Hello ${firstName},</h2>
+    <p style="font-size: 16px; margin: 0; color: #495057; line-height: 1.6;">
+      You requested a password reset for your TalentFlowHub account.<br>
+      Click the button below to create a new password.
+    </p>
+  </div>
+
+  <div style="background: white; padding: 25px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e9ecef;">
+    <h3 style="text-align: center; color: #2c3e50; font-size: 18px; margin: 0 0 20px 0;">Reset Your Password</h3>
+    
+    <div style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #dc3545;">
+      <span style="color: #495057;">1. Click "Reset Password" below</span>
+    </div>
+    
+    <div style="margin-bottom: 12px; padding: 12px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #fd7e14;">
+      <span style="color: #495057;">2. Enter your new secure password</span>
+    </div>
+    
+    <div style="padding: 12px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid #28a745;">
+      <span style="color: #495057;">3. Login with your new password</span>
+    </div>
+  </div>
+
+  <div style="text-align: center; margin: 30px 0;">
+    <a href="${resetUrl}" 
+       style="display: inline-block; background: #dc3545; color: white; text-decoration: none; font-weight: bold; font-size: 16px; padding: 14px 28px; border-radius: 6px; text-align: center;">
+      Reset Password
+    </a>
+    <p style="margin: 15px 0 0 0; font-size: 12px; color: #6c757d;">
+      This link will expire in 24 hours for security
+    </p>
+  </div>
+
+  <div style="background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 25px; text-align: center; border: 1px solid #ffeaa7;">
+    <p style="color: #856404; font-size: 14px; margin: 0;">
+      <strong>Important:</strong> If you didn't request this reset, please ignore this email. Your account remains secure.
+    </p>
+  </div>
+
+  <div style="text-align: center; border-top: 1px solid #e9ecef; padding-top: 20px;">
+    <p style="color: #6c757d; font-size: 12px; margin: 0 0 8px 0;">
+      Need assistance? Reply to this email for support
+    </p>
+    <p style="color: #2c3e50; font-weight: bold; font-size: 14px; margin: 0;">
+      TalentFlowHub Team
+    </p>
+  </div>
+  
+</div>`;
+
+    console.log(`📧 Sending password reset email to: ${email}`);
+    
+    await graphEmailService.sendEmail({
+      to: email,
+      subject: '🔑 Reset Your TalentFlowHub Password',
+      body: emailBody,
+      isHtml: true,
+    });
+    
+    console.log(`✅ Password reset email sent successfully to: ${email}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ Failed to send password reset email to ${email}:`, error);
+    return false;
+  }
+}
+
 // Email helper function for all modules
 async function sendModuleEmail(templateKey: string, recipientEmail: string, data: any) {
   try {
@@ -724,6 +803,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'Login failed' });
+    }
+  });
+
+  // Forgot password - request reset
+  app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || !email.includes('@')) {
+        return res.status(400).json({ message: 'Valid email address required' });
+      }
+
+      // Check if user exists
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        // Don't reveal if user exists or not for security
+        return res.json({ message: 'If an account with this email exists, a password reset link has been sent.' });
+      }
+
+      // Generate password reset token
+      const resetToken = Buffer.from(`${email}:${Date.now()}`).toString('base64');
+      
+      // Store reset token in passwordHash temporarily (will be overwritten when password is reset)
+      await storage.updateUser(user.id, {
+        passwordHash: `RESET:${resetToken}` // Prefix to distinguish from regular passwords
+      });
+
+      // Create the reset URL
+      const resetUrl = `https://${process.env.REPLIT_DEV_DOMAIN}/reset-password?token=${resetToken}`;
+      
+      // Send password reset email using unified system
+      const emailSent = await sendPasswordResetEmail(
+        email, 
+        user.firstName || email.split('@')[0], 
+        user.lastName || 'User', 
+        resetUrl
+      );
+
+      res.json({ message: 'If an account with this email exists, a password reset link has been sent.' });
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      res.status(500).json({ message: 'Failed to process password reset request' });
+    }
+  });
+
+  // Reset password with token
+  app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+      const { token, newPassword } = req.body;
+      
+      if (!token || !newPassword) {
+        return res.status(400).json({ message: 'Token and new password are required' });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+      }
+
+      // Decode token to get email
+      const decoded = Buffer.from(token, 'base64').toString();
+      const [email, timestamp] = decoded.split(':');
+      
+      // Check if token is expired (24 hours)
+      const tokenTime = parseInt(timestamp);
+      const currentTime = Date.now();
+      const oneDay = 24 * 60 * 60 * 1000;
+      
+      if (currentTime - tokenTime > oneDay) {
+        return res.status(400).json({ message: 'Reset token has expired' });
+      }
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid reset token' });
+      }
+
+      // Verify the reset token matches what we stored
+      if (!user.passwordHash || !user.passwordHash.startsWith('RESET:')) {
+        return res.status(400).json({ message: 'Invalid or expired reset token' });
+      }
+
+      const storedToken = user.passwordHash.replace('RESET:', '');
+      if (storedToken !== token) {
+        return res.status(400).json({ message: 'Invalid reset token' });
+      }
+
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
+      
+      // Update user with new password and activate account
+      await storage.updateUser(user.id, {
+        passwordHash: hashedPassword,
+        isActive: true
+      });
+
+      console.log(`🔑 Password reset successful for: ${user.email}`);
+
+      res.json({ message: 'Password has been reset successfully. You can now login with your new password.' });
+    } catch (error) {
+      console.error('Reset password error:', error);
+      res.status(500).json({ message: 'Failed to reset password' });
     }
   });
 
