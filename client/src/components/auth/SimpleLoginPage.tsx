@@ -63,50 +63,50 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-100 via-purple-50 to-cyan-100 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-teal-50 to-cyan-50 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full animate-pulse"></div>
-        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-r from-cyan-400/20 to-blue-400/20 rounded-full animate-pulse delay-1000"></div>
+        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-r from-blue-400/10 to-teal-400/10 rounded-full animate-pulse"></div>
+        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-r from-teal-400/10 to-cyan-400/10 rounded-full animate-pulse delay-1000"></div>
       </div>
       
-      <Card className="w-full max-w-md backdrop-blur-lg bg-white/90 border-0 shadow-2xl relative z-10 transform transition-all duration-300 hover:scale-105">
+      <Card className="w-full max-w-md backdrop-blur-lg bg-white/95 border border-blue-100/50 shadow-2xl relative z-10 transform transition-all duration-300 hover:scale-105">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-8">
             {companyLogo ? (
-              <div className="p-4 rounded-2xl shadow-lg transform transition-all duration-300 hover:rotate-6">
+              <div className="bg-gradient-to-br from-blue-50 to-teal-50 p-6 rounded-3xl shadow-lg transform transition-all duration-300 hover:scale-110 border border-blue-100">
                 <img 
                   src={companyLogo} 
                   alt={companyName}
-                  className="h-16 w-auto max-w-32 object-contain"
+                  className="h-20 w-auto max-w-40 object-contain"
                 />
               </div>
             ) : (
-              <div className="bg-gradient-to-r from-violet-600 to-purple-600 p-4 rounded-2xl shadow-lg transform transition-all duration-300 hover:rotate-6">
-                <Building2 className="h-10 w-10 text-white" />
+              <div className="bg-gradient-to-r from-blue-600 to-teal-600 p-6 rounded-3xl shadow-lg transform transition-all duration-300 hover:scale-110">
+                <Building2 className="h-12 w-12 text-white" />
               </div>
             )}
           </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-            {companyLoading ? 'Loading...' : companyName} ⚡
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-teal-600 bg-clip-text text-transparent mb-2">
+            O2F Portal
           </CardTitle>
-          <p className="text-gray-600 mt-3 font-medium">
-            {tagline || 'Welcome to your recruitment platform'} 🚀
+          <p className="text-slate-600 font-medium">
+            ATS Management System
           </p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700 font-medium">Email Address</Label>
+              <Label htmlFor="email" className="text-slate-700 font-medium">Email Address</Label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-violet-400 h-5 w-5" />
+                <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" />
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email address"
-                  className="pl-12 h-12 bg-gradient-to-r from-gray-50 to-white border-2 border-gray-200 focus:border-violet-400 rounded-xl transition-all duration-300"
+                  className="pl-12 h-12 bg-gradient-to-r from-blue-50/50 to-white border-2 border-blue-200/60 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl transition-all duration-300"
                   required
                   data-testid="input-email"
                 />
@@ -114,9 +114,9 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-700 font-medium">Password</Label>
+              <Label htmlFor="password" className="text-slate-700 font-medium">Password</Label>
               <div className="relative">
-                <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 text-violet-400 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-500 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <Input
@@ -125,7 +125,7 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="pl-12 h-12 bg-gradient-to-r from-gray-50 to-white border-2 border-gray-200 focus:border-violet-400 rounded-xl transition-all duration-300"
+                  className="pl-12 h-12 bg-gradient-to-r from-blue-50/50 to-white border-2 border-blue-200/60 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl transition-all duration-300"
                   required
                   data-testid="input-password"
                 />
@@ -134,7 +134,7 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
 
             <Button
               type="submit"
-              className="w-full h-12 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+              className="w-full h-12 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-semibold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
               disabled={login.isPending || !email.trim() || !password.trim()}
               data-testid="button-login"
             >
@@ -154,7 +154,7 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
           <div className="mt-4 text-center">
             <button
               type="button"
-              className="text-sm text-violet-600 hover:text-violet-800 underline transition-colors duration-300"
+              className="text-sm text-blue-600 hover:text-blue-800 underline transition-colors duration-300"
               onClick={() => {
                 setLocation('/forgot-password');
               }}
@@ -165,8 +165,8 @@ export function SimpleLoginPage({ onLoginSuccess }: SimpleLoginPageProps) {
           </div>
 
           <div className="mt-6 text-center">
-            <div className="bg-gradient-to-r from-violet-50 to-purple-50 p-4 rounded-xl border border-violet-100">
-              <p className="text-xs text-violet-800 leading-relaxed">
+            <div className="bg-gradient-to-r from-blue-50 to-teal-50 p-4 rounded-xl border border-blue-100">
+              <p className="text-xs text-blue-800 leading-relaxed">
                 <strong>💡 Pro tip:</strong> Contact your system admin if you need an account or role updates. We've got you covered! 
               </p>
             </div>
