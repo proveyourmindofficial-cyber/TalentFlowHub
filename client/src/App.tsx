@@ -21,6 +21,7 @@ import OfferLetters from "@/pages/OfferLetters";
 import ClientRequirements from "@/pages/client-requirements";
 import Settings from "@/pages/settings";
 import UserManagement from "@/pages/user-management";
+import ProfilePage from "@/pages/profile";
 import CandidatePortal from "@/pages/candidate-portal";
 import CandidateResponse from "@/pages/candidate-response";
 import NotFound from "@/pages/not-found";
@@ -77,6 +78,7 @@ function Router() {
         <Route path="/interviews" component={Interviews} />
         <Route path="/offer-letters" component={OfferLetters} />
         <Route path="/client-requirements" component={ClientRequirements} />
+        <Route path="/profile" component={ProfilePage} />
         <Route path="/settings" component={Settings} />
         <Route path="/user-management" component={UserManagement} />
 

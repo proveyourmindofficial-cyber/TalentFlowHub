@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCompanyBranding } from "@/hooks/useCompanyProfile";
+import UserProfileDropdown from "./user-profile-dropdown";
 
 const baseNavigation = [
   { name: "Dashboard", href: "/", icon: ChartPie, module: "dashboard" },
@@ -50,8 +51,8 @@ export default function Sidebar() {
     enabled: !!user,
   });
 
-  const userPermissions = permissionsData?.permissions || {};
-  const userRole = permissionsData?.role;
+  const userPermissions = (permissionsData as any)?.permissions || {};
+  const userRole = (permissionsData as any)?.role;
 
   // Filter navigation based on permissions
   const hasPermission = (module: string) => {
@@ -100,16 +101,7 @@ export default function Sidebar() {
 
       {/* User Profile */}
       <div className="p-4 border-b border-blue-100">
-        <div className="flex items-center space-x-3 bg-gradient-to-r from-blue-50 to-teal-50 p-3 rounded-xl border border-blue-100">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-teal-500 rounded-xl flex items-center justify-center">
-            <Users className="text-white w-5 h-5" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-bold text-gray-900">{userRole?.name || 'User'} {userRole?.name === 'Super Admin' ? '🔥' : '⚡'}</p>
-            <p className="text-xs text-blue-600 font-medium">{user?.firstName} {user?.lastName}</p>
-          </div>
-          <Settings className="text-blue-500 w-4 h-4 cursor-pointer hover:text-blue-700 transform transition-all duration-300 hover:rotate-90" />
-        </div>
+        <UserProfileDropdown userRole={userRole} user={user} />
       </div>
 
       {/* Navigation Menu */}
