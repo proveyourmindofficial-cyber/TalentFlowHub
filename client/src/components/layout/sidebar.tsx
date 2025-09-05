@@ -32,7 +32,6 @@ const baseNavigation = [
 
 const secondaryNavigation = [
   { name: "Reports", href: "/reports", icon: BarChart3, module: "reports" },
-  { name: "System Monitoring", href: "/admin/monitoring", icon: Monitor, module: "admin" },
   { name: "Settings", href: "/settings", icon: Settings, module: "settings" },
 ];
 
