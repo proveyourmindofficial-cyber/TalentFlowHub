@@ -687,6 +687,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Create the setup URL
         const setupUrl = `https://${process.env.REPLIT_DEV_DOMAIN}/setup-password?token=${inviteToken}`;
         
+        // Update/create user journey for resent invitation
+        try {
+          await storage.createUserJourneyState({
+            userId: existingUser.id,
+            currentStage: 'invitation_resent',
+            flow: 'user_onboarding',
+            stageData: {
+              invitationResent: true,
+              inviteToken: inviteToken,
+              email: email
+            },
+            metadata: {
+              inviteMethod: 'admin_resend',
+              department: department || existingUser.department || 'Staff'
+            }
+          });
+          console.log(`🔄 User journey updated for resent invitation: ${email}`);
+        } catch (journeyError) {
+          console.error('Failed to update user journey:', journeyError);
+        }
+
         // Send password setup email
         const emailSent = await sendPasswordSetupEmail(
           email, 
@@ -719,6 +740,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       console.log(`📧 User invitation created: ${email}`);
+
+      // Create user journey to track the invitation flow
+      try {
+        await storage.createUserJourneyState({
+          userId: user.id,
+          currentStage: 'invited',
+          flow: 'user_onboarding',
+          stageData: {
+            invitationSent: true,
+            inviteToken: inviteToken,
+            email: email
+          },
+          metadata: {
+            inviteMethod: 'admin_invitation',
+            department: department || 'Staff',
+            role: roleId || 'user'
+          }
+        });
+        console.log(`🔄 User journey initialized for: ${email}`);
+      } catch (journeyError) {
+        console.error('Failed to create user journey:', journeyError);
+      }
 
       // Create the setup URL
       const setupUrl = `https://${process.env.REPLIT_DEV_DOMAIN}/setup-password?token=${inviteToken}`;
