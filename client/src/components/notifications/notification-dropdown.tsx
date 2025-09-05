@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Bell, Check, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -48,27 +49,25 @@ const getNotificationColor = (type: string) => {
 export function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useAuth();
 
-  // Fetch unread notification count
+  // Fetch unread notification count (only when authenticated)
   const { data: countData } = useQuery({
     queryKey: ['/api/notifications/unread/count'],
+    enabled: isAuthenticated, // Only fetch when user is authenticated
     refetchInterval: 30000, // Poll every 30 seconds for real-time updates
   });
 
-  // Fetch all notifications when dropdown is opened
+  // Fetch all notifications when dropdown is opened (only when authenticated)
   const { data: notifications, isLoading } = useQuery({
     queryKey: ['/api/notifications'],
-    enabled: isOpen,
+    enabled: isOpen && isAuthenticated, // Only fetch when authenticated and dropdown is open
   });
 
   // Mark notification as read mutation
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      const response = await fetch(`/api/notifications/${notificationId}/read`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) throw new Error('Failed to mark as read');
+      const response = await apiRequest('PUT', `/api/notifications/${notificationId}/read`);
       return response.json();
     },
     onSuccess: () => {
@@ -81,11 +80,7 @@ export function NotificationDropdown() {
   // Mark all as read mutation
   const markAllAsReadMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/notifications/mark-all-read', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) throw new Error('Failed to mark all as read');
+      const response = await apiRequest('PUT', '/api/notifications/mark-all-read');
       return response.json();
     },
     onSuccess: () => {
@@ -97,12 +92,8 @@ export function NotificationDropdown() {
   // Delete notification mutation
   const deleteNotificationMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      const response = await fetch(`/api/notifications/${notificationId}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (!response.ok) throw new Error('Failed to delete notification');
-      return response.ok;
+      await apiRequest('DELETE', `/api/notifications/${notificationId}`);
+      return true;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
