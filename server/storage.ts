@@ -1267,6 +1267,40 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return state;
   }
+
+  // Get all user journey states for admin interface
+  async getUserJourneyStates(): Promise<any[]> {
+    const result = await db.select({
+      id: userJourneyStates.id,
+      userId: userJourneyStates.userId,
+      currentStage: userJourneyStates.currentStage,
+      previousStage: userJourneyStates.previousStage,
+      invitationSent: userJourneyStates.invitationSent,
+      invitationSentAt: userJourneyStates.invitationSentAt,
+      emailDelivered: userJourneyStates.emailDelivered,
+      emailOpened: userJourneyStates.emailOpened,
+      passwordSetupCompleted: userJourneyStates.passwordSetupCompleted,
+      firstLoginSuccess: userJourneyStates.firstLoginSuccess,
+      totalSessions: userJourneyStates.totalSessions,
+      lastActivityAt: userJourneyStates.lastActivityAt,
+      isStuck: userJourneyStates.isStuck,
+      errorCount: userJourneyStates.errorCount,
+      journeyCompleted: userJourneyStates.journeyCompleted,
+      createdAt: userJourneyStates.createdAt,
+      updatedAt: userJourneyStates.updatedAt,
+      user: {
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName
+      }
+    })
+    .from(userJourneyStates)
+    .leftJoin(users, eq(userJourneyStates.userId, users.id))
+    .orderBy(desc(userJourneyStates.createdAt));
+    
+    return result;
+  }
 }
 
 export const storage = new DatabaseStorage();
