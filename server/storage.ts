@@ -998,7 +998,6 @@ export class DatabaseStorage implements IStorage {
   async getActivityLogsByUser(userId: string, limit: number = 50): Promise<ActivityLog[]> {
     return await db.select()
       .from(activityLogs)
-      .leftJoin(users, eq(activityLogs.userId, users.id))
       .where(eq(activityLogs.userId, userId))
       .orderBy(desc(activityLogs.createdAt))
       .limit(limit);
