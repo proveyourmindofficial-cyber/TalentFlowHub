@@ -735,7 +735,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Assign custom role if provided (for invited users)
       if (roleId) {
-        await storage.assignCustomRoleToUser(user.id, roleId, 'system');
+        const currentUser = req.user as any;
+        await storage.assignCustomRoleToUser(user.id, roleId, currentUser?.id || user.id);
         console.log(`🔗 Custom role ${roleId} assigned to invited user ${user.id}`);
       }
 
