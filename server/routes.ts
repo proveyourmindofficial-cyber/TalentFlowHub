@@ -1404,7 +1404,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           subject = subject.replace(/\{\{company\.name\}\}/g, companyData.name);
           
           // Add other placeholders
-          emailContent = emailContent.replace(/\{\{candidate\.portalLink\}\}/g, 'https://talentflow.tech/portal');
+          if (emailContent) {
+            emailContent = emailContent.replace(/\{\{candidate\.portalLink\}\}/g, 'https://talentflow.tech/portal');
+          }
           
           // Wrap in professional HTML template
           const wrappedContent = `
@@ -3845,7 +3847,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await ActivityLogger.logSystemAction(
         req.user.id,
-        'delete',
+        'status_change',
         `Deleted feedback: ${feedback.title}`,
         req,
         true
