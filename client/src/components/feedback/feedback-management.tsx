@@ -115,6 +115,17 @@ export function FeedbackManagement() {
   // Fetch feedback list
   const { data: feedbackList, isLoading } = useQuery({
     queryKey: ['/api/feedback', { type: typeFilter, status: statusFilter, priority: priorityFilter }],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (typeFilter !== "all") params.append('type', typeFilter);
+      if (statusFilter !== "all") params.append('status', statusFilter);
+      if (priorityFilter !== "all") params.append('priority', priorityFilter);
+      
+      const url = `/api/feedback${params.toString() ? '?' + params.toString() : ''}`;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch feedback');
+      return response.json();
+    },
     refetchInterval: 30000, // Real-time updates
   });
 
