@@ -81,20 +81,20 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-gradient-to-b from-white via-blue-50/50 to-blue-100/30 shadow-xl border-r border-blue-200/50 flex flex-col min-h-screen" data-testid="sidebar">
       {/* Logo Section */}
-      <div className="p-6 border-b border-blue-100 bg-white/50">
-        <div className="flex items-center space-x-3">
+      <div className="p-6 border-b border-blue-100/50 bg-gradient-to-r from-white to-blue-50/30">
+        <div className="flex items-center space-x-4">
           <div className="flex-shrink-0">
-            <img 
-              src="/attached_assets/Logo tm 1_1757076341265.png"
-              alt="O2F InfoSolutions Logo"
-              className="w-12 h-12 object-contain"
-            />
+            <div className="w-12 h-12 bg-white rounded-xl shadow-lg p-2 flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 via-blue-500 to-teal-500 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-xs">O2F</span>
+              </div>
+            </div>
           </div>
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-gray-900 truncate">
+            <h1 className="text-lg font-bold text-gray-900 leading-tight">
               O2F InfoSolutions
             </h1>
-            <p className="text-xs text-blue-600 font-medium truncate">TalentFlow ATS Platform</p>
+            <p className="text-xs text-blue-600 font-medium mt-1">TalentFlow ATS Platform</p>
           </div>
         </div>
       </div>
