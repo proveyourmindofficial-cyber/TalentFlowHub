@@ -1151,7 +1151,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFeedbackList(filters?: any): Promise<any[]> {
-    let query = db.select({
+    // Build WHERE conditions
+    let conditions = [];
+    if (filters?.status) {
+      conditions.push(eq(feedback.status, filters.status));
+    }
+    if (filters?.type) {
+      conditions.push(eq(feedback.type, filters.type));
+    }
+    if (filters?.priority) {
+      conditions.push(eq(feedback.priority, filters.priority));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const result = await db.select({
       id: feedback.id,
       userId: feedback.userId,
       type: feedback.type,
@@ -1174,19 +1188,11 @@ export class DatabaseStorage implements IStorage {
       }
     })
     .from(feedback)
-    .leftJoin(users, eq(feedback.userId, users.id));
+    .leftJoin(users, eq(feedback.userId, users.id))
+    .where(whereClause)
+    .orderBy(desc(feedback.createdAt));
     
-    if (filters?.status) {
-      query = query.where(eq(feedback.status, filters.status));
-    }
-    if (filters?.type) {
-      query = query.where(eq(feedback.type, filters.type));
-    }
-    if (filters?.priority) {
-      query = query.where(eq(feedback.priority, filters.priority));
-    }
-    
-    return await query.orderBy(desc(feedback.createdAt));
+    return result;
   }
 
   async updateFeedback(id: string, feedbackData: Partial<InsertFeedback>): Promise<Feedback> {
