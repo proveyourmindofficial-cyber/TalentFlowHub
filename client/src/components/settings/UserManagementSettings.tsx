@@ -138,7 +138,8 @@ export default function UserManagementSettings() {
         email: userData.email,
         firstName: userData.firstName,
         lastName: userData.lastName,
-        department: userData.department
+        department: userData.department,
+        roleId: userData.customRoleId || null
       });
     },
     onSuccess: () => {
