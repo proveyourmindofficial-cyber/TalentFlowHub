@@ -1150,8 +1150,31 @@ export class DatabaseStorage implements IStorage {
     return feedbackItem;
   }
 
-  async getFeedbackList(filters?: any): Promise<Feedback[]> {
-    let query = db.select().from(feedback);
+  async getFeedbackList(filters?: any): Promise<any[]> {
+    let query = db.select({
+      id: feedback.id,
+      userId: feedback.userId,
+      type: feedback.type,
+      priority: feedback.priority,
+      status: feedback.status,
+      title: feedback.title,
+      description: feedback.description,
+      page: feedback.page,
+      userAgent: feedback.userAgent,
+      assignedTo: feedback.assignedTo,
+      resolution: feedback.resolution,
+      createdAt: feedback.createdAt,
+      updatedAt: feedback.updatedAt,
+      user: {
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      }
+    })
+    .from(feedback)
+    .leftJoin(users, eq(feedback.userId, users.id));
     
     if (filters?.status) {
       query = query.where(eq(feedback.status, filters.status));
