@@ -692,16 +692,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.createUserJourneyState({
             userId: existingUser.id,
             currentStage: 'invitation_resent',
-            flow: 'user_onboarding',
-            stageData: {
-              invitationResent: true,
-              inviteToken: inviteToken,
-              email: email
-            },
-            metadata: {
-              inviteMethod: 'admin_resend',
-              department: department || existingUser.department || 'Staff'
-            }
+            invitationSent: true,
+            invitationSentAt: new Date(),
+            adminActionTaken: 'invitation_resent',
+            adminActionAt: new Date()
           });
           console.log(`🔄 User journey updated for resent invitation: ${email}`);
         } catch (journeyError) {
@@ -752,17 +746,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.createUserJourneyState({
           userId: user.id,
           currentStage: 'invited',
-          flow: 'user_onboarding',
-          stageData: {
-            invitationSent: true,
-            inviteToken: inviteToken,
-            email: email
-          },
-          metadata: {
-            inviteMethod: 'admin_invitation',
-            department: department || 'Staff',
-            role: roleId || 'user'
-          }
+          invitationSent: true,
+          invitationSentAt: new Date(),
+          emailDelivered: false,
+          passwordSetupCompleted: false,
+          adminActionTaken: 'user_created',
+          adminActionAt: new Date()
         });
         console.log(`🔄 User journey initialized for: ${email}`);
       } catch (journeyError) {
@@ -3658,54 +3647,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin endpoints for monitoring
   app.get('/api/admin/user-journeys', authenticateUser, async (req, res) => {
     try {
-      // Mock user journey data for now - will be enhanced with real data processing
-      const journeys = [
-        {
-          userId: req.user?.id || 'demo-user',
-          userEmail: req.user?.email || 'demo@example.com',
-          currentStage: 'Active Usage',
-          startedAt: new Date(Date.now() - 3600000).toISOString(),
-          lastActivity: new Date().toISOString(),
-          totalSteps: 5,
-          completedSteps: 4,
-          status: 'active',
-          steps: [
-            {
-              id: '1',
-              step: 'Email Invitation',
-              action: 'invitation_sent',
-              timestamp: new Date(Date.now() - 3600000).toISOString(),
-              status: 'completed',
-              duration: '1 min'
-            },
-            {
-              id: '2', 
-              step: 'Account Setup',
-              action: 'login',
-              timestamp: new Date(Date.now() - 3000000).toISOString(),
-              status: 'completed',
-              duration: '5 min'
-            },
-            {
-              id: '3',
-              step: 'Dashboard Access',
-              action: 'page_view',
-              timestamp: new Date(Date.now() - 1800000).toISOString(),
-              status: 'completed',
-              duration: '2 min'
-            },
-            {
-              id: '4',
-              step: 'Feature Usage',
-              action: 'create',
-              timestamp: new Date(Date.now() - 600000).toISOString(),
-              status: 'current',
-              duration: '10 min'
-            }
-          ]
-        }
-      ];
-      res.json(journeys);
+      const userJourneys = await storage.getUserJourneyStates();
+      
+      // Transform database data to frontend format
+      const transformedJourneys = userJourneys.map((journey: any) => {
+        // Calculate status based on journey data
+        let status = 'pending';
+        if (journey.journeyCompleted) status = 'completed';
+        else if (journey.isStuck) status = 'stuck';
+        else if (journey.firstLoginSuccess) status = 'active';
+        else if (journey.invitationSent && !journey.passwordSetupCompleted) status = 'pending';
+        
+        return {
+          id: journey.id,
+          userId: journey.userId,
+          userEmail: journey.user?.email || 'Unknown',
+          currentStage: journey.currentStage || 'invited',
+          startedAt: journey.createdAt,
+          lastActivity: journey.lastActivityAt || journey.updatedAt,
+          status: status,
+          invitationSent: journey.invitationSent,
+          emailDelivered: journey.emailDelivered,
+          emailOpened: journey.emailOpened,
+          passwordSetupCompleted: journey.passwordSetupCompleted,
+          firstLoginSuccess: journey.firstLoginSuccess,
+          totalSessions: journey.totalSessions || 0,
+          isStuck: journey.isStuck,
+          errorCount: journey.errorCount || 0
+        };
+      });
+      
+      res.json(transformedJourneys);
     } catch (error) {
       console.error("Error fetching user journeys:", error);
       res.status(500).json({ message: "Failed to fetch user journeys" });
