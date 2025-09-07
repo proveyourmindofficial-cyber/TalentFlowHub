@@ -95,7 +95,7 @@ export default function Sidebar() {
       </div>
 
       {/* User Profile */}
-      <div className="p-4 border-b border-blue-100/50 bg-white/30">
+      <div className="p-4 border-b border-blue-100/50 bg-gradient-to-r from-white/40 to-blue-50/40">
         <UserProfileDropdown userRole={userRole} user={user} />
       </div>
 
@@ -128,13 +128,15 @@ export default function Sidebar() {
                 {item.badge !== undefined && (
                   <span 
                     className={cn(
-                      "ml-auto text-xs px-2 py-1 rounded-full",
+                      "ml-auto text-xs px-2.5 py-1 rounded-full font-medium transition-colors",
                       item.badgeType === "error" 
-                        ? "bg-error text-white" 
-                        : "bg-gray-200 text-gray-600"
+                        ? "bg-red-500 text-white shadow-sm" 
+                        : isActive 
+                          ? "bg-white/20 text-white" 
+                          : "bg-blue-100 text-blue-600"
                     )}
                   >
-                    ({item.badge})
+                    {item.badge}
                   </span>
                 )}
               </div>
@@ -142,27 +144,28 @@ export default function Sidebar() {
           );
         })}
         
-        <div className="pt-4 border-t border-gray-200 mt-4">
+        <div className="pt-4 border-t border-blue-200/30 mt-4">
           {secondaryNav.map((item) => {
             const isActive = location === item.href;
             return (
               <Link key={item.name} href={item.href} data-testid={`nav-${item.name.toLowerCase()}`}>
                 <div
                   className={cn(
-                    "flex items-center space-x-3 p-3 rounded-lg transition-colors sidebar-item",
+                    "flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 sidebar-item relative",
                     isActive
-                      ? "bg-blue-50 border-l-4 border-primary"
-                      : "text-gray-700 hover:text-primary"
+                      ? "bg-blue-600 text-white shadow-lg transform scale-[1.02]"
+                      : "text-gray-700 hover:bg-white/60 hover:text-blue-600 hover:shadow-md"
                   )}
                 >
                   <item.icon 
                     className={cn(
-                      "w-5 h-5",
-                      isActive ? "text-primary" : "text-gray-400"
+                      "w-5 h-5 transition-colors",
+                      isActive ? "text-white" : "text-gray-500"
                     )} 
                   />
                   <span className={cn(
-                    isActive ? "text-primary font-medium" : ""
+                    "transition-colors font-medium",
+                    isActive ? "text-white" : "text-gray-700"
                   )}>
                     {item.name}
                   </span>
