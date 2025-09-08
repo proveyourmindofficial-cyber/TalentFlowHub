@@ -1,0 +1,103 @@
+Two Types of Jobs
+
+Internal (Company Roles):
+
+Positions are very limited (Recruiter, Operations, Finance, IT, HR).
+
+These JDs are standard, and updates are done by HR (only one person handles this).
+
+No approval process is needed — HR directly uploads or updates these.
+
+External (Client Roles):
+
+Multiple job positions, received from clients via emails.
+
+Account Managers are the ones who get these JDs from management (or admin) and upload them into the portal.
+
+Recruiters do not upload JDs — they only work on JDs shared by their Account Manager.
+
+How It Works Now
+
+Account Managers upload JDs into the portal.
+
+Each Account Manager can decide which JD goes to which recruiter in their team.
+
+Sometimes:
+
+A JD is shared with only one recruiter or one team.
+
+Other times, a JD is common to all recruiters and everyone works on it.
+
+Different Account Managers might get the same JD and share it separately with their teams.
+
+All of this right now is being done via email, which is hard to track.
+
+Problems
+
+No proper tracking of which recruiter is working on which JD.
+
+Sometimes duplicate effort happens (same JD shared by multiple Account Managers).
+
+No visibility for management on who is handling what JD.
+
+Confusion between “common JDs” and “assigned JDs”.
+
+What You’re Asking For
+
+A clear solution for tracking JDs inside the portal:
+
+JDs will still be uploaded only by Account Managers.
+
+But there must be visibility on:
+
+Which JDs exist in the system (a common pool of all JDs)
+
+Which recruiter is assigned to which JD
+
+Which JDs are common (visible to everyone) vs. restricted (assigned to specific recruiter/team)
+
+Suggested Solution
+
+JD Upload Process
+
+Only Account Managers can upload new JDs (as per current setup).
+
+Each JD should have two properties:
+
+Visibility → Common (all recruiters) or Assigned (specific recruiters/teams)
+
+Source → Internal (HR-created) or External (Client via Account Manager)
+
+Assignment Flow
+
+When uploading, Account Manager selects:
+
+If JD is common, it automatically becomes visible to all recruiters.
+
+If JD is assigned, Account Manager chooses which recruiter(s) or team gets it.
+
+Recruiters will then only see:
+
+Common JDs (for all)
+
+Assigned JDs (specifically given to them)
+
+Tracking & Reporting
+
+Admin should be able to see a full JD tracker:
+
+JD → Uploaded by which Account Manager → Assigned to which recruiters → Current status (Open, In-progress, Closed).
+
+Prevent duplication by giving each JD a unique reference ID.
+
+Benefits of This Plan
+
+No more confusion between internal vs external jobs.
+
+No duplication of effort on the same JD.
+
+Recruiters have a clear view of only the jobs they should work on.
+
+Management/Admin can easily track assignments and progress.
+
+✅ This way, you’ll have clarity + control without changing the current process too much (Account Managers still upload, recruiters still work on assigned JDs).
