@@ -1,0 +1,55 @@
+"If I’m not wrong, let me explain my thought process in a simple way. This is also part of my future business plan.
+
+As we discussed earlier, we have two types of candidates:
+
+Internal candidates – basically our employees or users (this is directly related to User Management).
+
+External candidates – candidates we source for our clients.
+
+If you check the Candidate model and the User Management module, you’ll notice the connection. You can also find the complete information in the PQA or documentation files for this project. Please analyze those thoroughly so you understand the bigger picture.
+
+Internal Candidate Flow (Employee Lifecycle):
+
+We post a job for an internal requirement.
+
+Candidates are sourced (internal).
+
+They go through interviews.
+
+If selected, they receive an offer letter.
+
+After accepting, the onboarding process begins.
+
+👉 Onboarding here means converting the candidate into an employee (user) in the system.
+
+That employee must be added into User Management.
+
+They should be assigned a department, role, permissions, and application access.
+
+In simple terms, the user profile = candidate profile that has been converted into employee.
+
+Current System
+
+Right now, we only create basic user details (like email and role).
+
+Going forward, we already have profile settings in place, which should be extended.
+
+The flow should be: Admin/HR creates the user with basic details → User completes their profile → Additional info is added gradually (department, role, access, etc.).
+
+Key Point
+
+We should not duplicate efforts by separately managing Profile Settings, User Management, and Candidate Profiles. They should all be part of a single unified flow:
+
+Candidate → Employee → User profile (with role, permissions, and access).
+
+So, to summarize:
+
+An internal candidate eventually becomes a user/employee in User Management.
+
+External candidates remain separate and are managed for client projects.
+
+We need to align the candidate model and user model to avoid duplication.
+
+This gives clarity and makes the flow smooth for both HR/Admin and users.
+
+First, I want you to confirm what you understood from my explanation. Did it make sense to you? If not, please ask questions so we can clarify before planning the implementation."
