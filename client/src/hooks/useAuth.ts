@@ -6,7 +6,8 @@ interface User {
   email: string;
   firstName?: string;
   lastName?: string;
-  role: string;
+  role?: string;
+  roleName?: string;
   department?: string;
 }
 
@@ -101,6 +102,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     // Start activity tracking for this user
     activityTracker.setUser(userData.id);
+    
+    // Role-based routing after login
+    setTimeout(() => {
+      // Get user role from userData - check different possible role field names
+      const userRole = userData.role || userData.roleName || '';
+      const roleNormalized = userRole.toLowerCase().trim();
+      
+      console.log('🔀 Redirecting user based on role:', roleNormalized);
+      
+      if (roleNormalized === 'super admin' || roleNormalized === 'admin') {
+        window.location.href = '/';  // Admin gets current dashboard
+      } else if (roleNormalized === 'hr') {
+        window.location.href = '/hr/dashboard';
+      } else if (roleNormalized === 'recruiter') {
+        window.location.href = '/recruiter/dashboard';
+      } else if (roleNormalized === 'account manager') {
+        window.location.href = '/manager/dashboard';
+      } else {
+        // Default user dashboard for any other role
+        window.location.href = '/user/dashboard';
+      }
+    }, 100); // Small delay to ensure state is set
   };
 
   const logout = () => {

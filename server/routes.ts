@@ -883,13 +883,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         (req.session as any).userId = user.id;
       }
       
+      // Fetch user's role information
+      let roleDetails = null;
+      try {
+        const userRole = await storage.getUserCustomRole(user.id);
+        if (userRole) {
+          const roleData = await storage.getCustomRole(userRole.customRoleId);
+          if (roleData) {
+            roleDetails = { 
+              id: roleData.id, 
+              name: roleData.name, 
+              color: roleData.color 
+            };
+          }
+        }
+      } catch (roleError) {
+        console.warn('Failed to fetch user role:', roleError);
+      }
+      
       // Create a simple session token for the frontend
       const token = Buffer.from(JSON.stringify({ userId: user.id, email: user.email })).toString('base64');
       
-      console.log(`✅ Login successful for: ${user.email}`);
+      console.log(`✅ Login successful for: ${user.email} (Role: ${roleDetails?.name || 'No role'})`);
+      
+      // Include role information in user object
+      const userWithRole = {
+        ...user,
+        role: roleDetails?.name || null,
+        roleName: roleDetails?.name || null,
+        roleId: roleDetails?.id || null,
+        roleColor: roleDetails?.color || null
+      };
       
       res.json({ 
-        user,
+        user: userWithRole,
         token,
         message: 'Login successful' 
       });

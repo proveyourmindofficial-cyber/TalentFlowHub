@@ -10,6 +10,10 @@ import ForgotPasswordPage from "@/pages/forgot-password";
 import ResetPasswordPage from "@/pages/reset-password";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Dashboard from "@/pages/dashboard";
+import HRDashboard from "@/pages/hr-dashboard";
+import RecruiterDashboard from "@/pages/recruiter-dashboard";
+import ManagerDashboard from "@/pages/manager-dashboard";
+import UserDashboard from "@/pages/user-dashboard";
 import Jobs from "@/pages/jobs";
 import JobForm from "@/pages/job-form";
 import JobDetailPage from "@/pages/job-detail";
@@ -70,8 +74,17 @@ function Router() {
   return (
     <AppLayout>
       <Switch>
-        {/* Admin/HR Routes */}
+        {/* Admin Routes */}
         <Route path="/" component={Dashboard} />
+        <Route path="/admin/dashboard" component={Dashboard} />
+        
+        {/* Role-Based Dashboard Routes */}
+        <Route path="/hr/dashboard" component={HRDashboard} />
+        <Route path="/recruiter/dashboard" component={RecruiterDashboard} />
+        <Route path="/manager/dashboard" component={ManagerDashboard} />
+        <Route path="/user/dashboard" component={UserDashboard} />
+        
+        {/* Shared Routes */}
         <Route path="/jobs" component={Jobs} />
         <Route path="/jobs/new" component={JobForm} />
         <Route path="/jobs/:id" component={JobDetailPage} />
