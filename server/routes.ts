@@ -771,6 +771,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         'Team Member'
       );
 
+      // Create notification for admin about user invitation
+      const currentUser = req.user as any;
+      if (currentUser) {
+        await storage.createNotification({
+          userId: currentUser.id,
+          title: "User Invitation Sent",
+          message: `Invitation email sent to ${email}. User can now set up their account and login.`,
+          type: "success",
+          actionUrl: "/settings/user-management"
+        });
+      }
+
       res.json({
         message: 'Invitation sent successfully',
         inviteToken: inviteToken,
@@ -813,6 +825,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       console.log(`✅ Password set for user: ${user.email}`);
+
+      // Create notification for successful account activation
+      await storage.createNotification({
+        userId: user.id,
+        title: "Welcome to TalentFlowHub!",
+        message: "Your account has been successfully activated. You can now access all features.",
+        type: "success",
+        actionUrl: "/dashboard"
+      });
 
       res.json({
         message: 'Password set successfully. You can now login.',
@@ -1166,11 +1187,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // REMOVED OLD RESEND INVITATION ENDPOINT - Now handled by frontend calling /api/auth/invite-user
 
-  app.delete('/api/users/:id', async (req, res) => {
+  app.delete('/api/users/:id', authenticateUser, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
       const existingUser = await storage.getUser(req.params.id);
+      if (!existingUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
 
       await storage.deleteUser(req.params.id);
+      
+      // Create notification for user deletion
+      await storage.createNotification({
+        userId: req.user.id,
+        title: "User Deleted",
+        message: `User ${existingUser.firstName} ${existingUser.lastName} (${existingUser.email}) has been deleted from the system.`,
+        type: "warning",
+        actionUrl: "/settings/user-management"
+      });
+      
+      console.log(`🗑️ User deleted: ${existingUser.email} by ${req.user.email}`);
+      
       res.json({ message: "User deleted successfully" });
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -3846,6 +3886,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.deleteFeedback(req.params.id);
       
+      // Create notification for feedback deletion
+      await storage.createNotification({
+        userId: req.user.id,
+        title: "Feedback Deleted",
+        message: `Feedback item "${feedback.title}" has been successfully deleted.`,
+        type: "success",
+        actionUrl: "/settings/feedback-management"
+      });
+      
       await ActivityLogger.logSystemAction(
         req.user.id,
         'status_change',
@@ -3868,14 +3917,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Authentication required" });
       }
       
-      const { createSampleNotifications, createSampleActivityLogs } = await import('./test-notifications');
+      // Create test notifications directly
+      const testNotifications = [
+        {
+          userId: req.user.id,
+          title: "🎉 Welcome Test",
+          message: "This is a test success notification to verify the notification system is working!",
+          type: "success" as const,
+          actionUrl: "/dashboard"
+        },
+        {
+          userId: req.user.id,
+          title: "⚠️ System Alert",
+          message: "This is a test warning notification. Your profile may need attention.",
+          type: "warning" as const,
+          actionUrl: "/settings"
+        },
+        {
+          userId: req.user.id,
+          title: "📢 New Feature",
+          message: "Check out our new candidate tracking feature! Now available in the dashboard.",
+          type: "info" as const,
+          actionUrl: "/candidates"
+        },
+        {
+          userId: req.user.id,
+          title: "⚙️ System Maintenance",
+          message: "System maintenance scheduled for tonight. Some features may be temporarily unavailable.",
+          type: "system" as const,
+          actionUrl: "/system-status"
+        }
+      ];
+
+      // Create all test notifications
+      for (const notification of testNotifications) {
+        await storage.createNotification(notification);
+      }
       
-      const notificationsResult = await createSampleNotifications(req.user.id);
-      const activityLogsResult = await createSampleActivityLogs(req.user.id);
+      console.log(`🔔 Created ${testNotifications.length} test notifications for ${req.user.email}`);
       
       res.json({ 
-        success: notificationsResult && activityLogsResult,
-        message: "Sample notifications and activity logs created successfully"
+        success: true,
+        count: testNotifications.length,
+        message: "Test notifications created successfully! Check your notification bell."
       });
     } catch (error) {
       console.error('Error creating test notifications:', error);
