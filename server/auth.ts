@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import type { User } from '@shared/schema';
 import { ActivityLogger } from './activityLogger';
+import { storage } from './storage';
 
 
 // Extended request interface to include user and session
@@ -34,22 +35,15 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
         
         // Log successful session validation
         try {
-          await ActivityLogger.logActivity({
-            userId: user.id,
-            action: 'session_started',
-            entityType: 'user',
-            entityId: user.id,
-            metadata: {
-              userAgent: req.get('User-Agent'),
-              ip: req.ip,
-              path: req.path
-            },
+          await ActivityLogger.logCustomActivity(
+            user.id,
+            'session_started',
+            'User session started successfully',
             req,
-            userJourneyContext: {
-              flow: 'daily_usage',
-              stage: 'notification'
-            }
-          });
+            true,
+            'user',
+            user.id
+          );
         } catch (logError) {
           // Silent fail for activity logging
         }
@@ -58,23 +52,11 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
       } else {
         // Log authentication failure - invalid session
         try {
-          await ActivityLogger.logActivity({
-            userId: req.session?.userId || 'unknown',
-            action: 'authentication_failed',
-            entityType: 'user',
-            entityId: req.session?.userId || 'unknown',
-            metadata: {
-              reason: !user ? 'user_not_found' : 'user_inactive',
-              userAgent: req.get('User-Agent'),
-              ip: req.ip,
-              path: req.path
-            },
+          await ActivityLogger.logLogin(
+            req.session?.userId || 'unknown',
             req,
-            userJourneyContext: {
-              flow: 'troubleshooting',
-              stage: 'notification'
-            }
-          });
+            false
+          );
         } catch (logError) {
           // Silent fail for activity logging
         }
@@ -88,23 +70,15 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
     
     // Log authentication system error
     try {
-      await ActivityLogger.logActivity({
-        userId: 'system',
-        action: 'authentication_error',
-        entityType: 'system',
-        entityId: 'auth_middleware',
-        metadata: {
-          error: error instanceof Error ? error.message : String(error),
-          userAgent: req.get('User-Agent'),
-          ip: req.ip,
-          path: req.path
-        },
+      await ActivityLogger.logCustomActivity(
+        'system',
+        'authentication_error',
+        'Authentication system error occurred',
         req,
-        userJourneyContext: {
-          flow: 'troubleshooting',
-          stage: 'notification'
-        }
-      });
+        false,
+        'system',
+        'auth_middleware'
+      );
     } catch (logError) {
       // Silent fail for activity logging
     }
