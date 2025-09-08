@@ -1250,11 +1250,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Jobs routes - Protected with role-based access
-  app.get('/api/jobs', authenticateUser, attachDataAccess(storage), async (req, res) => {
+  app.get('/api/jobs', authenticateUser, async (req, res) => {
     try {
-      // Use hierarchical data access based on reporting structure
-      const accessibleUserIds = (req as any).accessibleUserIds as string[];
-      const jobs = await storage.getJobsByHierarchy(accessibleUserIds);
+      // Get user's permissions and filter data accordingly
+      const user = req.user as any;
+      let jobs;
+      
+      if (user.email === 'itsupport@o2finfosolutions.com') {
+        // Super Admin can see all jobs
+        jobs = await storage.getJobs();
+      } else {
+        // Other roles can only see jobs they created or are assigned to
+        jobs = await storage.getJobsByUserAccess(user.id);
+      }
       
       res.json(jobs);
     } catch (error) {
