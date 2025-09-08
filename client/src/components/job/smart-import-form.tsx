@@ -289,9 +289,28 @@ Looking for a passionate developer..."
                 <CheckCircle2 className="w-5 h-5 mr-2 text-green-600" />
                 Extracted Job Details
                 {hasAnalyzed && (
-                  <Badge variant="outline" className="ml-2 bg-green-100 text-green-700">
-                    Ready to Create
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="bg-green-100 text-green-700">
+                      Ready to Create
+                    </Badge>
+                    <Button
+                      type="submit"
+                      form="smart-import-form"
+                      disabled={createMutation.isPending}
+                      className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-bold px-4 py-2 shadow-lg"
+                    >
+                      {createMutation.isPending ? (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-1 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          🎯 CREATE JOB
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 )}
               </CardTitle>
             </CardHeader>
@@ -304,7 +323,7 @@ Looking for a passionate developer..."
                 </div>
               ) : (
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <form id="smart-import-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     {/* Basic Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
