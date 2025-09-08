@@ -532,6 +532,9 @@ export const candidates = pgTable("candidates", {
   responseAt: timestamp("response_at"),
   responseFeedback: text("response_feedback"), // Feedback from candidate
   
+  // Data ownership tracking
+  createdBy: varchar("created_by").references(() => users.id),
+  
   // Candidate Portal Authentication Fields
   password: text("password"), // Hashed password for portal login
   isPortalActive: boolean("is_portal_active").notNull().default(false),
@@ -610,6 +613,7 @@ export const applications = pgTable("applications", {
   responseToken: varchar("response_token"),
   responseAt: timestamp("response_at"),
   jdEmailSentAt: timestamp("jd_email_sent_at"),
+  createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -625,6 +629,7 @@ export const interviews = pgTable("interviews", {
   notes: text("notes"),
   feedbackResult: interviewFeedbackEnum("feedback_result"),
   status: interviewStatusEnum("status").notNull().default('Scheduled'),
+  createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
