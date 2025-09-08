@@ -344,6 +344,23 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
+  async getJobsByUserAccess(userId: string): Promise<JobWithRelations[]> {
+    const jobsData = await db
+      .select()
+      .from(jobs)
+      .leftJoin(users, eq(jobs.createdById, users.id))
+      .where(or(
+        eq(jobs.createdById, userId),
+        eq(jobs.assignedRecruiterId, userId)
+      ))
+      .orderBy(desc(jobs.createdAt));
+
+    return jobsData.map(row => ({
+      ...row.jobs,
+      createdBy: row.users || undefined,
+    }));
+  }
+
   async updateJob(id: string, jobData: Partial<InsertJob>): Promise<Job> {
     const [job] = await db
       .update(jobs)
