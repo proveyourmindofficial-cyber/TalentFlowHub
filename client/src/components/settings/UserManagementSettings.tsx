@@ -521,34 +521,94 @@ export default function UserManagementSettings() {
                             <Edit className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="max-w-md">
                           <DialogHeader>
-                            <DialogTitle>Assign Role to User</DialogTitle>
+                            <DialogTitle>Edit User Profile</DialogTitle>
                           </DialogHeader>
                           <div className="space-y-4">
-                            <div>
-                              <p className="text-sm text-gray-600">User</p>
-                              <p className="font-medium">{user.firstName} {user.lastName}</p>
-                              <p className="text-sm text-gray-500">{user.email}</p>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label>First Name *</Label>
+                                <Input
+                                  defaultValue={user.firstName || ''}
+                                  placeholder="Enter first name"
+                                  data-testid="input-edit-first-name"
+                                />
+                              </div>
+                              <div>
+                                <Label>Last Name *</Label>
+                                <Input
+                                  defaultValue={user.lastName || ''}
+                                  placeholder="Enter last name"
+                                  data-testid="input-edit-last-name"
+                                />
+                              </div>
                             </div>
                             
-                            {(user as any).customRole && (
-                              <div className="mt-2">
-                                <p className="text-sm text-gray-600">Current Role:</p>
-                                <Badge 
-                                  className="text-white" 
-                                  style={{ backgroundColor: (user as any).customRole.color || '#6366f1' }}
-                                >
-                                  {(user as any).customRole.name}
-                                </Badge>
-                              </div>
-                            )}
+                            <div>
+                              <Label>Email Address *</Label>
+                              <Input
+                                type="email"
+                                defaultValue={user.email || ''}
+                                placeholder="Enter email address"
+                                data-testid="input-edit-email"
+                                disabled={isSuperAdmin(user.email || '')}
+                              />
+                              {isSuperAdmin(user.email || '') && (
+                                <p className="text-xs text-gray-500 mt-1">Super admin email cannot be changed</p>
+                              )}
+                            </div>
+
+                            <div>
+                              <Label>Department</Label>
+                              <Select 
+                                defaultValue={user.departmentId || ''} 
+                                onValueChange={(value) => {
+                                  if (value === "add-new") {
+                                    // Handle adding new department
+                                    return;
+                                  }
+                                }}
+                              >
+                                <SelectTrigger data-testid="select-edit-department">
+                                  <SelectValue placeholder="Select department" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {departments.map((dept: any) => (
+                                    <SelectItem key={dept.id} value={dept.id}>
+                                      {dept.name}
+                                    </SelectItem>
+                                  ))}
+                                  <SelectItem value="add-new" className="text-blue-600 font-medium">
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Add New Department
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div>
+                              <Label>Manager (Optional)</Label>
+                              <Select defaultValue={user.managerId || 'none'}>
+                                <SelectTrigger data-testid="select-edit-manager">
+                                  <SelectValue placeholder="Select manager" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">No Manager</SelectItem>
+                                  {managers.map((manager: any) => (
+                                    <SelectItem key={manager.id} value={manager.id}>
+                                      {manager.firstName} {manager.lastName} ({manager.email})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                             
                             <div>
-                              <Label>Assign Role</Label>
+                              <Label>Role</Label>
                               <Select value={newCustomRole} onValueChange={setNewCustomRole}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select a role for this user" />
+                                <SelectTrigger data-testid="select-edit-role">
+                                  <SelectValue placeholder="Select a role" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="none">No Role</SelectItem>
@@ -583,9 +643,9 @@ export default function UserManagementSettings() {
                                   customRoleId: newCustomRole === "none" ? null : newCustomRole 
                                 })}
                                 disabled={updateUserCustomRole.isPending}
-                                data-testid="button-update-role"
+                                data-testid="button-update-user"
                               >
-                                {updateUserCustomRole.isPending ? "Updating..." : "Assign Role"}
+                                {updateUserCustomRole.isPending ? "Updating..." : "Update User"}
                               </Button>
                             </div>
                           </div>
