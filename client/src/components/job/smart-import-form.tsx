@@ -16,16 +16,16 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertJobSchema } from "@shared/schema";
 import { z } from "zod";
-import { parseJobPosting, type ParsedJobData } from "@/utils/jobParser";
+import { parseJobPosting } from "@/utils/jobParser";
 import { 
-  Sparkles, 
   FileText, 
   Zap, 
   CheckCircle2, 
   ArrowRight, 
   Copy,
   RotateCcw,
-  Wand2
+  Wand2,
+  Sparkles
 } from "lucide-react";
 
 const smartImportSchema = insertJobSchema.extend({
@@ -40,7 +40,6 @@ export default function SmartImportForm() {
   const [jobText, setJobText] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
-  const [parsedData, setParsedData] = useState<ParsedJobData | null>(null);
 
   const form = useForm<z.infer<typeof smartImportSchema>>({
     resolver: zodResolver(smartImportSchema),
@@ -76,11 +75,9 @@ export default function SmartImportForm() {
 
     setIsAnalyzing(true);
     try {
-      // Show analyzing animation
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const parsed = parseJobPosting(jobText);
-      setParsedData(parsed);
       setHasAnalyzed(true);
       
       // Auto-fill form with parsed data
@@ -93,7 +90,7 @@ export default function SmartImportForm() {
         location: parsed.location || "",
         salaryMin: parsed.salaryMin || undefined,
         salaryMax: parsed.salaryMax || undefined,
-        jobType: parsed.jobType || "full_time",
+        jobType: (parsed.jobType as any) || "full_time",
         status: "draft",
         priority: "medium",
         experienceLevel: parsed.experienceLevel || "",
@@ -103,14 +100,15 @@ export default function SmartImportForm() {
         applicationDeadline: undefined,
       });
       
+      const detectedCount = Object.values(parsed).filter(Boolean).length;
       toast({
         title: "✨ Analysis Complete!",
-        description: "Job details extracted successfully. Review and adjust as needed.",
+        description: `Extracted ${detectedCount} job details. Review and create your job!`,
       });
     } catch (error) {
       toast({
         title: "Analysis Failed",
-        description: "Unable to parse the job posting. Please check the format.",
+        description: "Unable to parse the job posting. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -129,16 +127,17 @@ export default function SmartImportForm() {
     },
     onSuccess: () => {
       toast({
-        title: "🎉 Success!",
-        description: "Job created successfully from Smart Import!",
+        title: "🎉 Job Created!",
+        description: "Your job has been created successfully from Smart Import!",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       setLocation("/jobs");
     },
     onError: (error) => {
+      console.error('Job creation error:', error);
       toast({
-        title: "Error",
-        description: error.message || "Failed to create job",
+        title: "Creation Failed", 
+        description: error.message || "Failed to create job. Please ensure all required fields are filled.",
         variant: "destructive",
       });
     },
@@ -150,40 +149,38 @@ export default function SmartImportForm() {
 
   const handleReset = () => {
     setJobText("");
-    setParsedData(null);
     setHasAnalyzed(false);
     form.reset();
   };
 
   const handleSamplePaste = () => {
-    const sampleJob = `🚀 We're Hiring at O2F Infosolutions! 
-We're on the lookout for an experienced Talent Acquisition Specialist (Domestic IT Recruitment) to join our growing team in Hyderabad! 
-📍 Location: Hyderabad 
-🏢 Work Mode: Work from Office 
-🕓 Experience: 4 – 8 Years 
-🧑‍💼 Role: Individual Contributor – Talent Acquisition (Domestic IT Recruitment) 
-Are you passionate about tech hiring and thrive in a fast-paced environment? This is your chance to make a real impact by connecting top talent with exciting IT opportunities.
+    const sampleJob = `🚀 We're Hiring: Senior Software Engineer
+📍 Location: Hyderabad, India  
+💰 Salary: ₹8-15 LPA
+🕓 Experience: 4-7 years
+🏢 Department: IT
 
-🔑 Key Responsibilities: 
-✅ Expertise in Domestic IT Recruitment with a strong grasp of various IT technologies 
-✅ Proven experience hiring for Contract and Contract-to-Hire positions 
-✅ Strong sourcing and multitasking abilities 
-✅ Excellent communication and interpersonal skills 
+🎯 About the Role:
+We're looking for a passionate Senior Software Engineer to join our growing technology team.
 
-❗ Important Note: 
-This role is strictly for professionals with experience in Domestic IT Recruitment. 
-If your background is in US IT Recruitment or Non-IT hiring, this position may not be a fit. 
+✅ Key Requirements:
+• 4+ years of experience in React, Node.js
+• Strong knowledge of database design
+• Experience with cloud platforms
+• Excellent problem-solving skills
 
-📩 Interested? 
-Send your updated resume to: 
-📧 Sakshi@o2finfosolutions.com 
-📧 Rekhaparvathi.s@o2finfosolutions.com`;
+🔧 Key Responsibilities:
+• Develop and maintain scalable web applications
+• Collaborate with cross-functional teams
+• Code review and mentor junior developers
+
+📧 Apply: careers@o2finfosolutions.com`;
     
     setJobText(sampleJob);
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6" data-testid="smart-import-form">
+    <div className="max-w-6xl mx-auto p-6 space-y-6" data-testid="smart-import-form">
       {/* Header */}
       <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
         <CardHeader>
@@ -191,11 +188,11 @@ Send your updated resume to:
             <Wand2 className="w-6 h-6 mr-3 text-purple-600" />
             Smart Import - AI Job Parser
             <Badge variant="outline" className="ml-3 bg-green-100 text-green-700">
-              🆓 100% FREE
+              🆓 FREE
             </Badge>
           </CardTitle>
           <p className="text-gray-600 mt-2">
-            Paste your job posting below and watch our intelligent parser extract all the details automatically!
+            Paste your job posting below and watch our parser extract all the details automatically!
           </p>
         </CardHeader>
       </Card>
@@ -212,14 +209,14 @@ Send your updated resume to:
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                placeholder="🚀 We're Hiring at Your Company!
-Looking for an experienced Software Engineer...
-📍 Location: Your City
-🕓 Experience: 3-5 Years
-..."
+                placeholder="🚀 We're Hiring: Software Engineer
+📍 Location: Your City  
+💰 Salary: Competitive
+🕓 Experience: 3-5 years
+Looking for a passionate developer..."
                 value={jobText}
                 onChange={(e) => setJobText(e.target.value)}
-                rows={20}
+                rows={16}
                 className="resize-none font-mono text-sm"
               />
               
@@ -248,12 +245,12 @@ Looking for an experienced Software Engineer...
                 
                 <div className="flex items-center gap-4">
                   <span className="text-xs text-gray-500">
-                    {jobText.length} characters
+                    {jobText.length} chars
                   </span>
                   <Button
                     onClick={handleAnalyze}
                     disabled={!jobText.trim() || isAnalyzing}
-                    className="bg-purple-600 hover:bg-purple-700"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                   >
                     {isAnalyzing ? (
                       <>
@@ -273,7 +270,7 @@ Looking for an experienced Software Engineer...
           </Card>
         </div>
 
-        {/* Right Column - Extracted Form */}
+        {/* Right Column - Form */}
         <div className="space-y-4">
           <Card>
             <CardHeader>
@@ -290,9 +287,9 @@ Looking for an experienced Software Engineer...
             <CardContent>
               {!hasAnalyzed ? (
                 <div className="text-center py-12 text-gray-500">
-                  <Sparkles className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                  <Wand2 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                   <p className="text-lg font-medium mb-2">Ready to Extract</p>
-                  <p>Paste your job posting and click "Analyze & Extract" to see the magic!</p>
+                  <p>Your extracted job details will appear here after analysis</p>
                 </div>
               ) : (
                 <Form {...form}>
@@ -318,7 +315,7 @@ Looking for an experienced Software Engineer...
                         name="department"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Department</FormLabel>
+                            <FormLabel>Department *</FormLabel>
                             <FormControl>
                               <Input {...field} data-testid="input-department" />
                             </FormControl>
@@ -334,7 +331,7 @@ Looking for an experienced Software Engineer...
                           <FormItem>
                             <FormLabel>Location</FormLabel>
                             <FormControl>
-                              <Input {...field} value={field.value || ""} data-testid="input-location" />
+                              <Input {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -348,7 +345,7 @@ Looking for an experienced Software Engineer...
                           <FormItem>
                             <FormLabel>Experience Level</FormLabel>
                             <FormControl>
-                              <Input {...field} value={field.value || ""} placeholder="e.g. 3-5 years" />
+                              <Input {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -384,9 +381,7 @@ Looking for an experienced Software Engineer...
                         name="isRemoteAvailable"
                         render={({ field }) => (
                           <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                            <div className="space-y-0.5">
-                              <FormLabel>Remote Work</FormLabel>
-                            </div>
+                            <FormLabel>Remote Work</FormLabel>
                             <FormControl>
                               <Switch
                                 checked={field.value}
@@ -409,7 +404,7 @@ Looking for an experienced Software Engineer...
                           <FormItem>
                             <FormLabel>Job Description</FormLabel>
                             <FormControl>
-                              <Textarea {...field} value={field.value || ""} rows={4} />
+                              <Textarea {...field} value={field.value || ""} rows={3} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -423,7 +418,7 @@ Looking for an experienced Software Engineer...
                           <FormItem>
                             <FormLabel>Requirements</FormLabel>
                             <FormControl>
-                              <Textarea {...field} value={field.value || ""} rows={4} />
+                              <Textarea {...field} value={field.value || ""} rows={3} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -437,7 +432,7 @@ Looking for an experienced Software Engineer...
                           <FormItem>
                             <FormLabel>Responsibilities</FormLabel>
                             <FormControl>
-                              <Textarea {...field} value={field.value || ""} rows={4} />
+                              <Textarea {...field} value={field.value || ""} rows={3} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -451,7 +446,7 @@ Looking for an experienced Software Engineer...
                           <FormItem>
                             <FormLabel>Skills (comma separated)</FormLabel>
                             <FormControl>
-                              <Input {...field} value={field.value || ""} placeholder="React, JavaScript, Node.js" />
+                              <Input {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -481,7 +476,7 @@ Looking for an experienced Software Engineer...
                         ) : (
                           <>
                             <ArrowRight className="w-4 h-4 mr-2" />
-                            Create Job from Smart Import
+                            Create Job
                           </>
                         )}
                       </Button>
