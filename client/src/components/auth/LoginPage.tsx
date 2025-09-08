@@ -14,7 +14,7 @@ export function LoginPage() {
             </div>
             <div>
               <CardTitle className="text-2xl font-bold text-gray-900">
-                TalentFlowHub
+                O2F ATS
               </CardTitle>
               <CardDescription className="text-gray-600 mt-2">
                 Applicant Tracking System

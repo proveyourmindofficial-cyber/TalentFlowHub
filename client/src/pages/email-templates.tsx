@@ -372,7 +372,7 @@ export default function EmailTemplatesPage() {
                       <FormItem>
                         <FormLabel>Email Subject</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="Welcome {{candidate.name}} to TalentFlow" />
+                          <Input {...field} placeholder="Welcome {{candidate.name}} to O2F" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -416,7 +416,7 @@ export default function EmailTemplatesPage() {
                             rows={12}
                             placeholder={`<div class="greeting">Hi {{candidate.name}}!</div>
 <div class="body-text">
-  Welcome to <strong>TalentFlowHub</strong>!
+  Welcome to <strong>O2F ATS</strong>!
 </div>
 <div class="highlight">
   <strong>Next Steps:</strong><br>

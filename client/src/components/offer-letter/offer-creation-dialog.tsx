@@ -173,7 +173,7 @@ export function OfferCreationDialog({ open, onOpenChange, application }: OfferCr
       designation: application.job.title,
       ctc: Number(application.candidate.expectedCtc) || 600000,
       joiningDate: "",
-      companyName: "TalentFlow Solutions",
+      companyName: "O2F Info Solutions",
       hrName: "HR Manager",
     }
   });

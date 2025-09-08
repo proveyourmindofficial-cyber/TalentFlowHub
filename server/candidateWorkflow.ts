@@ -19,7 +19,7 @@ export class CandidateWorkflowService {
       // Simple template data for welcome email only
       const templateData = {
         candidateName: candidate.fullName,
-        companyName: 'TalentFlow Solutions'
+        companyName: 'O2F Info Solutions'
       };
 
       // Create simple welcome email content
@@ -28,7 +28,7 @@ export class CandidateWorkflowService {
       // Send email using Microsoft Graph or available email service
       const emailSent = await this.sendEmailViaAvailableService({
         to: candidate.email,
-        subject: `Thanks for sharing your details - TalentFlow Solutions`,
+        subject: `Thanks for sharing your details - O2F Info Solutions`,
         htmlContent
       });
 
@@ -140,7 +140,7 @@ export class CandidateWorkflowService {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to TalentFlow Solutions</title>
+    <title>Welcome to O2F Info Solutions</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f8f9fa; }
         .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -152,7 +152,7 @@ export class CandidateWorkflowService {
 <body>
     <div class="container">
         <div class="header">
-            <h1>👋 Welcome to TalentFlow Solutions!</h1>
+            <h1>👋 Welcome to O2F Info Solutions!</h1>
             <p>Hi ${data.candidateName}, thank you for sharing your details with us</p>
         </div>
         

@@ -211,7 +211,7 @@ export default function CandidateResponsePage() {
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-sm text-gray-600 mb-4">
-              {jobDetails?.companyName || 'TalentFlow Solutions'} - Building careers, connecting talent
+              {jobDetails?.companyName || 'O2F Info Solutions'} - Building careers, connecting talent
             </p>
           </CardContent>
         </Card>

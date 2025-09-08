@@ -135,7 +135,7 @@ export function OfferLetterForm({ offerLetter, onSuccess }: OfferLetterFormProps
       designation: offerLetter?.designation || "",
       joiningDate: offerLetter?.joiningDate || "",
       offerDate: offerLetter?.offerDate || new Date().toISOString().split('T')[0],
-      companyName: offerLetter?.companyName || "TalentFlow Solutions",
+      companyName: offerLetter?.companyName || "O2F Info Solutions",
       hrName: offerLetter?.hrName || "",
       hrSignature: offerLetter?.hrSignature || "",
       ctc: offerLetter?.ctc?.toString() || "",
