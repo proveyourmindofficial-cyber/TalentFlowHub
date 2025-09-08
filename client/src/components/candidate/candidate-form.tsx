@@ -44,7 +44,7 @@ const candidateFormSchema = insertCandidateSchema.extend({
   // External candidate specific validations
   uanNumber: z.string().regex(/^\d{12}$/, "UAN must be 12 digits").optional().or(z.literal('')),
   aadhaarNumber: z.string().regex(/^\d{12}$/, "Aadhaar must be 12 digits").optional().or(z.literal('')),
-  linkedInUrl: z.string().url("Invalid LinkedIn URL").optional().or(z.literal('')),
+  linkedinUrl: z.string().url("Invalid LinkedIn URL").optional().or(z.literal('')),
 });
 
 interface CandidateFormProps {
@@ -133,7 +133,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
       tentativeDoj: initialData?.tentativeDoj || "",
       resumeUrl: initialData?.resumeUrl || "",
       notes: initialData?.notes || "",
-      status: initialData?.status || "Available",
+      status: (initialData?.status as any) || "Available",
       candidateType: (initialData?.candidateType as 'internal' | 'external') || 'internal',
       // External candidate fields - auto-fill recruiter name from authenticated user
       recruiterName: initialData?.recruiterName || (isAuthenticated && user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : ""),
@@ -141,20 +141,10 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
       clientName: initialData?.clientName || "",
       uanNumber: initialData?.uanNumber || "",
       aadhaarNumber: initialData?.aadhaarNumber || "",
-      linkedInUrl: initialData?.linkedInUrl || "",
-      fatherName: initialData?.fatherName || "",
-      currentAddress: initialData?.currentAddress || "",
-      permanentAddress: initialData?.permanentAddress || "",
-      qualification: initialData?.qualification || "",
-      skills: initialData?.skills || "",
-      // Additional dropdown fields
-      emergencyContactName: initialData?.emergencyContactName || "",
-      emergencyContactNumber: initialData?.emergencyContactNumber || "",
-      relationshipWithEmergencyContact: initialData?.relationshipWithEmergencyContact || "",
-      bloodGroup: initialData?.bloodGroup || "",
-      maritalStatus: initialData?.maritalStatus || "",
-      nationality: initialData?.nationality || "",
-      religion: initialData?.religion || "",
+      linkedinUrl: initialData?.linkedinUrl || "",
+      highestQualification: initialData?.highestQualification || "",
+      // Fields that exist in schema only
+      jobLocation: initialData?.jobLocation || "",
     },
   });
 
@@ -300,7 +290,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
       // Convert empty strings to null for optional fields
       uanNumber: values.uanNumber || null,
       aadhaarNumber: values.aadhaarNumber || null,
-      linkedInUrl: values.linkedInUrl || null,
+      linkedinUrl: values.linkedinUrl || null,
       // Include structured document data
       educationData: JSON.stringify(educationEntries),
       employmentData: JSON.stringify(employmentEntries),
