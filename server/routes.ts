@@ -1028,8 +1028,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User management routes - Allow public access for now until authentication is setup
-  app.get('/api/users', async (req, res) => {
+  // User management routes - Protected with authentication and role-based access
+  app.get('/api/users', authenticateUser, async (req, res) => {
     try {
       const users = await storage.getUsers();
       res.json(users);
@@ -1040,7 +1040,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get users with their custom roles - This is what the frontend actually calls
-  app.get('/api/users-with-custom-roles', async (req, res) => {
+  app.get('/api/users-with-custom-roles', authenticateUser, async (req, res) => {
     try {
       const users = await storage.getUsersWithCustomRoles();
       res.json(users);
@@ -1050,7 +1050,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/users', async (req, res) => {
+  app.post('/api/users', authenticateUser, async (req, res) => {
     try {
       const { username, email, firstName, lastName, customRoleId, department, isActive } = req.body;
       
@@ -1101,7 +1101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/users/:id/role', async (req, res) => {
+  app.put('/api/users/:id/role', authenticateUser, async (req, res) => {
     try {
       const { customRoleId } = req.body;
       
@@ -1181,7 +1181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint that the frontend is actually calling
-  app.put('/api/users/:id/custom-role', async (req, res) => {
+  app.put('/api/users/:id/custom-role', authenticateUser, async (req, res) => {
     try {
       const { customRoleId } = req.body;
       
@@ -1249,10 +1249,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Jobs routes
-  app.get('/api/jobs', async (req, res) => {
+  // Jobs routes - Protected with role-based access
+  app.get('/api/jobs', authenticateUser, async (req, res) => {
     try {
-      const jobs = await storage.getJobs();
+      // Get user's permissions and filter data accordingly
+      const user = req.user as any;
+      let jobs;
+      
+      if (user.role === 'Super Admin') {
+        // Super Admin can see all jobs
+        jobs = await storage.getJobs();
+      } else {
+        // Other roles can only see jobs they created or are assigned to
+        jobs = await storage.getJobsByUserAccess(user.id);
+      }
+      
       res.json(jobs);
     } catch (error) {
       console.error("Error fetching jobs:", error);
@@ -1260,7 +1271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/jobs/:id', async (req, res) => {
+  app.get('/api/jobs/:id', authenticateUser, async (req, res) => {
     try {
       const job = await storage.getJob(req.params.id);
       if (!job) {
@@ -1273,9 +1284,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/jobs', async (req, res) => {
+  app.post('/api/jobs', authenticateUser, async (req, res) => {
     try {
-      const jobData = insertJobSchema.parse(req.body);
+      const user = req.user as any;
+      const jobData = insertJobSchema.parse({
+        ...req.body,
+        createdById: user.id // Set creator for data ownership
+      });
       const job = await storage.createJob(jobData);
       res.status(201).json(job);
     } catch (error) {
@@ -1287,7 +1302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/jobs/:id', async (req, res) => {
+  app.put('/api/jobs/:id', authenticateUser, async (req, res) => {
     try {
       const jobData = insertJobSchema.partial().parse(req.body);
       const job = await storage.updateJob(req.params.id, jobData);
@@ -1301,7 +1316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/jobs/:id', async (req, res) => {
+  app.delete('/api/jobs/:id', authenticateUser, async (req, res) => {
     try {
       await storage.deleteJob(req.params.id);
       res.status(204).send();
@@ -1312,7 +1327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk delete jobs
-  app.post('/api/jobs/bulk-delete', async (req, res) => {
+  app.post('/api/jobs/bulk-delete', authenticateUser, async (req, res) => {
     try {
       const { ids } = req.body;
       if (!Array.isArray(ids) || ids.length === 0) {
@@ -1320,25 +1335,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       await storage.bulkDeleteJobs(ids);
-      
-      res.json({ message: `${ids.length} job${ids.length !== 1 ? 's' : ''} deleted successfully` });
-    } catch (error) {
-      console.error("Error bulk deleting jobs:", error);
-      res.status(500).json({ message: "Failed to delete jobs" });
-    }
-  });
-
-  // Bulk delete jobs
-  app.post('/api/jobs/bulk-delete', async (req, res) => {
-    try {
-      const { ids } = req.body;
-      if (!Array.isArray(ids) || ids.length === 0) {
-        return res.status(400).json({ message: "Invalid or empty job IDs array" });
-      }
-      
-      for (const id of ids) {
-        await storage.deleteJob(id);
-      }
       
       res.json({ message: `${ids.length} job${ids.length !== 1 ? 's' : ''} deleted successfully` });
     } catch (error) {
