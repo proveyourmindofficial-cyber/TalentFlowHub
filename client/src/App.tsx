@@ -16,6 +16,7 @@ import ManagerDashboard from "@/pages/manager-dashboard";
 import UserDashboard from "@/pages/user-dashboard";
 import Jobs from "@/pages/jobs";
 import JobForm from "@/pages/job-form";
+import SmartImportPage from "@/pages/smart-import";
 import JobDetailPage from "@/pages/job-detail";
 import Candidates from "@/pages/candidates";
 import CandidateDetailPage from "@/pages/candidate-detail";
@@ -87,6 +88,7 @@ function Router() {
         {/* Shared Routes */}
         <Route path="/jobs" component={Jobs} />
         <Route path="/jobs/new" component={JobForm} />
+        <Route path="/jobs/smart-import" component={SmartImportPage} />
         <Route path="/jobs/:id" component={JobDetailPage} />
         <Route path="/jobs/:id/edit" component={JobForm} />
         <Route path="/candidates" component={Candidates} />

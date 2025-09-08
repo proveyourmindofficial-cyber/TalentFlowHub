@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Wand2 } from "lucide-react";
 import { Link } from "wouter";
 import { ReactNode } from "react";
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
-import SmartImportDialog from "@/components/job/smart-import-dialog";
 
 interface HeaderProps {
   title: string;
@@ -31,7 +30,16 @@ export default function Header({
           {action && action}
           {!action && showNewJobButton && (
             <>
-              <SmartImportDialog />
+              <Link href="/jobs/smart-import">
+                <Button 
+                  variant="outline" 
+                  className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200 hover:from-purple-100 hover:to-pink-100 text-purple-700 font-semibold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg"
+                  data-testid="button-smart-import"
+                >
+                  <Wand2 className="w-4 h-4 mr-2" />
+                  ✨ Smart Import
+                </Button>
+              </Link>
               <Link href="/jobs/new">
                 <Button 
                   className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-semibold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
