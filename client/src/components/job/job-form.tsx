@@ -37,6 +37,33 @@ export default function JobForm({ jobId }: JobFormProps) {
   const [smartImportData, setSmartImportData] = useState<ParsedJobData | null>(null);
   const [showSmartImportBanner, setShowSmartImportBanner] = useState(false);
 
+  const { data: job, isLoading } = useQuery<Job>({
+    queryKey: [`/api/jobs/${jobId}`],
+    enabled: isEditing,
+  });
+
+  const form = useForm<z.infer<typeof jobFormSchema>>({
+    resolver: zodResolver(jobFormSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      requirements: "",
+      responsibilities: "",
+      department: "",
+      location: "",
+      salaryMin: undefined,
+      salaryMax: undefined,
+      jobType: "full_time",
+      status: "draft",
+      priority: "medium",
+      experienceLevel: "",
+      skills: "",
+      benefits: "",
+      isRemoteAvailable: false,
+      applicationDeadline: undefined,
+    },
+  });
+
   // Check for Smart Import data and URL parameter
   useEffect(() => {
     const urlParams = new URLSearchParams(location.split('?')[1]);
@@ -83,33 +110,6 @@ export default function JobForm({ jobId }: JobFormProps) {
       }
     }
   }, [location, form, isEditing, toast]);
-
-  const { data: job, isLoading } = useQuery<Job>({
-    queryKey: [`/api/jobs/${jobId}`],
-    enabled: isEditing,
-  });
-
-  const form = useForm<z.infer<typeof jobFormSchema>>({
-    resolver: zodResolver(jobFormSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      requirements: "",
-      responsibilities: "",
-      department: "",
-      location: "",
-      salaryMin: undefined,
-      salaryMax: undefined,
-      jobType: "full_time",
-      status: "draft",
-      priority: "medium",
-      experienceLevel: "",
-      skills: "",
-      benefits: "",
-      isRemoteAvailable: false,
-      applicationDeadline: undefined,
-    },
-  });
 
   // Update form when job data is loaded
   useEffect(() => {
