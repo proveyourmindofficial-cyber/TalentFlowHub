@@ -163,6 +163,8 @@ export default function UserManagementSettings() {
         firstName: userData.firstName,
         lastName: userData.lastName,
         department: userData.department,
+        departmentId: userData.departmentId || null,
+        managerId: userData.managerId === 'none' ? null : userData.managerId || null,
         roleId: userData.customRoleId || null
       });
     },
@@ -178,7 +180,9 @@ export default function UserManagementSettings() {
         firstName: "",
         lastName: "",
         customRoleId: "",
-        department: ""
+        department: "",
+        departmentId: "",
+        managerId: ""
       });
     },
     onError: () => {
@@ -386,7 +390,7 @@ export default function UserManagementSettings() {
                         <SelectValue placeholder="Select manager" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No Manager</SelectItem>
+                        <SelectItem value="none">No Manager</SelectItem>
                         {managers.map((manager: any) => (
                           <SelectItem key={manager.id} value={manager.id}>
                             {manager.firstName} {manager.lastName} ({manager.email})
