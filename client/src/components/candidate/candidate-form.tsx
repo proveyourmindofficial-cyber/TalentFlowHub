@@ -432,7 +432,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
               <>
                 <FormField
                   control={form.control}
-                  name="employeeId"
+                  name="serialNumber"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Employee ID</FormLabel>
@@ -446,7 +446,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
                 
                 <FormField
                   control={form.control}
-                  name="department"
+                  name="recruiterName"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Current Department</FormLabel>
@@ -471,7 +471,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
             {candidateType === 'external' && (
               <FormField
                 control={form.control}
-                name="fatherName"
+                name="notes"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Father's Name</FormLabel>
@@ -622,7 +622,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
 
                 <FormField
                   control={form.control}
-                  name="linkedInUrl"
+                  name="linkedinUrl"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>LinkedIn Profile URL</FormLabel>
@@ -648,7 +648,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
               <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="currentAddress"
+                  name="currentCompany"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Current Address</FormLabel>
@@ -667,7 +667,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
 
                 <FormField
                   control={form.control}
-                  name="permanentAddress"
+                  name="preferredLocation"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Permanent Address</FormLabel>
@@ -694,7 +694,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="bloodGroup"
+                  name="jobLocation"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Blood Group</FormLabel>
@@ -722,7 +722,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
 
                 <FormField
                   control={form.control}
-                  name="maritalStatus"
+                  name="source"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Marital Status</FormLabel>
@@ -746,7 +746,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
 
                 <FormField
                   control={form.control}
-                  name="nationality"
+                  name="clientName"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Nationality</FormLabel>
@@ -764,7 +764,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
 
                 <FormField
                   control={form.control}
-                  name="religion"
+                  name="uanNumber"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Religion</FormLabel>
@@ -790,7 +790,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="emergencyContactName"
+                  name="aadhaarNumber"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Emergency Contact Name</FormLabel>
@@ -808,7 +808,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
 
                 <FormField
                   control={form.control}
-                  name="emergencyContactNumber"
+                  name="highestQualification"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Emergency Contact Number</FormLabel>
@@ -826,7 +826,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
 
                 <FormField
                   control={form.control}
-                  name="relationshipWithEmergencyContact"
+                  name="currentLocation"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Relationship</FormLabel>
@@ -861,7 +861,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
               <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="qualification"
+                  name="primarySkill"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Qualification</FormLabel>
