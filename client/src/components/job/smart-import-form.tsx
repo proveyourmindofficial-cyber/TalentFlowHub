@@ -409,7 +409,7 @@ Looking for an experienced Software Engineer...
                           <FormItem>
                             <FormLabel>Job Description</FormLabel>
                             <FormControl>
-                              <Textarea {...field} rows={4} />
+                              <Textarea {...field} value={field.value || ""} rows={4} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
