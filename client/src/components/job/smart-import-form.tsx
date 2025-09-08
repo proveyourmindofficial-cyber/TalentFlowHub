@@ -144,6 +144,18 @@ export default function SmartImportForm() {
   });
 
   const onSubmit = (data: z.infer<typeof smartImportSchema>) => {
+    console.log('🚀 Form submitted with data:', data);
+    
+    // Ensure required fields are filled
+    if (!data.title || !data.department) {
+      toast({
+        title: "Missing Required Fields",
+        description: "Please fill in Job Title and Department before creating the job.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     createMutation.mutate(data);
   };
 
@@ -454,29 +466,31 @@ Looking for a passionate developer..."
                       />
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex justify-end gap-4 pt-6">
+                    {/* Action Buttons - Always Visible */}
+                    <div className="flex justify-end gap-4 pt-8 border-t border-gray-200 bg-gray-50 -m-6 p-6 mt-6">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => setLocation("/jobs")}
+                        data-testid="button-cancel"
                       >
                         Cancel
                       </Button>
                       <Button
                         type="submit"
                         disabled={createMutation.isPending}
-                        className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700"
+                        className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-6 py-3 shadow-lg"
+                        data-testid="button-create-job"
                       >
                         {createMutation.isPending ? (
                           <>
                             <Sparkles className="w-4 h-4 mr-2 animate-spin" />
-                            Creating...
+                            Creating Job...
                           </>
                         ) : (
                           <>
                             <ArrowRight className="w-4 h-4 mr-2" />
-                            Create Job
+                            🚀 Create Job
                           </>
                         )}
                       </Button>
