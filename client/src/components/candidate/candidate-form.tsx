@@ -254,7 +254,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
       name: skill.name,
       category: skill.category || 'technical',
       proficiency: 5 as const, // Expert level for primary skill
-      yearsOfExperience: parseInt(form.getValues('totalExperience') as string) || 1,
+      yearsOfExperience: parseInt(String(form.getValues('totalExperience'))) || 1,
       candidateId: 'temp',
       addedAt: new Date().toISOString(),
     };
