@@ -114,7 +114,7 @@ export function UserJourneyVisualization() {
     }
   };
 
-  const filteredJourneys = journeys?.filter((journey: UserJourney) => {
+  const filteredJourneys = (journeys || [])?.filter((journey: UserJourney) => {
     const matchesSearch = journey.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          journey.userId.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || journey.status === statusFilter;
@@ -240,7 +240,7 @@ export function UserJourneyVisualization() {
             </CardTitle>
             <CardDescription>
               {selectedJourney ? 
-                `Detailed steps for ${journeyDetails?.userEmail || 'selected user'}` :
+                `Detailed steps for ${(journeyDetails as any)?.userEmail || 'selected user'}` :
                 'Select a journey to view timeline'
               }
             </CardDescription>
@@ -254,14 +254,14 @@ export function UserJourneyVisualization() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {journeyDetails?.steps?.map((step: JourneyStep, index: number) => (
+                  {((journeyDetails as any)?.steps || [])?.map((step: JourneyStep, index: number) => (
                     <div key={step.id} className="flex items-start gap-4">
                       {/* Timeline line */}
                       <div className="flex flex-col items-center">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full border-2 bg-white">
                           {getStatusIcon(step.status)}
                         </div>
-                        {index < journeyDetails.steps.length - 1 && (
+                        {index < ((journeyDetails as any)?.steps?.length || 0) - 1 && (
                           <div className="w-px h-8 bg-gray-300 mt-2"></div>
                         )}
                       </div>
