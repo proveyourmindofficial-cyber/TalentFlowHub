@@ -62,6 +62,8 @@ export default function UserManagementSettings() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newCustomRole, setNewCustomRole] = useState<string>("");
+  const [newDepartmentName, setNewDepartmentName] = useState("");
+  const [showAddDepartment, setShowAddDepartment] = useState(false);
   const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
   const [addUserForm, setAddUserForm] = useState<AddUserForm>({
     email: "",
@@ -214,6 +216,29 @@ export default function UserManagementSettings() {
     }
   });
 
+  // Create department mutation
+  const createDepartment = useMutation({
+    mutationFn: async (name: string) => {
+      return apiRequest('POST', '/api/departments', { name, description: `${name} Department` });
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/departments'] });
+      toast({
+        title: "Department Created",
+        description: `Department "${newDepartmentName}" has been created successfully.`,
+      });
+      setShowAddDepartment(false);
+      setNewDepartmentName("");
+    },
+    onError: () => {
+      toast({
+        title: "Failed to Create Department",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
   // Resend invitation email mutation - now uses proper invitation system
   const resendInvitation = useMutation({
     mutationFn: async (userId: string) => {
@@ -357,7 +382,7 @@ export default function UserManagementSettings() {
                       value={addUserForm.departmentId} 
                       onValueChange={(value) => {
                         if (value === "add-new") {
-                          // Handle adding new department
+                          setShowAddDepartment(true);
                           return;
                         }
                         setAddUserForm({...addUserForm, departmentId: value});
@@ -565,7 +590,7 @@ export default function UserManagementSettings() {
                                 defaultValue={user.departmentId || ''} 
                                 onValueChange={(value) => {
                                   if (value === "add-new") {
-                                    // Handle adding new department
+                                    setShowAddDepartment(true);
                                     return;
                                   }
                                 }}
@@ -726,6 +751,44 @@ export default function UserManagementSettings() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Department Dialog */}
+      <Dialog open={showAddDepartment} onOpenChange={setShowAddDepartment}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Department</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Department Name *</Label>
+              <Input
+                value={newDepartmentName}
+                onChange={(e) => setNewDepartmentName(e.target.value)}
+                placeholder="Enter department name"
+                data-testid="input-department-name"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAddDepartment(false);
+                  setNewDepartmentName("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => createDepartment.mutate(newDepartmentName)}
+                disabled={!newDepartmentName || createDepartment.isPending}
+                data-testid="button-create-department"
+              >
+                {createDepartment.isPending ? "Creating..." : "Create Department"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

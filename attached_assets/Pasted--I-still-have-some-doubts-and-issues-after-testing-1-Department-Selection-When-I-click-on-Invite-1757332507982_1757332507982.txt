@@ -1,0 +1,79 @@
+"I still have some doubts and issues after testing.
+
+1. Department Selection
+
+When I click on Invite User, there is no proper way to select a department.
+
+You only provided a dropdown with 'Add New Department', but it’s not functioning. I don’t get any option to actually add or create a new department.
+
+2. Manager Assignment
+
+For existing users, you’ve given the option to select a manager from the list, which is fine.
+
+But for a new user, there is no option to add or assign a manager. I’m not clear what your plan is here.
+
+3. Role & Hierarchy Confusion
+
+As I explained earlier, we have roles like Manager → Team Lead → Recruiter.
+
+Example:
+
+A = Manager
+
+B = Team Lead
+
+C = Recruiter
+
+My question: how do we tag this hierarchy correctly in the system? Is it only based on the role, or do we also need a reporting manager field?
+
+4. Practical Example
+
+Let’s say:
+
+Sandeep (Admin)
+
+Sakshi (Team Lead)
+
+Areka (Recruiter)
+
+We already have different permission sets for these roles, which is fine.
+
+But how do I tag Sakshi under Sandeep, and then tag Areka under Sakshi?
+
+Right now, it’s not clear how this reporting structure is supposed to work inside User Management.
+
+Scenario (Hierarchy Requirement)
+
+Let’s take a scenario:
+
+We have 1 Manager with 10 Recruiters reporting to them.
+
+Out of those 10, 2 are Team Leads.
+
+So effectively:
+
+Manager → oversees all 10 recruiters.
+
+Team Lead A → manages 4 recruiters (Team A).
+
+Team Lead B → manages 4 recruiters (Team B).
+
+The remaining 2 recruiters report directly to the Manager.
+
+Requirement: Data Access Based on Hierarchy
+
+Recruiter → Can only see their own data.
+
+Team Lead → Can see their own data + the data of their team members.
+
+Manager → Full access to all 10 recruiters’ data.
+
+This way, data visibility is controlled by hierarchy:
+
+No overlap or unnecessary access.
+
+Reporting lines decide what a user can see and manage.
+
+👉 The goal is to ensure user-wise data visibility and controlled access based on reporting structure, not just generic roles.
+
+This is why I’ve been insisting on proper hierarchy mapping inside User Management. Can you explain the exact flow you’re planning to implement for this?"
