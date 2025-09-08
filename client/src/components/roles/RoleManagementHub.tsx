@@ -35,10 +35,13 @@ export default function RoleManagementHub() {
             const permResponse = await apiRequest('GET', `/api/custom-roles/${role.id}/permissions`);
             const permissions = await permResponse.json();
             
-            // Count total permissions
+            // Count total permissions - Debug logging
             const totalPermissions = permissions.reduce((total: number, perm: any) => {
-              return total + Object.values(perm.permissions).filter(Boolean).length;
+              const modulePermCount = Object.values(perm.permissions).filter(Boolean).length;
+              console.log(`Role ${role.id} - Module ${perm.module}: ${modulePermCount} permissions`, perm.permissions);
+              return total + modulePermCount;
             }, 0);
+            console.log(`Role ${role.name} (${role.id}) - Total permissions: ${totalPermissions}`);
             
             return { ...role, permissionCount: totalPermissions };
           } catch (error) {
