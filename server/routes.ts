@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertJobSchema, insertCandidateSchema, insertApplicationSchema, insertInterviewSchema, insertOfferLetterSchema, insertClientSchema, insertClientRequirementSchema, insertCompanyProfileSchema, insertCustomRoleSchema, insertNotificationSchema, insertActivityLogSchema, insertFeedbackSchema } from "@shared/schema";
+import { insertJobSchema, insertCandidateSchema, insertApplicationSchema, insertInterviewSchema, insertOfferLetterSchema, insertClientSchema, insertClientRequirementSchema, insertCompanyProfileSchema, insertCustomRoleSchema, insertNotificationSchema, insertActivityLogSchema, insertFeedbackSchema, insertDepartmentSchema } from "@shared/schema";
 import { ActivityLogger } from './activityLogger';
 import { z } from "zod";
 import { validateCandidateTypeFields, uanNumberSchema, aadhaarNumberSchema, linkedinUrlSchema } from "./validationUtils";
@@ -3936,6 +3936,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error deleting feedback:', error);
       res.status(500).json({ message: "Failed to delete feedback" });
+    }
+  });
+
+  // Departments endpoints
+  app.get('/api/departments', authenticateUser, async (req, res) => {
+    try {
+      const departments = await storage.getDepartments();
+      res.json(departments);
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+      res.status(500).json({ message: 'Failed to fetch departments' });
+    }
+  });
+
+  app.post('/api/departments', authenticateUser, async (req, res) => {
+    try {
+      const departmentData = insertDepartmentSchema.parse(req.body);
+      const department = await storage.createDepartment(departmentData);
+      res.status(201).json(department);
+    } catch (error) {
+      console.error('Error creating department:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: 'Invalid department data', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Failed to create department' });
+    }
+  });
+
+  app.get('/api/departments/:id', authenticateUser, async (req, res) => {
+    try {
+      const department = await storage.getDepartment(req.params.id);
+      if (!department) {
+        return res.status(404).json({ message: 'Department not found' });
+      }
+      res.json(department);
+    } catch (error) {
+      console.error('Error fetching department:', error);
+      res.status(500).json({ message: 'Failed to fetch department' });
+    }
+  });
+
+  app.put('/api/departments/:id', authenticateUser, async (req, res) => {
+    try {
+      const departmentData = insertDepartmentSchema.partial().parse(req.body);
+      const department = await storage.updateDepartment(req.params.id, departmentData);
+      res.json(department);
+    } catch (error) {
+      console.error('Error updating department:', error);
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ message: 'Invalid department data', errors: error.errors });
+      }
+      res.status(500).json({ message: 'Failed to update department' });
+    }
+  });
+
+  app.delete('/api/departments/:id', authenticateUser, async (req, res) => {
+    try {
+      await storage.deleteDepartment(req.params.id);
+      res.json({ message: 'Department deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting department:', error);
+      res.status(500).json({ message: 'Failed to delete department' });
+    }
+  });
+
+  // Get users who can be managers (Account Managers, Team Leads)
+  app.get('/api/users/managers', authenticateUser, async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      // Filter users who can be managers (you can customize this logic)
+      const managers = users.filter(user => user.isActive);
+      res.json(managers);
+    } catch (error) {
+      console.error('Error fetching managers:', error);
+      res.status(500).json({ message: 'Failed to fetch managers' });
     }
   });
 
