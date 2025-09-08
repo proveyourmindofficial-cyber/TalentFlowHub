@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { Link } from "wouter";
 import { ReactNode } from "react";
 import { NotificationDropdown } from "@/components/notifications/notification-dropdown";
+import SmartImportDialog from "@/components/job/smart-import-dialog";
 
 interface HeaderProps {
   title: string;
@@ -29,15 +30,18 @@ export default function Header({
         <div className="flex items-center space-x-4 animate-fade-in-right">
           {action && action}
           {!action && showNewJobButton && (
-            <Link href="/jobs/new">
-              <Button 
-                className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-semibold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
-                data-testid="button-new-job"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                🚀 New Job
-              </Button>
-            </Link>
+            <>
+              <SmartImportDialog />
+              <Link href="/jobs/new">
+                <Button 
+                  className="bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700 text-white font-semibold rounded-xl transform transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                  data-testid="button-new-job"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  🚀 New Job
+                </Button>
+              </Link>
+            </>
           )}
           
           {/* Notifications */}
