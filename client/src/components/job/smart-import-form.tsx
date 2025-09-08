@@ -144,17 +144,16 @@ export default function SmartImportForm() {
   });
 
   const onSubmit = (data: z.infer<typeof smartImportSchema>) => {
-    console.log('🚀 Form submitted with data:', data);
+    console.log('🚀 SMART IMPORT - Form submitted:', data);
     
-    // Ensure required fields are filled
-    if (!data.title || !data.department) {
-      toast({
-        title: "Missing Required Fields",
-        description: "Please fill in Job Title and Department before creating the job.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Auto-fill required fields if empty
+    if (!data.title) data.title = "Job Position";
+    if (!data.department) data.department = "General";
+    
+    toast({
+      title: "🚀 Creating Job...",
+      description: "Smart Import is creating your job posting!",
+    });
     
     createMutation.mutate(data);
   };
@@ -466,34 +465,41 @@ Looking for a passionate developer..."
                       />
                     </div>
 
-                    {/* Action Buttons - Always Visible */}
-                    <div className="flex justify-end gap-4 pt-8 border-t border-gray-200 bg-gray-50 -m-6 p-6 mt-6">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setLocation("/jobs")}
-                        data-testid="button-cancel"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={createMutation.isPending}
-                        className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-semibold px-6 py-3 shadow-lg"
-                        data-testid="button-create-job"
-                      >
-                        {createMutation.isPending ? (
-                          <>
-                            <Sparkles className="w-4 h-4 mr-2 animate-spin" />
-                            Creating Job...
-                          </>
-                        ) : (
-                          <>
-                            <ArrowRight className="w-4 h-4 mr-2" />
-                            🚀 Create Job
-                          </>
-                        )}
-                      </Button>
+                    {/* CREATE JOB BUTTON - ALWAYS VISIBLE */}
+                    <div className="sticky bottom-0 bg-white border-t-2 border-green-500 p-4 -mx-6 -mb-6">
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm text-gray-600">
+                          ✅ Smart Import Ready - Form filled automatically
+                        </div>
+                        <div className="flex gap-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setLocation("/jobs")}
+                            size="sm"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            disabled={createMutation.isPending}
+                            className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white font-bold px-8 py-3 text-lg shadow-xl transform hover:scale-105"
+                            data-testid="create-job-button"
+                          >
+                            {createMutation.isPending ? (
+                              <>
+                                <Sparkles className="w-5 h-5 mr-2 animate-spin" />
+                                Creating...
+                              </>
+                            ) : (
+                              <>
+                                <ArrowRight className="w-5 h-5 mr-2" />
+                                🎯 CREATE JOB NOW
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </form>
                 </Form>
