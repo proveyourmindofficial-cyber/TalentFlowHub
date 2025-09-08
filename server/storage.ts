@@ -71,7 +71,7 @@ import {
   type InsertUserCustomRole,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, count, sql, inArray, lt } from "drizzle-orm";
+import { eq, desc, and, count, sql, inArray, lt, or } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
