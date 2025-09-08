@@ -221,8 +221,8 @@ export const departments = pgTable("departments", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Users table - ONLY CUSTOM ROLES, NO OLD ROLE SYSTEM
-export const users = pgTable("users", {
+// Users table - ONLY CUSTOM ROLES, NO OLD ROLE SYSTEM  
+export const users: any = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   email: varchar("email").unique(),
