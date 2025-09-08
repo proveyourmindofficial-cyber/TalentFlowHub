@@ -59,6 +59,9 @@ import {
   dropdownOptions,
   type DropdownOption,
   type InsertDropdownOption,
+  departments,
+  type Department,
+  type InsertDepartment,
   // OLD ROLE SYSTEM TYPES REMOVED
   customRoles,
   type CustomRole,
@@ -107,6 +110,13 @@ export interface IStorage {
   // Dropdown management operations
   getDropdownOptions(category: string): Promise<DropdownOption[]>;
   createDropdownOption(option: InsertDropdownOption): Promise<DropdownOption>;
+
+  // Department operations
+  createDepartment(department: InsertDepartment): Promise<Department>;
+  getDepartment(id: string): Promise<Department | undefined>;
+  getDepartments(): Promise<Department[]>;
+  updateDepartment(id: string, department: Partial<InsertDepartment>): Promise<Department>;
+  deleteDepartment(id: string): Promise<void>;
 
   // Candidate portal session operations
   createCandidateSession(session: InsertCandidateSession): Promise<CandidateSession>;
@@ -463,6 +473,36 @@ export class DatabaseStorage implements IStorage {
   async createDropdownOption(optionData: InsertDropdownOption): Promise<DropdownOption> {
     const [option] = await db.insert(dropdownOptions).values(optionData).returning();
     return option;
+  }
+
+  // Department operations
+  async createDepartment(departmentData: InsertDepartment): Promise<Department> {
+    const [department] = await db.insert(departments).values(departmentData).returning();
+    return department;
+  }
+
+  async getDepartment(id: string): Promise<Department | undefined> {
+    const [department] = await db.select().from(departments).where(eq(departments.id, id));
+    return department;
+  }
+
+  async getDepartments(): Promise<Department[]> {
+    return await db.select().from(departments)
+      .where(eq(departments.isActive, true))
+      .orderBy(departments.name);
+  }
+
+  async updateDepartment(id: string, departmentData: Partial<InsertDepartment>): Promise<Department> {
+    const [department] = await db
+      .update(departments)
+      .set({ ...departmentData, updatedAt: new Date() })
+      .where(eq(departments.id, id))
+      .returning();
+    return department;
+  }
+
+  async deleteDepartment(id: string): Promise<void> {
+    await db.delete(departments).where(eq(departments.id, id));
   }
 
   // Application operations
@@ -1141,6 +1181,8 @@ export class DatabaseStorage implements IStorage {
       lastName: users.lastName,
       profileImageUrl: users.profileImageUrl,
       department: users.department,
+      departmentId: users.departmentId,
+      managerId: users.managerId,
       roleId: users.roleId,
       passwordHash: users.passwordHash,
       isActive: users.isActive,
