@@ -141,7 +141,7 @@ class ActivityTracker {
   }
 
   trackError(error: Error, context?: string) {
-    if (!this.isEnabled) return;
+    if (!this.isEnabled || !this.userId) return;
 
     this.trackActivity({
       action: 'frontend_error',
@@ -242,7 +242,7 @@ class ActivityTracker {
   }
 
   private trackActivity(event: ActivityEvent) {
-    if (!this.isEnabled) return;
+    if (!this.isEnabled || !this.userId) return;
 
     // Add to batch queue
     this.batchQueue.push(event);
@@ -269,13 +269,17 @@ class ActivityTracker {
   }
 
   private async sendBatch() {
-    if (this.batchQueue.length === 0) return;
+    if (this.batchQueue.length === 0 || !this.userId) return;
 
     const events = [...this.batchQueue].map(event => ({
       ...event,
       userId: this.userId // Add userId to each event
-    }));
+    })).filter(event => event.userId); // Remove events without userId
+    
     this.batchQueue = [];
+    
+    // Don't send if no valid events
+    if (events.length === 0) return;
 
     if (this.batchTimeout) {
       clearTimeout(this.batchTimeout);
@@ -306,6 +310,8 @@ class ActivityTracker {
   private setupEventListeners() {
     // Track page visibility changes
     document.addEventListener('visibilitychange', () => {
+      if (!this.userId) return; // Only track when user is set
+      
       if (document.hidden) {
         this.trackActivity({
           action: 'page_hidden',
@@ -325,26 +331,30 @@ class ActivityTracker {
 
     // Track when user leaves page
     window.addEventListener('beforeunload', () => {
-      if (this.batchQueue.length > 0) {
+      if (this.batchQueue.length > 0 && this.userId) {
         // Add userId to events before sending
         const events = this.batchQueue.map(event => ({
           ...event,
           userId: this.userId
-        }));
-        // Send final batch synchronously
-        navigator.sendBeacon('/api/activity-logs/batch', JSON.stringify({
-          events
-        }));
+        })).filter(event => event.userId);
+        
+        // Only send if we have valid events
+        if (events.length > 0) {
+          const blob = new Blob([JSON.stringify({ events })], { type: 'application/json' });
+          navigator.sendBeacon('/api/activity-logs/batch', blob);
+        }
       }
     });
 
     // Global error handler
     window.addEventListener('error', (event) => {
+      if (!this.userId) return; // Only track when user is set
       this.trackError(new Error(event.message), `${event.filename}:${event.lineno}`);
     });
 
     // Promise rejection handler
     window.addEventListener('unhandledrejection', (event) => {
+      if (!this.userId) return; // Only track when user is set
       this.trackError(new Error(event.reason), 'unhandled_promise_rejection');
     });
 
@@ -352,6 +362,8 @@ class ActivityTracker {
     if ('PerformanceObserver' in window) {
       try {
         const observer = new PerformanceObserver((list) => {
+          if (!this.userId) return; // Only track when user is set
+          
           for (const entry of list.getEntries()) {
             if (entry.name === 'long-animation-frame' || entry.duration > 100) {
               this.trackActivity({
