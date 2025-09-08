@@ -655,8 +655,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User invitation system - send invitation email
-  app.post('/api/auth/invite-user', async (req, res) => {
+  app.post('/api/auth/invite-user', authenticateUser, async (req, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+      
       const { email, firstName, lastName, department, roleId } = req.body;
       
       if (!email || !email.includes('@')) {
