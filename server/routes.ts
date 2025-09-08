@@ -3340,13 +3340,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const roles = await storage.getCustomRoles();
       
-      // Add user count for each role
+      // Add user count and permission count for each role
       const rolesWithCounts = await Promise.all(
         roles.map(async (role) => {
           const userCount = await storage.getUserCountByCustomRole(role.id);
+          const permissions = await storage.getCustomRolePermissions(role.id);
           return {
             ...role,
             userCount: userCount.toString(),
+            permissionCount: permissions.length.toString(),
           };
         })
       );
