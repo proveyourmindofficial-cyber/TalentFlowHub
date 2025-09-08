@@ -97,6 +97,8 @@ export interface IStorage {
   deleteJob(id: string): Promise<void>;
   bulkDeleteJobs(ids: string[]): Promise<void>;
   getJobsByStatus(status: string): Promise<Job[]>;
+  getJobsByUserAccess(userId: string): Promise<JobWithRelations[]>;
+  getJobsByHierarchy(accessibleUserIds: string[]): Promise<JobWithRelations[]>;
 
   // Candidate operations
   createCandidate(candidate: InsertCandidate): Promise<Candidate>;
@@ -362,6 +364,28 @@ export class DatabaseStorage implements IStorage {
       .where(or(
         eq(jobs.createdById, userId),
         eq(jobs.assignedRecruiterId, userId)
+      ))
+      .orderBy(desc(jobs.createdAt));
+
+    return jobsData.map(row => ({
+      ...row.jobs,
+      createdBy: row.users || undefined,
+    }));
+  }
+
+  // Hierarchical data access for jobs
+  async getJobsByHierarchy(accessibleUserIds: string[]): Promise<JobWithRelations[]> {
+    if (accessibleUserIds.length === 0) {
+      return [];
+    }
+    
+    const jobsData = await db
+      .select()
+      .from(jobs)
+      .leftJoin(users, eq(jobs.createdById, users.id))
+      .where(or(
+        inArray(jobs.createdById, accessibleUserIds),
+        inArray(jobs.assignedRecruiterId, accessibleUserIds)
       ))
       .orderBy(desc(jobs.createdAt));
 
