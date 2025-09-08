@@ -114,7 +114,7 @@ export function UserJourneyVisualization() {
     }
   };
 
-  const filteredJourneys = (journeys || [])?.filter((journey: UserJourney) => {
+  const filteredJourneys = (Array.isArray(journeys) ? journeys : [])?.filter((journey: UserJourney) => {
     const matchesSearch = journey.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          journey.userId.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || journey.status === statusFilter;
