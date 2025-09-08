@@ -53,6 +53,8 @@ interface AddUserForm {
   lastName: string;
   customRoleId: string;
   department: string;
+  departmentId: string;
+  managerId: string;
 }
 
 export default function UserManagementSettings() {
@@ -66,8 +68,12 @@ export default function UserManagementSettings() {
     firstName: "",
     lastName: "",
     customRoleId: "",
-    department: ""
+    department: "",
+    departmentId: "",
+    managerId: ""
   });
+  const [newDepartment, setNewDepartment] = useState("");
+  const [showNewDepartmentDialog, setShowNewDepartmentDialog] = useState(false);
 
   // Fetch custom roles for assignment
   const { data: customRoles = [] } = useQuery({
@@ -82,6 +88,24 @@ export default function UserManagementSettings() {
     queryKey: ['/api/users-with-custom-roles'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/users-with-custom-roles');
+      return await response.json();
+    },
+  });
+
+  // Fetch departments for dropdown
+  const { data: departments = [] } = useQuery({
+    queryKey: ['/api/departments'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/departments');
+      return await response.json();
+    },
+  });
+
+  // Fetch users who can be managers
+  const { data: managers = [] } = useQuery({
+    queryKey: ['/api/users/managers'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/users/managers');
       return await response.json();
     },
   });
@@ -325,12 +349,51 @@ export default function UserManagementSettings() {
 
                   <div>
                     <Label>Department</Label>
-                    <Input
-                      value={addUserForm.department}
-                      onChange={(e) => setAddUserForm({...addUserForm, department: e.target.value})}
-                      placeholder="Enter department"
-                      data-testid="input-add-department"
-                    />
+                    <Select 
+                      value={addUserForm.departmentId} 
+                      onValueChange={(value) => {
+                        if (value === "add-new") {
+                          // Handle adding new department
+                          return;
+                        }
+                        setAddUserForm({...addUserForm, departmentId: value});
+                      }}
+                    >
+                      <SelectTrigger data-testid="select-add-department">
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map((dept: any) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="add-new" className="text-blue-600 font-medium">
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add New Department
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Manager (Optional)</Label>
+                    <Select 
+                      value={addUserForm.managerId} 
+                      onValueChange={(value) => setAddUserForm({...addUserForm, managerId: value})}
+                    >
+                      <SelectTrigger data-testid="select-add-manager">
+                        <SelectValue placeholder="Select manager" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">No Manager</SelectItem>
+                        {managers.map((manager: any) => (
+                          <SelectItem key={manager.id} value={manager.id}>
+                            {manager.firstName} {manager.lastName} ({manager.email})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div>
