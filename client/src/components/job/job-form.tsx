@@ -15,10 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertJobSchema, type Job } from "@shared/schema";
 import { z } from "zod";
-import { parseJobPosting, type ParsedJobData } from "@/utils/jobParser";
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface JobFormProps {
@@ -34,8 +32,6 @@ export default function JobForm({ jobId }: JobFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isEditing = !!jobId;
-  const [smartImportData, setSmartImportData] = useState<ParsedJobData | null>(null);
-  const [showSmartImportBanner, setShowSmartImportBanner] = useState(false);
 
   const { data: job, isLoading } = useQuery<Job>({
     queryKey: [`/api/jobs/${jobId}`],
@@ -64,52 +60,6 @@ export default function JobForm({ jobId }: JobFormProps) {
     },
   });
 
-  // Check for Smart Import data and URL parameter
-  useEffect(() => {
-    const urlParams = new URLSearchParams(location.split('?')[1]);
-    const isSmartImport = urlParams.get('import') === 'smart';
-    
-    if (isSmartImport && !isEditing) {
-      const savedData = sessionStorage.getItem('smartImportData');
-      if (savedData) {
-        try {
-          const parsedData: ParsedJobData = JSON.parse(savedData);
-          setSmartImportData(parsedData);
-          setShowSmartImportBanner(true);
-          
-          // Pre-fill form with smart import data
-          form.reset({
-            title: parsedData.title || "",
-            description: parsedData.description || "",
-            requirements: parsedData.requirements || "",
-            responsibilities: parsedData.responsibilities || "",
-            department: parsedData.department || "",
-            location: parsedData.location || "",
-            salaryMin: parsedData.salaryMin || undefined,
-            salaryMax: parsedData.salaryMax || undefined,
-            jobType: parsedData.jobType || "full_time",
-            status: "draft",
-            priority: "medium",
-            experienceLevel: parsedData.experienceLevel || "",
-            skills: parsedData.skills || "",
-            benefits: parsedData.benefits || "",
-            isRemoteAvailable: parsedData.isRemoteAvailable || false,
-            applicationDeadline: undefined,
-          });
-
-          // Clear the smart import data from sessionStorage
-          sessionStorage.removeItem('smartImportData');
-          
-          toast({
-            title: "✨ Smart Import Successful!",
-            description: "Form pre-filled with extracted job details. Review and save!",
-          });
-        } catch (error) {
-          console.error('Failed to parse smart import data:', error);
-        }
-      }
-    }
-  }, [location, form, isEditing, toast]);
 
   // Update form when job data is loaded
   useEffect(() => {
@@ -202,26 +152,10 @@ export default function JobForm({ jobId }: JobFormProps) {
 
   return (
     <div className="max-w-4xl mx-auto" data-testid="job-form">
-      {showSmartImportBanner && smartImportData && (
-        <Alert className="mb-6 bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
-          <Sparkles className="w-4 h-4 text-purple-600" />
-          <AlertDescription className="text-purple-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <strong>✨ Smart Import Successful!</strong> 
-                <span className="ml-2">Form auto-filled with extracted job details.</span>
-              </div>
-              <Badge variant="outline" className="bg-purple-100 text-purple-700">
-                🆓 FREE AI Parser
-              </Badge>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
       <Card>
         <CardHeader>
           <CardTitle>
-            {isEditing ? "Edit Job" : showSmartImportBanner ? "Review & Create Job" : "Create New Job"}
+            {isEditing ? "Edit Job" : "Create New Job"}
           </CardTitle>
         </CardHeader>
         <CardContent>
