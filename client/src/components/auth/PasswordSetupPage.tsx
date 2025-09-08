@@ -96,7 +96,7 @@ export function PasswordSetupPage() {
                 Set Your Password
               </CardTitle>
               <CardDescription className="text-gray-600 mt-2">
-                Create a secure password to access TalentFlowHub
+                Create a secure password to access O2F ATS
               </CardDescription>
             </div>
           </CardHeader>

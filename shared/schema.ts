@@ -172,7 +172,7 @@ export const offerLetters = pgTable("offer_letters", {
   designation: text("designation").notNull(),
   joiningDate: date("joining_date").notNull(),
   offerDate: date("offer_date").notNull().default(sql`CURRENT_DATE`),
-  companyName: text("company_name").notNull().default('TalentFlow Solutions'),
+  companyName: text("company_name").notNull().default('O2F Info Solutions'),
   hrName: text("hr_name").notNull(),
   hrSignature: text("hr_signature"),
   

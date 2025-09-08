@@ -129,7 +129,7 @@ export function FeedbackButton() {
                     Share Your Feedback
                   </CardTitle>
                   <CardDescription className="mt-2 text-base">
-                    Help us improve TalentFlowHub by reporting bugs, suggesting features, or asking questions.
+                    Help us improve O2F ATS by reporting bugs, suggesting features, or asking questions.
                   </CardDescription>
                 </div>
                 <Button

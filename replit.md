@@ -1,6 +1,6 @@
 # Overview
 
-TalentFlowHub is an Applicant Tracking System (ATS) built as a full-stack web application following the user's custom workflow: Job → Candidate → Application → Interview. It provides recruitment teams with tools to manage the complete hiring pipeline through a modern, responsive interface. The system follows a module-based approach where each module includes database schema, API endpoints, forms, and table views.
+O2F ATS is an Applicant Tracking System (ATS) built as a full-stack web application following the user's custom workflow: Job → Candidate → Application → Interview. It provides recruitment teams with tools to manage the complete hiring pipeline through a modern, responsive interface. The system follows a module-based approach where each module includes database schema, API endpoints, forms, and table views.
 
 ## Current Status (August 20, 2025)
 ✅ **Job Module Complete** - Full CRUD operations, form validation, table view with search/filters

@@ -833,7 +833,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create notification for successful account activation
       await storage.createNotification({
         userId: user.id,
-        title: "Welcome to TalentFlowHub!",
+        title: "Welcome to O2F ATS!",
         message: "Your account has been successfully activated. You can now access all features.",
         type: "success",
         actionUrl: "/dashboard"
