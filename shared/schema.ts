@@ -211,6 +211,16 @@ export const offerLetters = pgTable("offer_letters", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Departments table for structured department management
+export const departments = pgTable("departments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull().unique(),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Users table - ONLY CUSTOM ROLES, NO OLD ROLE SYSTEM
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -219,7 +229,9 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  department: varchar("department"),
+  department: varchar("department"), // Keep for backward compatibility
+  departmentId: varchar("department_id").references(() => departments.id),
+  managerId: varchar("manager_id").references(() => users.id),
   roleId: varchar("role_id").references(() => customRoles.id),
   passwordHash: varchar("password_hash"), // Added for secure password storage
   isActive: boolean("is_active").notNull().default(true),
@@ -728,6 +740,12 @@ export const clientRequirementsRelations = relations(clientRequirements, ({ one 
 // OLD ROLE SYSTEM RELATIONS REMOVED - ONLY CUSTOM ROLES NOW
 
 // Insert schemas
+export const insertDepartmentSchema = createInsertSchema(departments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
