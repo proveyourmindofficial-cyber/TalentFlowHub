@@ -272,6 +272,20 @@ async function sendModuleEmail(templateKey: string, recipientEmail: string, data
       emailContent = emailContent.replace(/\{\{interview\.duration\}\}/g, '60 minutes');
     }
     
+    // Replace interviewer placeholders
+    if (data.interviewer && emailContent) {
+      emailContent = emailContent.replace(/\{\{interviewer\.name\}\}/g, data.interviewer.name || 'Interviewer');
+      emailContent = emailContent.replace(/\{\{interviewer\.email\}\}/g, data.interviewer.email || 'interviewer@company.com');
+      subject = subject.replace(/\{\{interviewer\.name\}\}/g, data.interviewer.name || 'Interviewer');
+    }
+    
+    // Replace creator placeholders (for confirmation emails)
+    if (data.creator && emailContent) {
+      emailContent = emailContent.replace(/\{\{creator\.firstName\}\}/g, data.creator.firstName || data.creator.username || 'User');
+      emailContent = emailContent.replace(/\{\{creator\.name\}\}/g, `${data.creator.firstName || ''} ${data.creator.lastName || ''}`.trim() || data.creator.username || 'User');
+      subject = subject.replace(/\{\{creator\.firstName\}\}/g, data.creator.firstName || data.creator.username || 'User');
+    }
+    
     // Replace offer placeholders
     if (data.offer && emailContent) {
       const baseUrl = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000';
@@ -2595,12 +2609,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
               confirmationLink: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/candidate-portal/interviews/${interview.id}/confirm`
             };
 
+            // Send interview invitation to candidate
             await sendModuleEmail('interview_invitation', candidate.email, {
               candidate,
               job,
               application,
               interview: interviewForEmail
             });
+
+            // Send interview notification to interviewer
+            const emailMatch = interview.interviewer.match(/\(([^)]+)\)/);
+            if (emailMatch && emailMatch[1] && emailMatch[1].includes('@')) {
+              const interviewerEmail = emailMatch[1];
+              await sendModuleEmail('interviewer_notification', interviewerEmail, {
+                candidate,
+                job,
+                application,
+                interview: interviewForEmail,
+                interviewer: { email: interviewerEmail, name: interview.interviewer.replace(/\s*\([^)]*\)\s*$/, '') }
+              });
+            }
+
+            // Send confirmation to logged-in user (interview creator) if different from interviewer
+            if (req.user?.email && req.user.email !== (emailMatch && emailMatch[1])) {
+              await sendModuleEmail('interview_scheduled_confirmation', req.user.email, {
+                candidate,
+                job,
+                application,
+                interview: interviewForEmail,
+                creator: req.user
+              });
+            }
           }
         }
       } catch (emailError) {
