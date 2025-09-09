@@ -1072,6 +1072,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get potential interviewers (users who can conduct interviews)
+  app.get('/api/users/interviewers', authenticateUser, async (req, res) => {
+    try {
+      const users = await storage.getUsersWithCustomRoles();
+      const interviewers = [];
+      
+      // Define roles that can conduct interviews
+      const interviewerRoles = ['Super Admin', 'Recruiter', 'HR', 'Director', 'Account Manager'];
+      
+      for (const user of users) {
+        if (!user.isActive) continue; // Skip inactive users
+        
+        if (user.customRole && interviewerRoles.includes(user.customRole.name)) {
+          interviewers.push({
+            id: user.id,
+            name: `${user.firstName} ${user.lastName}`.trim() || user.username,
+            email: user.email,
+            department: user.department,
+            role: user.customRole.name,
+            roleColor: user.customRole.color
+          });
+        }
+      }
+      
+      // Sort by role priority and then by name
+      const rolePriority = { 'Super Admin': 1, 'Director': 2, 'Account Manager': 3, 'HR': 4, 'Recruiter': 5 };
+      interviewers.sort((a, b) => {
+        const priorityDiff = (rolePriority[a.role] || 6) - (rolePriority[b.role] || 6);
+        if (priorityDiff !== 0) return priorityDiff;
+        return a.name.localeCompare(b.name);
+      });
+      
+      console.log(`📋 Found ${interviewers.length} potential interviewers:`, interviewers.map(i => `${i.name} (${i.role})`));
+      res.json(interviewers);
+    } catch (error) {
+      console.error("Error fetching interviewers:", error);
+      res.status(500).json({ message: "Failed to fetch interviewers" });
+    }
+  });
+
   app.post('/api/users', authenticateUser, async (req, res) => {
     try {
       const { username, email, firstName, lastName, customRoleId, department, isActive } = req.body;

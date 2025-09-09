@@ -71,6 +71,16 @@ export function InterviewForm({ interview, onSuccess, onCancel }: InterviewFormP
     }
   });
 
+  // Get potential interviewers from User Management
+  const { data: interviewers = [], isLoading: interviewersLoading } = useQuery({
+    queryKey: ["/api/users/interviewers"],
+    queryFn: async () => {
+      const response = await fetch("/api/users/interviewers");
+      if (!response.ok) throw new Error('Failed to fetch interviewers');
+      return response.json();
+    }
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data: InterviewFormData) => {
       const payload = {
@@ -218,9 +228,38 @@ export function InterviewForm({ interview, onSuccess, onCancel }: InterviewFormP
           render={({ field }) => (
             <FormItem>
               <FormLabel>Interviewer</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter interviewer name/email" {...field} data-testid="input-interviewer" />
-              </FormControl>
+              <Select onValueChange={field.onChange} value={field.value} disabled={interviewersLoading}>
+                <FormControl>
+                  <SelectTrigger data-testid="select-interviewer">
+                    <SelectValue placeholder={interviewersLoading ? "Loading interviewers..." : "Select interviewer"} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {interviewers.length > 0 ? (
+                    interviewers.map((interviewer: any) => (
+                      <SelectItem key={interviewer.id} value={`${interviewer.name} (${interviewer.email})`}>
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{interviewer.name}</span>
+                            <span className="text-sm text-muted-foreground">{interviewer.email}</span>
+                          </div>
+                          <div className="flex items-center gap-2 ml-4">
+                            <div 
+                              className="w-2 h-2 rounded-full" 
+                              style={{ backgroundColor: interviewer.roleColor }}
+                            />
+                            <span className="text-xs text-muted-foreground">{interviewer.role}</span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      {interviewersLoading ? "Loading..." : "No interviewers available"}
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
