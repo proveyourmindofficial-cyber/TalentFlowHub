@@ -122,6 +122,75 @@ export default function CandidateProfilePage() {
     updateMutation.mutate({ candidateData, skills });
   };
 
+  const handleSendEmail = () => {
+    if (candidate?.email) {
+      const subject = `Regarding Your Application - ${candidate.name}`;
+      const body = `Dear ${candidate.name},\n\nI hope this email finds you well.\n\nBest regards,\nTalentFlow ATS Team`;
+      const mailtoLink = `mailto:${candidate.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(mailtoLink, '_blank');
+    } else {
+      toast({
+        title: "No Email Available",
+        description: "This candidate doesn't have an email address on file.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportProfile = () => {
+    if (!candidate) return;
+    
+    const exportData = {
+      'Name': candidate.name,
+      'Email': candidate.email,
+      'Phone': candidate.phone,
+      'Primary Skill': candidate.primarySkill,
+      'Total Experience': `${candidate.totalExperience} years`,
+      'Relevant Experience': `${candidate.relevantExperience} years`,
+      'Current Location': candidate.currentLocation || 'Not specified',
+      'Preferred Location': candidate.preferredLocation || 'Not specified',
+      'Current Company': candidate.currentCompany || 'Not specified',
+      'Current Designation': candidate.currentDesignation || 'Not specified',
+      'Current CTC': formatCurrency(candidate.currentCtc),
+      'Expected CTC': formatCurrency(candidate.expectedCtc),
+      'Notice Period': candidate.noticePeriod || 'Not specified',
+      'Status': candidate.status,
+      'Qualification': candidate.qualification || 'Not specified',
+      'Candidate Type': candidate.candidateType || 'Not specified',
+      'Source': candidate.source || 'Not specified',
+      'Recruiter': candidate.recruiterName || 'Not specified',
+      'LinkedIn': candidate.linkedinUrl || 'Not specified',
+      'UAN Number': candidate.uanNumber || 'Not specified',
+      'Aadhaar Number': candidate.aadhaarNumber || 'Not specified',
+      'Created Date': candidate.createdAt ? new Date(candidate.createdAt).toLocaleDateString() : 'Not specified',
+    };
+
+    // Convert to CSV
+    const headers = Object.keys(exportData);
+    const values = Object.values(exportData);
+    const csvContent = [
+      headers.join(','),
+      values.map(value => `"${String(value).replace(/"/g, '""')}"`).join(',')
+    ].join('\n');
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${candidate.name.replace(/\s+/g, '_')}_Profile_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Profile Exported",
+      description: `${candidate.name}'s profile has been exported successfully.`,
+    });
+  };
+
   const formatCurrency = (amount: string | null) => {
     if (!amount) return "Not specified";
     const num = parseFloat(amount);
@@ -232,11 +301,11 @@ export default function CandidateProfilePage() {
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Profile
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleSendEmail} data-testid="button-send-email">
                 <Send className="w-4 h-4 mr-2" />
                 Send Email
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleExportProfile} data-testid="button-export-profile">
                 <Download className="w-4 h-4 mr-2" />
                 Export Profile
               </Button>
