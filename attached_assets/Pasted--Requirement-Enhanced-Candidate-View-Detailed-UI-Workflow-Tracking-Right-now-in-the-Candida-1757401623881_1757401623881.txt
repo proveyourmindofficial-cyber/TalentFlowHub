@@ -1,0 +1,71 @@
+📌 Requirement: Enhanced Candidate View (Detailed UI & Workflow Tracking)
+
+Right now, in the Candidate Form, we have a View option that shows some basic information. That’s fine, but what I really need is a more detailed view with a clean and structured UI, so that all relevant information can be accessed in one place.
+
+🔍 Current Gap
+
+The current candidate view shows only basic details.
+
+Missing: Clear visibility of skills, applied jobs, interview/application stages, remarks, and documents.
+
+As an admin/reviewer, I cannot get a complete picture of the candidate’s journey from start to end.
+
+💡 Proposed Enhancements
+
+Detailed Candidate Profile View
+
+Show all fields (basic info, contact, documents, resume, etc.).
+
+Display skills with proficiency, experience, and certifications.
+
+List all jobs applied for with the associated skill(s).
+
+Application & Stage-Wise Tracking
+
+Track and display the full workflow of the candidate:
+
+Application submitted → Screening → Interview rounds → Offer → Joining → Rejection (if any).
+
+Show remarks and comments at each stage.
+
+Highlight the current status (e.g., “Interview Round 2 scheduled”).
+
+Clear Sections & UI Improvements
+
+Separate tabs or blocks for:
+
+Personal Info
+
+Skills & Expertise
+
+Jobs Applied
+
+Interview/Application Stages
+
+Documents & Attachments
+
+Admin Remarks & Feedback
+
+Well-organized layout with better readability.
+
+History & Audit Trail
+
+Complete activity log of the candidate: who added them, which role, changes made, emails sent, status updates.
+
+A timeline view to see the candidate’s journey from start to finish.
+
+✅ Expected Outcome
+
+If I open any candidate’s profile, I should get the entire picture at a glance:
+
+Skills → Jobs applied → Progress in each stage → Remarks → Final outcome.
+
+This will help in monitoring, decision-making, and improving the candidate workflow.
+
+❓ My Questions to You
+
+Is this possible to implement in the current system?
+
+Should it be part of the Candidate Form (View option), or should we build a separate Candidate Detailed Profile Page?
+
+What would be the best approach/UI standard for this (global best practice)?
