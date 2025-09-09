@@ -132,10 +132,10 @@ export class GraphEmailService {
     }
   }
 
-  async sendEmail(emailData: EmailMessage): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  async sendEmail(emailData: EmailMessage & { senderEmail?: string }): Promise<{ success: boolean; messageId?: string; error?: string }> {
     const startTime = Date.now();
-    const { to, subject, body, fromEmail, isHtml = false, userId, req, userJourneyContext } = emailData;
-    const fromAddress = fromEmail || process.env.GRAPH_FROM_EMAIL || 'noreply@yourdomain.com';
+    const { to, subject, body, fromEmail, senderEmail, isHtml = false, userId, req, userJourneyContext } = emailData;
+    const actualSender = senderEmail || fromEmail || process.env.GRAPH_FROM_EMAIL || 'noreply@yourdomain.com';
     
     // Create initial email log entry
     let emailLogId: string | undefined;
@@ -191,15 +191,33 @@ export class GraphEmailService {
           ],
           from: {
             emailAddress: {
-              address: fromAddress,
+              address: actualSender,
             },
           },
         },
       };
 
-      // Send email using Graph API
-      const userEmail = fromAddress;
-      const response = await this.graphClient.api(`/users/${userEmail}/sendMail`).post(message);
+      // Send email using Graph API - try from specific user first, fallback to system account
+      let response: any;
+      let finalSender = actualSender;
+      
+      console.log(`📧 Attempting to send email from: ${actualSender} to: ${to}...`);
+      
+      try {
+        // Try to send from the specific user's mailbox
+        if (actualSender && actualSender !== 'itsupport@o2finfosolutions.com' && actualSender.includes('@')) {
+          response = await this.graphClient.api(`/users/${actualSender}/sendMail`).post(message);
+        } else {
+          // Send from default system account
+          response = await this.graphClient.api('/me/sendMail').post(message);
+          finalSender = 'itsupport@o2finfosolutions.com';
+        }
+      } catch (userError: any) {
+        console.warn(`⚠️ Could not send from ${actualSender} (${userError?.message || 'Unknown error'}), using system account...`);
+        // Fallback to system account
+        response = await this.graphClient.api('/me/sendMail').post(message);
+        finalSender = 'itsupport@o2finfosolutions.com';
+      }
       
       const responseTime = Date.now() - startTime;
       const messageId = response?.id || `graph-${Date.now()}`;
