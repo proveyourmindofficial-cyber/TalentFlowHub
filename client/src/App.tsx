@@ -20,6 +20,7 @@ import SmartImportPage from "@/pages/smart-import";
 import JobDetailPage from "@/pages/job-detail";
 import Candidates from "@/pages/candidates";
 import CandidateDetailPage from "@/pages/candidate-detail";
+import CandidateProfilePage from "@/pages/candidate-profile";
 import Applications from "@/pages/applications";
 import Interviews from "@/pages/interviews";
 import OfferLetters from "@/pages/OfferLetters";
