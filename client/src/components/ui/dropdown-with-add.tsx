@@ -33,13 +33,15 @@ export function DropdownWithAdd({
     if (!newOption.trim()) return;
     
     try {
+      const normalizedValue = newOption.trim().toLowerCase().replace(/\s+/g, '_');
       await addOption.mutateAsync({
         category,
         label: newOption.trim(),
-        value: newOption.trim().toLowerCase().replace(/\s+/g, '_'),
+        value: normalizedValue,
       });
       
-      onValueChange?.(newOption.trim());
+      // Auto-select the newly created option
+      onValueChange?.(normalizedValue);
       setNewOption("");
       setDialogOpen(false);
     } catch (error) {
