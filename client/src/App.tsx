@@ -94,6 +94,7 @@ function Router() {
         <Route path="/jobs/:id/edit" component={JobForm} />
         <Route path="/candidates" component={Candidates} />
         <Route path="/candidates/:id" component={CandidateDetailPage} />
+        <Route path="/candidates/:id/profile" component={CandidateProfilePage} />
         <Route path="/applications" component={Applications} />
         <Route path="/interviews" component={Interviews} />
         <Route path="/offer-letters" component={OfferLetters} />
