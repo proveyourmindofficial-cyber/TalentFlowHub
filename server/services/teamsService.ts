@@ -1,5 +1,4 @@
 import { Client } from '@microsoft/microsoft-graph-client';
-import { ClientCredentialAuthProvider } from '@azure/msal-node';
 import { graphEmailService } from './graphEmailService';
 
 export interface TeamsOnlineMeetingOptions {
@@ -29,25 +28,25 @@ export class TeamsService {
   private config: any;
 
   constructor() {
-    // Reuse the same configuration as GraphEmailService
-    this.config = {
-      tenantId: process.env.AZURE_TENANT_ID || '',
-      clientId: process.env.AZURE_CLIENT_ID || '',
-      clientSecret: process.env.AZURE_CLIENT_SECRET || '',
-    };
+    // Check if we can reuse the GraphEmailService configuration
+    this.isConfigured = graphEmailService.isConfigured;
+    
+    if (!this.isConfigured) {
+      console.warn('⚠️ Microsoft Teams Service not configured. Microsoft Graph API credentials required.');
+      return;
+    }
 
-    // Check configuration - same logic as email service
-    this.isConfigured = this.checkConfiguration();
-    if (this.isConfigured) {
-      try {
-        const authProvider = new ClientCredentialAuthProvider(this.config);
-        this.graphClient = Client.initWithMiddleware({
-          authProvider: authProvider,
-        });
-      } catch (error) {
-        console.warn('Failed to initialize Teams Service:', error);
-        this.isConfigured = false;
-      }
+    this.setupGraphClient();
+  }
+
+  private setupGraphClient(): void {
+    try {
+      // Reuse the GraphEmailService client since it's already configured
+      this.graphClient = graphEmailService.graphClient;
+      console.log('✅ Microsoft Teams Service initialized using existing Graph client');
+    } catch (error: any) {
+      console.error('❌ Failed to initialize Microsoft Teams Service:', error.message);
+      this.isConfigured = false;
     }
   }
 

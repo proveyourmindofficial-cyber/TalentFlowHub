@@ -266,10 +266,10 @@ async function sendModuleEmail(templateKey: string, recipientEmail: string, data
       emailContent = emailContent.replace(/\{\{interview\.date\}\}/g, new Date(data.interview.scheduledDate).toLocaleDateString());
       emailContent = emailContent.replace(/\{\{interview\.time\}\}/g, new Date(data.interview.scheduledDate).toLocaleTimeString());
       emailContent = emailContent.replace(/\{\{interview\.type\}\}/g, data.interview.interviewRound || 'Interview');
+      emailContent = emailContent.replace(/\{\{interview\.meetingLink\}\}/g, data.interview.meetingLink || '#');
+      emailContent = emailContent.replace(/\{\{interview\.location\}\}/g, data.interview.location || 'TBD');
+      emailContent = emailContent.replace(/\{\{interview\.confirmationLink\}\}/g, data.interview.confirmationLink || `${baseUrl}/candidate-portal`);
       emailContent = emailContent.replace(/\{\{interview\.duration\}\}/g, '60 minutes');
-      emailContent = emailContent.replace(/\{\{interview\.location\}\}/g, data.interview.mode === 'Online' ? 'Virtual Meeting' : 'Office');
-      emailContent = emailContent.replace(/\{\{interview\.meetingLink\}\}/g, `${baseUrl}/interview-meeting/${data.interview.id}`);
-      emailContent = emailContent.replace(/\{\{interview\.confirmationLink\}\}/g, `${baseUrl}/interview-confirmation/${data.interview.id}`);
     }
     
     // Replace offer placeholders
@@ -2581,11 +2581,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const candidate = await storage.getCandidate(application.candidateId);
           const job = await storage.getJob(application.jobId);
           if (candidate && candidate.email) {
+            // Transform interview data to match email template expectations
+            const interviewForEmail = {
+              ...interview,
+              // Transform Teams meeting data to match template placeholders
+              meetingLink: interview.teamsMeetingUrl || '#',
+              date: new Date(interview.scheduledDate).toLocaleDateString(),
+              time: new Date(interview.scheduledDate).toLocaleTimeString(),
+              type: interview.interviewRound,
+              location: interview.mode === 'Teams' ? 'Microsoft Teams Meeting' :
+                       interview.mode === 'Online' ? 'Virtual Meeting' : 
+                       'On-site',
+              confirmationLink: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/candidate-portal/interviews/${interview.id}/confirm`
+            };
+
             await sendModuleEmail('interview_invitation', candidate.email, {
               candidate,
               job,
               application,
-              interview
+              interview: interviewForEmail
             });
           }
         }
