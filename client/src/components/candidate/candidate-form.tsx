@@ -49,7 +49,7 @@ const candidateFormSchema = insertCandidateSchema.extend({
 
 interface CandidateFormProps {
   initialData?: Candidate;
-  onSubmit: (data: InsertCandidate) => void;
+  onSubmit: (data: InsertCandidate, skills: CandidateSkill[]) => void;
   isLoading?: boolean;
 }
 
@@ -297,7 +297,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
       identityData: JSON.stringify(identityDocuments),
       additionalData: JSON.stringify(additionalDocuments),
     };
-    onSubmit(candidateData);
+    onSubmit(candidateData, selectedSkills);
   }
 
   return (

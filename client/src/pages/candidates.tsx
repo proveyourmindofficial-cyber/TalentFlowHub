@@ -14,7 +14,7 @@ import { CandidateForm } from "@/components/candidate/candidate-form";
 import { CandidateTable } from "@/components/candidate/candidate-table";
 import { CandidateDetailView } from "@/components/candidate/candidate-detail-view";
 import { apiRequest } from "@/lib/queryClient";
-import { type Candidate, type InsertCandidate } from "@shared/schema";
+import { type Candidate, type InsertCandidate, type CandidateSkill } from "@shared/schema";
 import { useLocation } from "wouter";
 import Header from "@/components/layout/header";
 
@@ -35,7 +35,7 @@ export default function CandidatesPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (candidateData: InsertCandidate) => {
+    mutationFn: async ({ candidateData, skills }: { candidateData: InsertCandidate; skills: CandidateSkill[] }) => {
       const response = await fetch("/api/candidates", {
         method: "POST",
         body: JSON.stringify(candidateData),
@@ -46,7 +46,27 @@ export default function CandidatesPage() {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return response.json();
+      const candidate = await response.json();
+      
+      // Save skills after candidate is created
+      if (skills.length > 0) {
+        for (const skill of skills) {
+          await fetch(`/api/candidates/${candidate.id}/skills`, {
+            method: "POST",
+            body: JSON.stringify({
+              skillId: skill.id,
+              proficiency: skill.proficiency,
+              yearsOfExperience: skill.yearsOfExperience || 0,
+              certified: skill.certified || false,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+        }
+      }
+      
+      return candidate;
     },
     onSuccess: () => {
       // Invalidate all queries affected by candidate creation
@@ -54,6 +74,8 @@ export default function CandidatesPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/pipeline"] });
       queryClient.invalidateQueries({ queryKey: ["/api/navigation/counts"] });
+      // Invalidate skills queries for real-time updates in Enhanced Profile
+      queryClient.invalidateQueries({ queryKey: ["/api/candidates", "skills"] });
       setDialogOpen(false);
       setEditingCandidate(null);
       toast({
@@ -71,10 +93,10 @@ export default function CandidatesPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: InsertCandidate }) => {
+    mutationFn: async ({ id, candidateData, skills }: { id: string; candidateData: InsertCandidate; skills: CandidateSkill[] }) => {
       const response = await fetch(`/api/candidates/${id}`, {
         method: "PUT",
-        body: JSON.stringify(data),
+        body: JSON.stringify(candidateData),
         headers: {
           "Content-Type": "application/json",
         },
@@ -82,7 +104,38 @@ export default function CandidatesPage() {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      return response.json();
+      const candidate = await response.json();
+      
+      // First, remove all existing skills for this candidate
+      const existingSkillsResponse = await fetch(`/api/candidates/${id}/skills`);
+      if (existingSkillsResponse.ok) {
+        const existingSkills = await existingSkillsResponse.json();
+        for (const existingSkill of existingSkills) {
+          await fetch(`/api/candidates/${id}/skills/${existingSkill.skillId}`, {
+            method: "DELETE",
+          });
+        }
+      }
+      
+      // Then save new skills
+      if (skills.length > 0) {
+        for (const skill of skills) {
+          await fetch(`/api/candidates/${id}/skills`, {
+            method: "POST",
+            body: JSON.stringify({
+              skillId: skill.id,
+              proficiency: skill.proficiency,
+              yearsOfExperience: skill.yearsOfExperience || 0,
+              certified: skill.certified || false,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+        }
+      }
+      
+      return candidate;
     },
     onSuccess: () => {
       // Invalidate all queries affected by candidate updates
@@ -91,6 +144,8 @@ export default function CandidatesPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/pipeline"] });
       queryClient.invalidateQueries({ queryKey: ["/api/navigation/counts"] });
+      // Invalidate skills queries for real-time updates in Enhanced Profile
+      queryClient.invalidateQueries({ queryKey: ["/api/candidates", "skills"] });
       setDialogOpen(false);
       setEditingCandidate(null);
       toast({
@@ -140,11 +195,11 @@ export default function CandidatesPage() {
     },
   });
 
-  const handleSubmit = (candidateData: InsertCandidate) => {
+  const handleSubmit = (candidateData: InsertCandidate, skills: CandidateSkill[]) => {
     if (editingCandidate) {
-      updateMutation.mutate({ id: editingCandidate.id, data: candidateData });
+      updateMutation.mutate({ id: editingCandidate.id, candidateData, skills });
     } else {
-      createMutation.mutate(candidateData);
+      createMutation.mutate({ candidateData, skills });
     }
   };
 
