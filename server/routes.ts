@@ -2339,7 +2339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               joiningDate: new Date(Date.now() + 14*24*60*60*1000).toLocaleDateString(),
               manager: 'Your Reporting Manager'
             }
-          });
+          }, req.user?.email);
           console.log(`📧 Offer acceptance confirmation sent to ${candidate.email}`);
         }
       } catch (emailError) {
@@ -2387,7 +2387,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             candidate,
             job,
             application
-          });
+          }, req.user?.email);
           console.log(`📧 Offer declined follow-up sent to ${candidate.email}`);
         }
       } catch (emailError) {
@@ -2616,7 +2616,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               job,
               application,
               interview: interviewForEmail
-            });
+            }, req.user?.email);
 
             // Send interview notification to interviewer
             const emailMatch = interview.interviewer.match(/\(([^)]+)\)/);
@@ -2628,7 +2628,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 application,
                 interview: interviewForEmail,
                 interviewer: { email: interviewerEmail, name: interview.interviewer.replace(/\s*\([^)]*\)\s*$/, '') }
-              });
+              }, req.user?.email);
             }
 
             // Send confirmation to logged-in user (interview creator) if different from interviewer
@@ -2639,7 +2639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 application,
                 interview: interviewForEmail,
                 creator: req.user
-              });
+              }, req.user?.email);
             }
           }
         }
@@ -2695,29 +2695,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 if (interview.interviewRound === 'L1') {
                   await sendModuleEmail('application_shortlisted', candidate.email, {
                     candidate, job, application, interview: { ...interview, nextStage: 'L2 Technical Round' }
-                  });
+                  }, req.user?.email);
                 } else if (interview.interviewRound === 'L2') {
                   await sendModuleEmail('application_shortlisted', candidate.email, {
                     candidate, job, application, interview: { ...interview, nextStage: 'HR Discussion' }
-                  });
+                  }, req.user?.email);
                 } else if (interview.interviewRound === 'HR') {
                   await sendModuleEmail('offer_extended', candidate.email, {
                     candidate, job, application, interview
-                  });
+                  }, req.user?.email);
                 } else {
                   await sendModuleEmail('application_shortlisted', candidate.email, {
                     candidate, job, application, interview
-                  });
+                  }, req.user?.email);
                 }
               } else if (interview.feedbackResult === 'Rejected') {
                 await sendModuleEmail('application_rejected', candidate.email, {
                   candidate, job, application, interview
-                });
+                }, req.user?.email);
               } else {
                 // Send general feedback request for other results
                 await sendModuleEmail('interview_feedback_request', candidate.email, {
                   candidate, job, application, interview
-                });
+                }, req.user?.email);
               }
             }
             // Send reminder if interview date changed and is tomorrow
@@ -2729,7 +2729,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               if (interviewDate.toDateString() === tomorrow.toDateString()) {
                 await sendModuleEmail('interview_reminder', candidate.email, {
                   candidate, job, application, interview
-                });
+                }, req.user?.email);
               }
             }
           }
@@ -3178,7 +3178,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               salary: ctc,
               startDate: joiningDate
             }
-          });
+          }, req.user?.email);
           console.log(`📧 Offer extended email sent to ${candidate.email}`);
         }
       } catch (emailError) {
