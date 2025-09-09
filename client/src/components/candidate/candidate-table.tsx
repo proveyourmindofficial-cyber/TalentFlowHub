@@ -35,7 +35,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BulkOperations, ItemCheckbox } from "@/components/ui/bulk-operations";
-import { Search, Filter, MoreHorizontal, Eye, Edit, Trash2, FileText } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Eye, Edit, Trash2, FileText, User } from "lucide-react";
+import { useLocation } from "wouter";
 import { type Candidate } from "@shared/schema";
 import { useBulkSelection } from "@/hooks/use-bulk-selection";
 import { CandidateDetailView } from "./candidate-detail-view";
@@ -54,6 +55,7 @@ export function CandidateTable({ candidates, isLoading, onView, onEdit, onDelete
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [candidateToDelete, setCandidateToDelete] = useState<Candidate | null>(null);
+  const [, setLocation] = useLocation();
 
   const filteredCandidates = candidates.filter((candidate) => {
     const matchesSearch = 
@@ -271,7 +273,14 @@ export function CandidateTable({ candidates, isLoading, onView, onEdit, onDelete
                               data-testid={`button-view-${candidate.id}`}
                             >
                               <Eye className="mr-2 h-4 w-4" />
-                              View
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => setLocation(`/candidates/${candidate.id}/profile`)}
+                              data-testid={`button-profile-${candidate.id}`}
+                            >
+                              <User className="mr-2 h-4 w-4" />
+                              Enhanced Profile
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => onEdit(candidate)}
