@@ -297,66 +297,34 @@ export class ApplicationWorkflowService {
   }
 
   /**
-   * Send welcome email for portal access
+   * Send welcome email for portal access with login credentials
    */
   private async sendPortalWelcomeEmail(candidate: any, tempPassword: string): Promise<void> {
     try {
-      const emailContent = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Welcome to {{company.name}} Candidate Portal</title>
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #2563eb;">Welcome to Your Candidate Portal!</h2>
-        
-        <p>Hi ${candidate.name},</p>
-        
-        <p>Thank you for your interest in our job opportunity! We've created a personalized portal account for you.</p>
-        
-        <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="margin-top: 0;">Your Login Details:</h3>
-            <p><strong>Email:</strong> ${candidate.email}</p>
-            <p><strong>Temporary Password:</strong> ${tempPassword}</p>
-            <p><strong>Portal URL:</strong> <a href="https://${process.env.REPLIT_DEV_DOMAIN}/candidate-portal/login">Access Portal</a></p>
-        </div>
-        
-        <p><strong>Important:</strong> Please change your password after first login for security.</p>
-        
-        <h3>What you can do in your portal:</h3>
-        <ul>
-            <li>Track your application status</li>
-            <li>Upload additional documents</li>
-            <li>Complete your profile information</li>
-            <li>View job details and requirements</li>
-            <li>Communicate with our recruitment team</li>
-        </ul>
-        
-        <p>Our recruitment team will review your application and contact you within 2-3 business days with next steps.</p>
-        
-        <p>Best regards,<br>
-        {{company.name}}<br>
-        Building careers, connecting talent</p>
-    </div>
-</body>
-</html>`;
-
-      // Send via EmailTemplateService for consistency
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000';
+      const portalUrl = `${baseUrl}/candidate-portal/login`;
+      
+      // Send email using proper credentials template
       const result = await emailTemplateService.sendEmail(
-        'candidate_registration', 
+        'candidate_portal_credentials', 
         candidate.email,
         {
           candidate: { 
             name: candidate.name || 'Candidate',
-            portalLink: 'https://talentflow.tech/portal'
+            email: candidate.email,
+            tempPassword: tempPassword
           },
-          company: await this.getCompanyData()
+          company: await this.getCompanyData(),
+          portalUrl: portalUrl
         }
       );
 
-      console.log(`✅ Portal welcome email sent to ${candidate.email}`);
+      if (result.success) {
+        console.log(`✅ Portal credentials email sent to ${candidate.email}`);
+        console.log(`   Login: ${candidate.email} / ${tempPassword}`);
+      } else {
+        console.error(`❌ Failed to send portal credentials email to ${candidate.email}`);
+      }
     } catch (error) {
       console.error('Error sending portal welcome email:', error);
     }
