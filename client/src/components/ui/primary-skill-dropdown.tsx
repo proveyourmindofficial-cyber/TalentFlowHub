@@ -44,10 +44,8 @@ export function PrimarySkillDropdown({
   // Create new skill mutation
   const createSkillMutation = useMutation({
     mutationFn: async (newSkill: { name: string; category: string }) => {
-      return await apiRequest("/api/skills", {
-        method: "POST",
-        body: JSON.stringify(newSkill),
-      });
+      const response = await apiRequest("POST", "/api/skills", newSkill);
+      return await response.json();
     },
     onSuccess: (newSkill: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/skills"] });
