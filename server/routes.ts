@@ -2341,7 +2341,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (interview.interviewRound === 'HR' && interview.status === 'Completed' && interview.feedbackResult) {
         switch (interview.feedbackResult) {
           case 'Selected':
-            newApplicationStage = 'Selected';
+            newApplicationStage = 'Offer Released';
             newCandidateStatus = 'Offered';
             break;
           case 'Rejected':
@@ -2361,6 +2361,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
             newApplicationStage = 'Shortlisted';
             newCandidateStatus = 'Interviewing';
         }
+      }
+      // Rule 1.5: L1/L2/Final + Completed + Selected → Progress to next stage
+      else if (['L1', 'L2', 'Final'].includes(interview.interviewRound) && interview.status === 'Completed' && interview.feedbackResult === 'Selected') {
+        if (interview.interviewRound === 'L1') {
+          newApplicationStage = 'L2 Scheduled';
+        } else if (interview.interviewRound === 'L2') {
+          newApplicationStage = 'HR Scheduled';
+        } else if (interview.interviewRound === 'Final') {
+          newApplicationStage = 'HR Scheduled';
+        }
+        newCandidateStatus = 'Interviewing';
+      }
+      // Rule 1.6: L1/L2/Final + Completed + Rejected → Reject application
+      else if (['L1', 'L2', 'Final'].includes(interview.interviewRound) && interview.status === 'Completed' && interview.feedbackResult === 'Rejected') {
+        newApplicationStage = 'Rejected';
+        newCandidateStatus = 'Rejected';
       }
       // Rule 2: L1/L2/Final rounds (any status) - Update to proper scheduled stage
       else if (['L1', 'L2', 'Final'].includes(interview.interviewRound)) {
@@ -2468,9 +2484,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Check if interview status changed to Completed with feedback
             if (originalInterview.status !== 'Completed' && interview.status === 'Completed' && interview.feedbackResult) {
               if (interview.feedbackResult === 'Selected') {
-                await sendModuleEmail('application_shortlisted', candidate.email, {
-                  candidate, job, application, interview
-                });
+                // Send stage progression emails based on interview round
+                if (interview.interviewRound === 'L1') {
+                  await sendModuleEmail('application_shortlisted', candidate.email, {
+                    candidate, job, application, interview: { ...interview, nextStage: 'L2 Technical Round' }
+                  });
+                } else if (interview.interviewRound === 'L2') {
+                  await sendModuleEmail('application_shortlisted', candidate.email, {
+                    candidate, job, application, interview: { ...interview, nextStage: 'HR Discussion' }
+                  });
+                } else if (interview.interviewRound === 'HR') {
+                  await sendModuleEmail('offer_extended', candidate.email, {
+                    candidate, job, application, interview
+                  });
+                } else {
+                  await sendModuleEmail('application_shortlisted', candidate.email, {
+                    candidate, job, application, interview
+                  });
+                }
               } else if (interview.feedbackResult === 'Rejected') {
                 await sendModuleEmail('application_rejected', candidate.email, {
                   candidate, job, application, interview
