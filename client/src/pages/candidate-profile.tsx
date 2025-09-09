@@ -1,11 +1,13 @@
 import { useParams, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   User, 
   Briefcase, 
@@ -21,7 +23,10 @@ import {
   Download,
   Send
 } from "lucide-react";
-import type { Candidate } from "@shared/schema";
+import type { Candidate, InsertCandidate, CandidateSkill } from "@shared/schema";
+import { CandidateForm } from "@/components/candidate/candidate-form";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 // Tab components
 import { CandidateOverviewTab } from "@/components/candidate/profile/overview-tab";
@@ -34,11 +39,88 @@ export default function CandidateProfilePage() {
   const params = useParams();
   const [, setLocation] = useLocation();
   const candidateId = params.id;
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const { data: candidate, isLoading, error } = useQuery<Candidate>({
     queryKey: ['/api/candidates', candidateId],
     enabled: !!candidateId,
   });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ candidateData, skills }: { candidateData: InsertCandidate; skills: CandidateSkill[] }) => {
+      const response = await fetch(`/api/candidates/${candidateId}`, {
+        method: "PUT",
+        body: JSON.stringify(candidateData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const updatedCandidate = await response.json();
+      
+      // Update skills
+      if (skills.length > 0) {
+        // First, remove all existing skills for this candidate
+        const existingSkillsResponse = await fetch(`/api/candidates/${candidateId}/skills`);
+        if (existingSkillsResponse.ok) {
+          const existingSkills = await existingSkillsResponse.json();
+          for (const existingSkill of existingSkills) {
+            await fetch(`/api/candidates/${candidateId}/skills/${existingSkill.skillId}`, {
+              method: "DELETE",
+            });
+          }
+        }
+        
+        // Then save new skills
+        for (const skill of skills) {
+          await fetch(`/api/candidates/${candidateId}/skills`, {
+            method: "POST",
+            body: JSON.stringify({
+              skillId: skill.id,
+              proficiency: skill.proficiency,
+              yearsOfExperience: skill.yearsOfExperience || 0,
+              certified: skill.certified || false,
+            }),
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+        }
+      }
+      
+      return updatedCandidate;
+    },
+    onSuccess: () => {
+      // Invalidate all queries affected by candidate updates
+      queryClient.invalidateQueries({ queryKey: ["/api/candidates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/candidates", candidateId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/candidates", candidateId, "skills"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/candidates", candidateId, "applications"] });
+      setEditDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Candidate profile updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEdit = () => {
+    setEditDialogOpen(true);
+  };
+
+  const handleSubmit = (candidateData: InsertCandidate, skills: CandidateSkill[]) => {
+    updateMutation.mutate({ candidateData, skills });
+  };
 
   const formatCurrency = (amount: string | null) => {
     if (!amount) return "Not specified";
@@ -146,7 +228,7 @@ export default function CandidateProfilePage() {
             
             {/* Quick Actions */}
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={handleEdit} data-testid="button-edit-profile">
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Profile
               </Button>
@@ -210,6 +292,21 @@ export default function CandidateProfilePage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Candidate Profile</DialogTitle>
+          </DialogHeader>
+          <CandidateForm
+            initialData={candidate}
+            onSubmit={handleSubmit}
+            onCancel={() => setEditDialogOpen(false)}
+            isLoading={updateMutation.isPending}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
