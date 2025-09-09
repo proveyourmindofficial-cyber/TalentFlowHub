@@ -50,6 +50,30 @@ export function CandidateOverviewTab({ candidate }: CandidateOverviewTabProps) {
     ? Math.round((applications.filter((app: any) => app.stage === 'Joined').length / totalApplications) * 100)
     : 0;
 
+  // Calculate profile completion percentage
+  const calculateProfileCompletion = () => {
+    let completedFields = 0;
+    const totalFields = 12; // Total required fields for a complete profile
+    
+    // Required fields check
+    if (candidate.name) completedFields++;
+    if (candidate.email) completedFields++;
+    if (candidate.phone) completedFields++;
+    if (candidate.primarySkill) completedFields++;
+    if (candidate.totalExperience) completedFields++;
+    if (candidate.currentCompany) completedFields++;
+    if (candidate.currentLocation) completedFields++;
+    if (candidate.preferredLocation) completedFields++;
+    if (candidate.resumeUrl) completedFields++;
+    if (candidate.currentCtc) completedFields++;
+    if (candidate.expectedCtc) completedFields++;
+    if (candidate.noticePeriod) completedFields++;
+    
+    return Math.round((completedFields / totalFields) * 100);
+  };
+
+  const profileCompletionPercentage = calculateProfileCompletion();
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left Column - Personal Info */}
@@ -227,23 +251,23 @@ export function CandidateOverviewTab({ candidate }: CandidateOverviewTabProps) {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Profile Completion</span>
-                <span>85%</span>
+                <span>{profileCompletionPercentage}%</span>
               </div>
-              <Progress value={85} className="h-2" />
+              <Progress value={profileCompletionPercentage} className="h-2" />
             </div>
             
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Resume uploaded</span>
+                <CheckCircle className={`w-4 h-4 ${candidate.resumeUrl ? 'text-green-500' : 'text-gray-300'}`} />
+                <span className={candidate.resumeUrl ? 'text-green-700' : 'text-gray-500'}>Resume uploaded</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Contact verified</span>
+                <CheckCircle className={`w-4 h-4 ${candidate.email && candidate.phone ? 'text-green-500' : 'text-gray-300'}`} />
+                <span className={candidate.email && candidate.phone ? 'text-green-700' : 'text-gray-500'}>Contact verified</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Skills added</span>
+                <CheckCircle className={`w-4 h-4 ${candidate.primarySkill ? 'text-green-500' : 'text-gray-300'}`} />
+                <span className={candidate.primarySkill ? 'text-green-700' : 'text-gray-500'}>Primary skill added</span>
               </div>
             </div>
           </CardContent>
