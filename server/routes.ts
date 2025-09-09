@@ -6,6 +6,7 @@ import { ActivityLogger } from './activityLogger';
 import { z } from "zod";
 import { validateCandidateTypeFields, uanNumberSchema, aadhaarNumberSchema, linkedinUrlSchema } from "./validationUtils";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { teamsService } from './services/teamsService';
 // emailRoutes removed - functionality consolidated into EmailTemplateService
 import graphEmailRoutes from "./routes/graphEmailRoutes";
 import emailTemplateRoutes from "./routes/emailTemplateRoutes";
@@ -2514,7 +2515,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       const interviewData = insertInterviewSchema.parse(requestData);
-      const interview = await storage.createInterview(interviewData);
+      
+      // Handle Teams meeting creation for "Teams" mode
+      let teamsDetails = {};
+      if (interviewData.mode === 'Teams') {
+        console.log('📅 Creating Teams meeting for interview...');
+        
+        try {
+          // Get application, candidate, and job details for meeting info
+          const application = await storage.getApplication(interviewData.applicationId);
+          if (application) {
+            const candidate = await storage.getCandidate(application.candidateId);
+            const job = await storage.getJob(application.jobId);
+            
+            if (candidate && job) {
+              // Calculate end time (1 hour after start)
+              const startTime = new Date(interviewData.scheduledDate);
+              const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+              
+              // Extract organizer email from interviewer field (format: "Name (email)")
+              let organizerEmail = process.env.GRAPH_FROM_EMAIL || 'noreply@o2finfosolutions.com';
+              const emailMatch = interviewData.interviewer.match(/\(([^)]+)\)/);
+              if (emailMatch && emailMatch[1] && emailMatch[1].includes('@')) {
+                organizerEmail = emailMatch[1];
+              }
+
+              const teamsmeeting = await teamsService.createOnlineMeeting({
+                subject: `${interviewData.interviewRound} Interview - ${candidate.name} - ${job.title}`,
+                startDateTime: startTime.toISOString(),
+                endDateTime: endTime.toISOString(),
+                organizerEmail,
+                attendeeEmails: candidate.email ? [candidate.email] : [],
+                additionalInfo: `Interview for ${job.title} position with ${candidate.name}`
+              });
+
+              if (teamsmeeting) {
+                teamsDetails = {
+                  teamsMeetingId: teamsmeeting.meetingId,
+                  teamsMeetingUrl: teamsmeeting.joinUrl,
+                  teamsOrganizerEmail: organizerEmail
+                };
+                console.log(`✅ Teams meeting created: ${teamsmeeting.joinUrl}`);
+              } else {
+                console.warn('❌ Failed to create Teams meeting - proceeding without it');
+              }
+            }
+          }
+        } catch (teamsError) {
+          console.error('❌ Teams meeting creation error:', teamsError);
+          // Continue with interview creation even if Teams meeting fails
+        }
+      }
+
+      // Create interview with Teams details if available
+      const finalInterviewData = { ...interviewData, ...teamsDetails };
+      const interview = await storage.createInterview(finalInterviewData);
       
       // Apply comprehensive interview automation
       await applyInterviewAutomation(interview);

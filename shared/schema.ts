@@ -641,6 +641,10 @@ export const interviews = pgTable("interviews", {
   notes: text("notes"),
   feedbackResult: interviewFeedbackEnum("feedback_result"),
   status: interviewStatusEnum("status").notNull().default('Scheduled'),
+  // Teams meeting details
+  teamsMeetingId: text("teams_meeting_id"),
+  teamsMeetingUrl: text("teams_meeting_url"),
+  teamsOrganizerEmail: text("teams_organizer_email"),
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
