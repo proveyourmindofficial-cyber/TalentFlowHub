@@ -57,7 +57,9 @@ export function InterviewForm({ interview, onSuccess, onCancel }: InterviewFormP
   // Watch for changes in interview round and status to control field visibility
   const watchedRound = form.watch("interviewRound");
   const watchedStatus = form.watch("status");
+  const watchedMode = form.watch("mode");
   const showFeedbackResult = watchedRound === "HR" && watchedStatus === "Completed";
+  const isTeamsMode = watchedMode === "Teams";
 
   // Get available applications based on selected interview round
   const selectedRound = form.watch("interviewRound");
@@ -305,6 +307,46 @@ export function InterviewForm({ interview, onSuccess, onCancel }: InterviewFormP
             </FormItem>
           )}
         />
+
+        {/* Teams Meeting Information - Show if Teams mode and meeting URL exists */}
+        {isTeamsMode && interview?.teamsMeetingUrl && (
+          <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+              <h3 className="font-medium text-blue-900 dark:text-blue-100">Microsoft Teams Meeting</h3>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-blue-800 dark:text-blue-200">Join Meeting:</span>
+                <a 
+                  href={interview.teamsMeetingUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"></path>
+                    <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"></path>
+                  </svg>
+                  Join Teams Meeting
+                </a>
+              </div>
+              
+              {interview.teamsMeetingId && (
+                <div className="text-xs text-blue-700 dark:text-blue-300">
+                  Meeting ID: <code className="px-1 py-0.5 bg-blue-100 dark:bg-blue-800 rounded text-blue-900 dark:text-blue-100">{interview.teamsMeetingId}</code>
+                </div>
+              )}
+              
+              {interview.teamsOrganizerEmail && (
+                <div className="text-xs text-blue-700 dark:text-blue-300">
+                  Organizer: {interview.teamsOrganizerEmail}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <FormField
           control={form.control}
