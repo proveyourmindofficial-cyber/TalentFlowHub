@@ -72,10 +72,8 @@ export function SkillsManager({
   // Add new skill to the global skills database
   const addSkillMutation = useMutation({
     mutationFn: async (skill: Omit<Skill, "id">) => {
-      return await apiRequest("/api/skills", {
-        method: "POST",
-        body: JSON.stringify(skill),
-      });
+      const response = await apiRequest("POST", "/api/skills", skill);
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/skills"] });
