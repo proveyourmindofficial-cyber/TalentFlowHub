@@ -189,11 +189,23 @@ async function getCompanyData() {
   try {
     const profile = await storage.getCompanyProfile();
     return {
-      name: profile?.companyName || 'ATS System'
+      name: profile?.companyName || 'O2F Info Solutions',
+      email: profile?.email || 'hr@o2finfosolutions.com',
+      website: profile?.website || 'https://o2finfosolutions.com',
+      phone: profile?.phone || '+91-40-4855-4855',
+      address: profile?.industry || 'Hyderabad, India',
+      tagline: 'Building Excellence in IT Solutions'
     };
   } catch (error) {
     console.error('Error fetching company profile:', error);
-    return { name: 'ATS System' };
+    return { 
+      name: 'O2F Info Solutions',
+      email: 'hr@o2finfosolutions.com',
+      website: 'https://o2finfosolutions.com',
+      phone: '+91-40-4855-4855',
+      address: 'Hyderabad, India',
+      tagline: 'Building Excellence in IT Solutions'
+    };
   }
 }
 
@@ -230,6 +242,11 @@ async function sendModuleEmail(templateKey: string, recipientEmail: string, data
     const companyData = await getCompanyData();
     if (emailContent) {
       emailContent = emailContent.replace(/\{\{company\.name\}\}/g, companyData.name);
+      emailContent = emailContent.replace(/\{\{company\.email\}\}/g, companyData.email);
+      emailContent = emailContent.replace(/\{\{company\.website\}\}/g, companyData.website);
+      emailContent = emailContent.replace(/\{\{company\.phone\}\}/g, companyData.phone);
+      emailContent = emailContent.replace(/\{\{company\.address\}\}/g, companyData.address);
+      emailContent = emailContent.replace(/\{\{company\.tagline\}\}/g, companyData.tagline);
       subject = subject.replace(/\{\{company\.name\}\}/g, companyData.name);
     }
     
@@ -261,7 +278,7 @@ async function sendModuleEmail(templateKey: string, recipientEmail: string, data
       emailContent = emailContent.replace(/\{\{offer\.acceptanceLink\}\}/g, 'https://talentflow.tech/accept-offer');
     }
     
-    // Wrap in professional HTML template
+    // Wrap in professional HTML template with dynamic company branding
     const wrappedContent = `
 <!DOCTYPE html>
 <html lang="en">
@@ -272,17 +289,17 @@ async function sendModuleEmail(templateKey: string, recipientEmail: string, data
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f8f9fa; }
         .email-container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+        .header { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 30px; text-align: center; }
         .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
         .header p { margin: 5px 0 0 0; opacity: 0.9; font-size: 14px; }
         .content { padding: 40px 30px; }
         .greeting { font-size: 18px; font-weight: 600; color: #2c3e50; margin-bottom: 20px; }
         .body-text { margin-bottom: 20px; color: #5a6c7d; line-height: 1.7; }
-        .highlight { background: #f8f9ff; border-left: 4px solid #667eea; padding: 20px; margin: 25px 0; border-radius: 4px; }
+        .highlight { background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 4px; }
         .highlight strong { color: #2c3e50; }
         .cta-button { 
             display: inline-block; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); 
             color: white; 
             padding: 14px 28px; 
             text-decoration: none; 
@@ -300,16 +317,17 @@ async function sendModuleEmail(templateKey: string, recipientEmail: string, data
 <body>
     <div class="email-container">
         <div class="header">
-            <h1>TalentFlow Technologies</h1>
-            <p>Building Tomorrow's Tech Teams</p>
+            <h1>${companyData.name}</h1>
+            <p>${companyData.tagline}</p>
         </div>
         <div class="content">
             ${emailContent}
         </div>
         <div class="footer">
-            <p><strong>TalentFlow Technologies</strong></p>
+            <p><strong>${companyData.name}</strong></p>
             <div class="company-info">
-                Hitech City, Hyderabad | www.talentflow.tech<br>
+                ${companyData.address} | ${companyData.website}<br>
+                📧 ${companyData.email} | 📞 ${companyData.phone}<br>
                 This is an automated message from our Talent Management System
             </div>
         </div>
