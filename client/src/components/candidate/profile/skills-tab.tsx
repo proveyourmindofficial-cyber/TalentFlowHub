@@ -74,7 +74,7 @@ export function CandidateSkillsTab({ candidateId }: CandidateSkillsTabProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
       {/* Skills Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {Object.entries(SKILL_CATEGORIES).map(([category, config]) => {

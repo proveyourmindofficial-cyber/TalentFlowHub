@@ -178,9 +178,9 @@ export function CandidateDocumentsTab({ candidate }: CandidateDocumentsTabProps)
               <p className="text-muted-foreground mb-4">
                 This candidate hasn't uploaded their resume yet.
               </p>
-              <Button>
+              <Button disabled>
                 <Upload className="w-4 h-4 mr-2" />
-                Upload Resume
+                Upload Resume (Contact Admin)
               </Button>
             </div>
           )}
