@@ -1759,9 +1759,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`📧 Resending portal invitation to: ${candidate.email}`);
 
       // Use the existing workflow to create/recreate portal account
-      const { ApplicationWorkflowService } = await import('./applicationWorkflow');
-      const workflow = new ApplicationWorkflowService();
-      const result = await workflow.createPortalAccount(candidateId);
+      const { applicationWorkflowService } = await import('./applicationWorkflow');
+      const result = await applicationWorkflowService.createPortalAccount(candidateId);
       
       if (result.success) {
         console.log(`✅ Portal invitation resent successfully to ${candidate.email}`);
