@@ -1,0 +1,111 @@
+📌 Glitches Found in Workflow (Job → Candidate → Application → Interview → HR → Final)
+
+I tested the end-to-end process and found several issues. Let me explain step by step:
+
+1. Job & Candidate Creation
+
+I added a Job.
+
+I added a Candidate.
+
+I applied the candidate to the job (created an Application).
+
+✅ Candidate received an email with Interested / Not Interested buttons.
+
+Issue Found:
+
+When I clicked Interested, the status in the application moved to Shortlisted (good), and in the candidate profile the status updated to Interested Candidate (good).
+
+2. Interview Scheduling – L1
+
+I selected the application, scheduled an Interview (L1) for today.
+
+✅ In the Candidate profile, status updated to Interview.
+
+✅ In the Application, status remained Shortlisted.
+
+Issue Found:
+
+❌ The candidate did not receive any email about the scheduled interview.
+
+3. Interview Update – L1 → L2
+
+I changed the interview stage from L1 → L2.
+
+Issue Found:
+
+❌ No email notification sent.
+
+❌ No clear status update in either Candidate or Application.
+
+4. HR Round
+
+I selected the HR round (salary discussion).
+
+After HR round is completed, the status should ideally move to Final / Completed.
+
+Issue Found:
+
+❌ No email notification sent.
+
+❌ No update/change in Application status.
+
+❌ Candidate profile also did not reflect any proper HR → Final → Completed progression.
+
+🔎 Key Problems Identified
+
+Email Triggers Missing
+
+Candidate receives email at “Interested/Not Interested” stage.
+
+But no email is triggered for Interview Scheduling, Interview Stage updates (L1 → L2), HR Round, or Final status.
+
+Status Inconsistencies
+
+Application status stays at Shortlisted even after interviews are scheduled.
+
+Candidate profile shows some updates, but not consistent with Application.
+
+HR → Final → Completed does not trigger any proper change.
+
+Workflow Gaps
+
+End-to-end flow is incomplete: Jobs → Candidate → Application → Interview → HR → Final.
+
+Missing clear mappings between Candidate module and Application module.
+
+Missing audit logs of actions (who updated, when, and what).
+
+✅ What I Need From You
+
+Please check the complete workflow end-to-end:
+
+Jobs Module → Candidate Application → Email Trigger → Status Update
+
+Application Module → Interview Scheduling → Stage-wise Progression → HR Round → Final Status
+
+Candidate Module → Consistent updates across all steps
+
+Email System → Verify all expected triggers
+
+Provide me with detailed documentation (like a book/manual) explaining:
+
+How the workflow is designed (end-to-end logic).
+
+What happens at each stage (status updates, emails, logs).
+
+How Candidate, Application, and Job modules are connected.
+
+Where the current gaps are and how to fix them.
+
+Final plan to ensure no missing statuses or emails.
+
+🎯 Expected Output From You
+
+A clear explanation of how the system is structured, developed, configured, and written (all workflows + logics).
+
+A detailed flow document that I can read and use to test each step.
+
+A list of issues you found in my testing.
+
+The solutions to fix those issues, and why they occurred in the first place.
