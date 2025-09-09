@@ -280,6 +280,7 @@ export function InterviewForm({ interview, onSuccess, onCancel }: InterviewFormP
                 <SelectContent>
                   <SelectItem value="Online">Online</SelectItem>
                   <SelectItem value="Offline">Offline</SelectItem>
+                  <SelectItem value="Teams">Online → Teams</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
