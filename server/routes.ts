@@ -211,7 +211,7 @@ async function getCompanyData() {
 }
 
 // Email helper function for all modules
-async function sendModuleEmail(templateKey: string, recipientEmail: string, data: any) {
+async function sendModuleEmail(templateKey: string, recipientEmail: string, data: any, senderEmail?: string) {
   try {
     const template = await storage.getEmailTemplateByKey(templateKey);
     if (!template || !template.isActive || !recipientEmail) {
@@ -359,6 +359,7 @@ async function sendModuleEmail(templateKey: string, recipientEmail: string, data
       subject: subject,
       body: wrappedContent,
       isHtml: true,
+      senderEmail: senderEmail
     });
     
     console.log(`✅ ${templateKey} email sent successfully to ${recipientEmail}`);
