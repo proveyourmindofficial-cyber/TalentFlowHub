@@ -31,7 +31,7 @@ export function PrimarySkillDropdown({
 }: PrimarySkillDropdownProps) {
   const [open, setOpen] = useState(false);
   const [newSkillName, setNewSkillName] = useState("");
-  const [newSkillCategory, setNewSkillCategory] = useState("Technical");
+  const [newSkillCategory, setNewSkillCategory] = useState("technical");
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
 
@@ -161,11 +161,9 @@ export function PrimarySkillDropdown({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Technical">Technical</SelectItem>
-                    <SelectItem value="Soft Skills">Soft Skills</SelectItem>
-                    <SelectItem value="Domain">Domain Knowledge</SelectItem>
-                    <SelectItem value="Leadership">Leadership</SelectItem>
-                    <SelectItem value="Management">Management</SelectItem>
+                    <SelectItem value="technical">Technical</SelectItem>
+                    <SelectItem value="soft">Soft Skills</SelectItem>
+                    <SelectItem value="domain">Domain Knowledge</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
