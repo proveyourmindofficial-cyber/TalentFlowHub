@@ -2362,9 +2362,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             newCandidateStatus = 'Interviewing';
         }
       }
-      // Rule 2: L1/L2/Final rounds (any status) - Reset to interviewing state
+      // Rule 2: L1/L2/Final rounds (any status) - Update to proper scheduled stage
       else if (['L1', 'L2', 'Final'].includes(interview.interviewRound)) {
-        newApplicationStage = 'Shortlisted';
+        newApplicationStage = `${interview.interviewRound} Scheduled`;
         newCandidateStatus = 'Interviewing';
       }
       // Rule 3: Default fallback for any other scenarios
@@ -2412,7 +2412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const candidate = await storage.getCandidate(application.candidateId);
           const job = await storage.getJob(application.jobId);
           if (candidate && candidate.email) {
-            await sendModuleEmail('interview_scheduled', candidate.email, {
+            await sendModuleEmail('interview_invitation', candidate.email, {
               candidate,
               job,
               application,
