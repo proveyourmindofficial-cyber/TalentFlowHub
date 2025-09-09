@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarIcon, Upload, Users, Building2, FileText, DollarSign, Calendar } from "lucide-react";
-import { insertCandidateSchema, type InsertCandidate, type Candidate } from "@shared/schema";
+import { insertCandidateSchema, type InsertCandidate, type Candidate, type CandidateSkill } from "@shared/schema";
 import { z } from "zod";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import { DropdownWithAdd } from "@/components/ui/dropdown-with-add";
