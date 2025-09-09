@@ -2367,9 +2367,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (interview.interviewRound === 'L1') {
           newApplicationStage = 'L2 Scheduled';
         } else if (interview.interviewRound === 'L2') {
-          newApplicationStage = 'HR Scheduled';
+          newApplicationStage = 'Selected';
         } else if (interview.interviewRound === 'Final') {
-          newApplicationStage = 'HR Scheduled';
+          newApplicationStage = 'Selected';
         }
         newCandidateStatus = 'Interviewing';
       }
