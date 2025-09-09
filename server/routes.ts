@@ -1746,6 +1746,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Resend portal invitation to a candidate
+  app.post('/api/candidates/:id/resend-portal-invitation', authenticateUser, async (req, res) => {
+    try {
+      const candidateId = req.params.id;
+      const candidate = await storage.getCandidate(candidateId);
+      
+      if (!candidate) {
+        return res.status(404).json({ message: "Candidate not found" });
+      }
+
+      console.log(`📧 Resending portal invitation to: ${candidate.email}`);
+
+      // Use the existing workflow to create/recreate portal account
+      const { ApplicationWorkflowService } = await import('./applicationWorkflow');
+      const workflow = new ApplicationWorkflowService();
+      const result = await workflow.createPortalAccount(candidateId);
+      
+      if (result.success) {
+        console.log(`✅ Portal invitation resent successfully to ${candidate.email}`);
+        res.json({ 
+          message: `Portal invitation sent successfully to ${candidate.email}`,
+          success: true 
+        });
+      } else {
+        console.error(`❌ Failed to resend portal invitation: ${result.message}`);
+        res.status(500).json({ 
+          message: result.message || "Failed to resend portal invitation",
+          success: false 
+        });
+      }
+
+    } catch (error) {
+      console.error("Error resending portal invitation:", error);
+      res.status(500).json({ message: "Failed to resend portal invitation" });
+    }
+  });
+
   // Bulk delete candidates
   app.post('/api/candidates/bulk-delete', async (req, res) => {
     try {
