@@ -1405,6 +1405,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get candidate applications for enhanced profile
+  app.get('/api/candidates/:id/applications', async (req, res) => {
+    try {
+      const candidateId = req.params.id;
+      const applications = await storage.getApplicationsByCandidate(candidateId);
+      res.json(applications);
+    } catch (error) {
+      console.error("Error fetching candidate applications:", error);
+      res.status(500).json({ message: "Failed to fetch candidate applications" });
+    }
+  });
+
+  // Note: Candidate skills endpoint already exists in skills router at /api/candidates/:candidateId/skills
+
+  // Get candidate timeline/activity for enhanced profile
+  app.get('/api/candidates/:id/timeline', async (req, res) => {
+    try {
+      const candidateId = req.params.id;
+      
+      // Collect timeline events from various sources
+      const timelineEvents = [];
+      
+      // Add candidate creation event
+      const candidate = await storage.getCandidate(candidateId);
+      if (candidate) {
+        timelineEvents.push({
+          id: `candidate-created-${candidate.id}`,
+          type: 'candidate_created',
+          title: 'Candidate Profile Created',
+          description: `${candidate.name} joined the platform`,
+          createdAt: candidate.createdAt,
+          metadata: { candidateId: candidate.id }
+        });
+      }
+      
+      // Add application events
+      const applications = await storage.getApplicationsByCandidate(candidateId);
+      applications.forEach(app => {
+        timelineEvents.push({
+          id: `application-${app.id}`,
+          type: 'application_submitted',
+          title: 'Application Submitted',
+          description: `Applied for ${app.job?.title || 'position'}`,
+          createdAt: app.createdAt,
+          metadata: { 
+            applicationId: app.id,
+            jobTitle: app.job?.title,
+            stage: app.stage
+          }
+        });
+        
+        // Add stage change events if feedback exists
+        if (app.feedback) {
+          timelineEvents.push({
+            id: `feedback-${app.id}`,
+            type: 'feedback_added',
+            title: 'Feedback Added',
+            description: app.feedback,
+            createdAt: app.updatedAt || app.createdAt,
+            metadata: { 
+              applicationId: app.id,
+              jobTitle: app.job?.title,
+              stage: app.stage
+            }
+          });
+        }
+      });
+      
+      // Add interview events
+      const interviews = await storage.getInterviews();
+      const candidateInterviews = interviews.filter(interview => 
+        applications.some(app => app.id === interview.applicationId)
+      );
+      
+      candidateInterviews.forEach(interview => {
+        const relatedApp = applications.find(app => app.id === interview.applicationId);
+        timelineEvents.push({
+          id: `interview-${interview.id}`,
+          type: 'interview_scheduled',
+          title: 'Interview Scheduled',
+          description: `Interview scheduled`,
+          createdAt: interview.createdAt,
+          metadata: { 
+            interviewId: interview.id,
+            jobTitle: relatedApp?.job?.title,
+            scheduledDate: interview.scheduledDate
+          }
+        });
+      });
+      
+      // Sort timeline events by date (newest first)
+      timelineEvents.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA;
+      });
+      
+      res.json(timelineEvents);
+    } catch (error) {
+      console.error("Error fetching candidate timeline:", error);
+      res.status(500).json({ message: "Failed to fetch candidate timeline" });
+    }
+  });
+
   app.post('/api/candidates', async (req, res) => {
     try {
       const candidateData = insertCandidateSchema.parse(req.body);
