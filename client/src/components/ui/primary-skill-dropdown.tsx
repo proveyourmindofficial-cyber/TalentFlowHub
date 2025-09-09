@@ -48,7 +48,10 @@ export function PrimarySkillDropdown({
       return await response.json();
     },
     onSuccess: (newSkill: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/skills"] });
+      // Force immediate cache update
+      queryClient.setQueryData(["/api/skills"], (oldData: any[]) => {
+        return oldData ? [...oldData, newSkill] : [newSkill];
+      });
       setOpen(false);
       setNewSkillName("");
       onValueChange(newSkill.name);

@@ -861,7 +861,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
               <CardContent className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="primarySkill"
+                  name="highestQualification"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Qualification</FormLabel>
