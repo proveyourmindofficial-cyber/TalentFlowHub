@@ -355,6 +355,65 @@ export class EmailTemplateService {
         isActive: true,
       },
       {
+        key: 'interviewer_notification',
+        name: 'Interviewer Notification',
+        subject: 'Interview Assignment – {{job.title}} with {{candidate.name}}',
+        htmlContent: `
+          <div class="greeting">Hi {{interviewer.name}},</div>
+          <div class="body-text">
+            You have been assigned to conduct an interview for <strong>{{candidate.name}}</strong> for the <strong>{{job.title}}</strong> position.
+          </div>
+          <div class="highlight">
+            <strong>📅 Interview Details:</strong><br>
+            Candidate: {{candidate.name}}<br>
+            Position: {{job.title}}<br>
+            Date: {{interview.date}}<br>
+            Time: {{interview.time}}<br>
+            Type: {{interview.type}}<br>
+            Location: {{interview.location}}<br>
+            Meeting Link: <a href="{{interview.meetingLink}}" style="color: ${this.config.primaryColor};">Join Teams Meeting</a>
+          </div>
+          <div class="body-text">
+            Please prepare for the interview and join the meeting at the scheduled time. If you need to reschedule, please contact HR immediately.
+          </div>
+          <div class="body-text">
+            Thank you for your participation in our recruitment process.
+          </div>
+        `,
+        category: 'interview',
+        isActive: true,
+      },
+      {
+        key: 'interview_scheduled_confirmation',
+        name: 'Interview Scheduled Confirmation',
+        subject: 'Interview Scheduled – {{candidate.name}} for {{job.title}}',
+        htmlContent: `
+          <div class="greeting">Hi {{creator.firstName}},</div>
+          <div class="body-text">
+            You have successfully scheduled an interview for <strong>{{candidate.name}}</strong> for the <strong>{{job.title}}</strong> position.
+          </div>
+          <div class="highlight">
+            <strong>📅 Interview Summary:</strong><br>
+            Candidate: {{candidate.name}}<br>
+            Position: {{job.title}}<br>
+            Interviewer: {{interview.interviewer}}<br>
+            Date: {{interview.date}}<br>
+            Time: {{interview.time}}<br>
+            Type: {{interview.type}}<br>
+            Location: {{interview.location}}<br>
+            Meeting Link: <a href="{{interview.meetingLink}}" style="color: ${this.config.primaryColor};">Teams Meeting</a>
+          </div>
+          <div class="body-text">
+            All participants have been notified via email. You can manage this interview from your dashboard.
+          </div>
+          <div style="text-align: center; margin: 32px 0;">
+            <a href="{{company.website}}/interviews" class="cta-button">View Interview</a>
+          </div>
+        `,
+        category: 'interview',
+        isActive: true,
+      },
+      {
         key: 'offer_letter',
         name: 'Job Offer Letter',
         subject: 'Job Offer – {{job.title}} at {{company.name}} 🎉',
