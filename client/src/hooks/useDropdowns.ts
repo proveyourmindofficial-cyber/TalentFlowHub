@@ -26,10 +26,8 @@ export function useAddDropdownOption() {
   
   return useMutation({
     mutationFn: async (data: { category: string; label: string; value: string }) => {
-      return await apiRequest('/api/dropdowns', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest('POST', '/api/dropdowns', data);
+      return response.json();
     },
     onSuccess: (_, variables) => {
       // Invalidate the specific category to refresh dropdown
