@@ -252,30 +252,34 @@ async function sendModuleEmail(templateKey: string, recipientEmail: string, data
     
     // Replace application placeholders
     if (data.application && emailContent) {
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000';
       emailContent = emailContent.replace(/\{\{application\.submittedAt\}\}/g, new Date().toLocaleDateString());
-      emailContent = emailContent.replace(/\{\{application\.referenceId\}\}/g, `TFT-${Date.now()}`);
-      emailContent = emailContent.replace(/\{\{application\.trackingLink\}\}/g, 'https://talentflow.tech/track');
+      emailContent = emailContent.replace(/\{\{application\.referenceId\}\}/g, `O2F-${Date.now()}`);
+      emailContent = emailContent.replace(/\{\{application\.trackingLink\}\}/g, `${baseUrl}/candidate-portal/applications`);
+      emailContent = emailContent.replace(/\{\{candidatePortal\.link\}\}/g, `${baseUrl}/candidate-portal/dashboard`);
     }
     
     // Replace interview placeholders
     if (data.interview && emailContent) {
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000';
       emailContent = emailContent.replace(/\{\{interview\.date\}\}/g, new Date(data.interview.scheduledDate).toLocaleDateString());
       emailContent = emailContent.replace(/\{\{interview\.time\}\}/g, new Date(data.interview.scheduledDate).toLocaleTimeString());
       emailContent = emailContent.replace(/\{\{interview\.type\}\}/g, data.interview.interviewRound || 'Interview');
       emailContent = emailContent.replace(/\{\{interview\.duration\}\}/g, '60 minutes');
-      emailContent = emailContent.replace(/\{\{interview\.location\}\}/g, data.interview.mode === 'video_call' ? 'Virtual Meeting' : 'Office');
-      emailContent = emailContent.replace(/\{\{interview\.meetingLink\}\}/g, 'https://meet.google.com/abc-defg-hij');
-      emailContent = emailContent.replace(/\{\{interview\.confirmationLink\}\}/g, 'https://talentflow.tech/confirm-interview');
+      emailContent = emailContent.replace(/\{\{interview\.location\}\}/g, data.interview.mode === 'Online' ? 'Virtual Meeting' : 'Office');
+      emailContent = emailContent.replace(/\{\{interview\.meetingLink\}\}/g, `${baseUrl}/interview-meeting/${data.interview.id}`);
+      emailContent = emailContent.replace(/\{\{interview\.confirmationLink\}\}/g, `${baseUrl}/interview-confirmation/${data.interview.id}`);
     }
     
     // Replace offer placeholders
     if (data.offer && emailContent) {
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000';
       emailContent = emailContent.replace(/\{\{offer\.startDate\}\}/g, new Date().toLocaleDateString());
       emailContent = emailContent.replace(/\{\{offer\.salary\}\}/g, '₹15,00,000 per annum');
       emailContent = emailContent.replace(/\{\{offer\.benefits\}\}/g, 'Health Insurance, Flexible Work, Learning Budget');
       emailContent = emailContent.replace(/\{\{offer\.reportingManager\}\}/g, 'Reporting Manager');
       emailContent = emailContent.replace(/\{\{offer\.responseDeadline\}\}/g, new Date(Date.now() + 7*24*60*60*1000).toLocaleDateString());
-      emailContent = emailContent.replace(/\{\{offer\.acceptanceLink\}\}/g, 'https://talentflow.tech/accept-offer');
+      emailContent = emailContent.replace(/\{\{offer\.acceptanceLink\}\}/g, `${baseUrl}/offer-response/${data.application?.id || 'offer'}`);
     }
     
     // Wrap in professional HTML template with dynamic company branding
