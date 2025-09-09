@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { 
   Briefcase, 
   Calendar, 
@@ -77,10 +78,15 @@ const formatCurrency = (amount: number | null) => {
 };
 
 export function CandidateApplicationsTab({ candidateId }: CandidateApplicationsTabProps) {
+  const [, setLocation] = useLocation();
   const { data: applications = [], isLoading } = useQuery({
     queryKey: ['/api/candidates', candidateId, 'applications'],
     enabled: !!candidateId,
   });
+
+  const handleViewApplicationDetails = (applicationId: string) => {
+    setLocation(`/applications/${applicationId}`);
+  };
 
   if (isLoading) {
     return (
@@ -230,7 +236,12 @@ export function CandidateApplicationsTab({ candidateId }: CandidateApplicationsT
                       )}
                     </div>
                     
-                    <Button variant="outline" size="sm" className="ml-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="ml-4"
+                      onClick={() => handleViewApplicationDetails(application.id)}
+                    >
                       <Eye className="w-4 h-4 mr-2" />
                       View Details
                     </Button>
@@ -275,7 +286,12 @@ export function CandidateApplicationsTab({ candidateId }: CandidateApplicationsT
                     </div>
                   </div>
                   
-                  <Button variant="ghost" size="sm">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleViewApplicationDetails(application.id)}
+                    title="View Application Details"
+                  >
                     <Eye className="w-4 h-4" />
                   </Button>
                 </div>
