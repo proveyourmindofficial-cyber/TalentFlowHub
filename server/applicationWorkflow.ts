@@ -129,7 +129,7 @@ export class ApplicationWorkflowService {
           const job = await storage.getJob(application.jobId);
           
           // Try to create portal account if not exists
-          const portalResult = await this.createCandidatePortalAccount(candidate);
+          const portalResult = await this.createPortalAccount(candidate.id);
           
           return {
             success: true,
@@ -177,7 +177,7 @@ export class ApplicationWorkflowService {
         });
 
         // Create/Activate portal account for interested candidates
-        const portalResult = await this.createCandidatePortalAccount(candidate);
+        const portalResult = await this.createPortalAccount(candidate.id);
         
         return {
           success: true,
@@ -262,7 +262,11 @@ export class ApplicationWorkflowService {
   /**
    * Create or activate candidate portal account
    */
-  private async createCandidatePortalAccount(candidate: any): Promise<{ success: boolean; message: string }> {
+  async createPortalAccount(candidateId: string): Promise<{ success: boolean; message: string }> {
+    const candidate = await storage.getCandidate(candidateId);
+    if (!candidate) {
+      return { success: false, message: 'Candidate not found' };
+    }
     try {
       // Generate temporary password
       const tempPassword = `temp_${candidate.email.split('@')[0]}_${Date.now()}`;
