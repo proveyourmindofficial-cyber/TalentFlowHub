@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   FileText, 
   Download, 
@@ -65,35 +66,44 @@ export function CandidateDocumentsTab({ candidate }: CandidateDocumentsTabProps)
     }
   };
 
-  const handleResumeDownload = () => {
+  const handleResumeDownload = async () => {
     if (candidate.resumeUrl) {
-      const link = document.createElement('a');
-      link.href = candidate.resumeUrl;
-      link.download = `${candidate.name}_Resume.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      try {
+        const response = await fetch(candidate.resumeUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${candidate.name}_Resume.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Error downloading resume:', error);
+        // Fallback to direct link
+        window.open(candidate.resumeUrl, '_blank');
+      }
     }
   };
 
-  // Sample document data - in real implementation, this would come from API
-  const documents = [
+  // Real document data - only include resume if it exists
+  const documents = candidate.resumeUrl ? [
     {
       id: '1',
       name: 'Resume.pdf',
       type: 'Resume',
-      size: 245760,
+      size: 245760, // Approximate size
       uploadedAt: candidate.createdAt,
       url: candidate.resumeUrl,
-    },
-    // Additional documents would be fetched from API
-  ];
+    }
+  ] : [];
 
   const documentsByCategory = {
     'Resume': documents.filter(doc => doc.type === 'Resume'),
-    'Certificates': documents.filter(doc => doc.type === 'Certificate'),
-    'Identity Documents': documents.filter(doc => doc.type === 'Identity'),
-    'Other Documents': documents.filter(doc => !['Resume', 'Certificate', 'Identity'].includes(doc.type)),
+    'Certificates': [], // No certificates available yet
+    'Identity Documents': [], // No identity documents available yet
+    'Other Documents': [], // No other documents available yet
   };
 
   return (
@@ -220,10 +230,28 @@ export function CandidateDocumentsTab({ candidate }: CandidateDocumentsTabProps)
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          if (doc.url) {
+                            setResumeViewOpen(true);
+                          }
+                        }}
+                        title="View Document"
+                      >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          if (doc.url) {
+                            handleResumeDownload();
+                          }
+                        }}
+                        title="Download Document"
+                      >
                         <Download className="w-4 h-4" />
                       </Button>
                     </div>
@@ -309,6 +337,28 @@ export function CandidateDocumentsTab({ candidate }: CandidateDocumentsTabProps)
           </div>
         </CardContent>
       </Card>
+
+      {/* Resume Viewing Modal */}
+      <Dialog open={resumeViewOpen} onOpenChange={setResumeViewOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Resume - {candidate.name}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-[500px]">
+            {candidate.resumeUrl ? (
+              <iframe
+                src={candidate.resumeUrl}
+                className="w-full h-[500px] border rounded"
+                title="Resume Preview"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-[500px] text-muted-foreground">
+                <p>No resume available to preview</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
