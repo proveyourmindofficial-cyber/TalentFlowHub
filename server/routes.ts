@@ -2535,9 +2535,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const interviewData = insertInterviewSchema.parse(requestData);
       
-      // Handle Teams meeting creation for "Teams" mode
+      // Handle Teams meeting creation for online interviews (Teams and Online modes)
       let teamsDetails = {};
-      if (interviewData.mode === 'Teams') {
+      if (interviewData.mode === 'Teams' || interviewData.mode === 'Online') {
         console.log('📅 Creating Teams meeting for interview...');
         
         try {
@@ -2735,9 +2735,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               
               console.log('📅 Interview rescheduled, sending notifications and updating Teams meeting...');
               
-              // Create/update Teams meeting if mode is Teams
+              // Create/update Teams meeting if mode is Teams or Online
               let teamsJoinUrl = interview.teamsMeetingUrl;
-              if (interview.mode === 'Teams') {
+              if (interview.mode === 'Teams' || interview.mode === 'Online') {
                 try {
                   const { TeamsService } = await import('./services/teamsService');
                   const teamsService = new TeamsService();
