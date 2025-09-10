@@ -16,6 +16,8 @@ export const interviewRoundEnum = pgEnum('interview_round', ['L1', 'L2', 'HR', '
 export const interviewModeEnum = pgEnum('interview_mode', ['Online', 'Offline', 'Teams']);
 export const interviewStatusEnum = pgEnum('interview_status', ['Scheduled', 'Completed', 'Selected', 'Rejected', 'On Hold']);
 export const interviewFeedbackEnum = pgEnum('interview_feedback', ['Selected', 'Rejected', 'On Hold', 'No Show']);
+export const recommendationEnum = pgEnum('recommendation', ['Hire', 'No Hire', 'Maybe', 'Strong Hire']);
+export const ratingEnum = pgEnum('rating', ['1', '2', '3', '4', '5']);
 export const clientRequirementStatusEnum = pgEnum('client_requirement_status', ['open', 'closed', 'hold']);
 export const emailProviderEnum = pgEnum('email_provider', ['smtp', 'sendgrid', 'outlook', 'gmail']);
 export const emailStatusEnum = pgEnum('email_status', ['sent', 'delivered', 'failed', 'bounced', 'complained']);
@@ -650,6 +652,34 @@ export const interviews = pgTable("interviews", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Interview Feedback Details table
+export const interviewFeedbackDetails = pgTable("interview_feedback_details", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  interviewId: varchar("interview_id").notNull().references(() => interviews.id, { onDelete: 'cascade' }),
+  // Overall assessment
+  overallRecommendation: recommendationEnum("overall_recommendation").notNull(),
+  
+  // Skill ratings (1-5 scale)
+  technicalSkills: ratingEnum("technical_skills"),
+  communicationSkills: ratingEnum("communication_skills"),
+  problemSolving: ratingEnum("problem_solving"),
+  culturalFit: ratingEnum("cultural_fit"),
+  
+  // Detailed feedback
+  strengthsComments: text("strengths_comments"),
+  improvementAreas: text("improvement_areas"),
+  detailedNotes: text("detailed_notes"),
+  
+  // Additional assessment fields
+  wouldWorkWithAgain: boolean("would_work_with_again"),
+  confidenceLevel: ratingEnum("confidence_level"), // How confident is the interviewer in their assessment
+  
+  // Metadata
+  submittedBy: varchar("submitted_by").references(() => users.id),
+  submittedAt: timestamp("submitted_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   createdJobs: many(jobs, { relationName: "job_creator" }),
@@ -704,6 +734,21 @@ export const interviewsRelations = relations(interviews, ({ one }) => ({
   application: one(applications, {
     fields: [interviews.applicationId],
     references: [applications.id],
+  }),
+  feedbackDetails: one(interviewFeedbackDetails, {
+    fields: [interviews.id],
+    references: [interviewFeedbackDetails.interviewId],
+  }),
+}));
+
+export const interviewFeedbackDetailsRelations = relations(interviewFeedbackDetails, ({ one }) => ({
+  interview: one(interviews, {
+    fields: [interviewFeedbackDetails.interviewId],
+    references: [interviews.id],
+  }),
+  submittedBy: one(users, {
+    fields: [interviewFeedbackDetails.submittedBy],
+    references: [users.id],
   }),
 }));
 
@@ -997,3 +1042,13 @@ export const insertEmailDeliveryStatusSchema = createInsertSchema(emailDeliveryS
 
 export type InsertEmailDeliveryStatus = z.infer<typeof insertEmailDeliveryStatusSchema>;
 export type EmailDeliveryStatus = typeof emailDeliveryStatus.$inferSelect;
+
+// Interview Feedback schemas
+export const insertInterviewFeedbackSchema = createInsertSchema(interviewFeedbackDetails).omit({
+  id: true,
+  submittedAt: true,
+  updatedAt: true,
+});
+
+export type InterviewFeedbackDetails = typeof interviewFeedbackDetails.$inferSelect;
+export type InsertInterviewFeedback = z.infer<typeof insertInterviewFeedbackSchema>;
