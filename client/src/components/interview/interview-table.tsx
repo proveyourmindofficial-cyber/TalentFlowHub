@@ -186,7 +186,7 @@ export function InterviewTable({ onEdit, onDelete, onBulkDelete, onResend }: Int
               <TableHead className="w-[50px]">
                 <ItemCheckbox
                   checked={selectedIds.length > 0 && selectedIds.length === filteredInterviews.length}
-                  onChange={() => toggleAll()}
+                  onChange={() => toggleAll(!(selectedIds.length > 0 && selectedIds.length === filteredInterviews.length))}
                   data-testid="checkbox-select-all"
                 />
               </TableHead>
@@ -205,7 +205,7 @@ export function InterviewTable({ onEdit, onDelete, onBulkDelete, onResend }: Int
                 <TableCell>
                   <ItemCheckbox
                     checked={isSelected(interview.id)}
-                    onChange={() => toggleItem(interview.id)}
+                    onChange={() => toggleItem(interview.id, !isSelected(interview.id))}
                     data-testid={`checkbox-${interview.id}`}
                   />
                 </TableCell>
