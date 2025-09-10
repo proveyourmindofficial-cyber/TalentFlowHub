@@ -145,6 +145,12 @@ export interface IStorage {
   deleteInterview(id: string): Promise<void>;
   bulkDeleteInterviews(ids: string[]): Promise<void>;
   getInterviewWithRelations(id: string): Promise<any>;
+  
+  // Interview Feedback operations
+  createInterviewFeedback(feedback: any): Promise<any>;
+  getInterviewFeedback(interviewId: string): Promise<any>;
+  updateInterviewFeedback(interviewId: string, feedback: any): Promise<any>;
+  deleteInterviewFeedback(interviewId: string): Promise<void>;
 
   // Offer Letter operations
   createOfferLetter(offerLetter: InsertOfferLetter): Promise<OfferLetter>;
@@ -1385,6 +1391,36 @@ export class DatabaseStorage implements IStorage {
     .orderBy(desc(userJourneyStates.createdAt));
     
     return result;
+  }
+
+  // Interview Feedback operations
+  async createInterviewFeedback(feedbackData: any): Promise<any> {
+    // First check if feedback already exists
+    const existing = await this.getInterviewFeedback(feedbackData.interviewId);
+    if (existing) {
+      // Update existing feedback instead of creating new one
+      return await this.updateInterviewFeedback(feedbackData.interviewId, feedbackData);
+    }
+    
+    const [feedback] = await db.insert(interviewFeedbackDetails).values(feedbackData).returning();
+    return feedback;
+  }
+
+  async getInterviewFeedback(interviewId: string): Promise<any> {
+    const [feedback] = await db.select().from(interviewFeedbackDetails).where(eq(interviewFeedbackDetails.interviewId, interviewId));
+    return feedback;
+  }
+
+  async updateInterviewFeedback(interviewId: string, feedbackData: any): Promise<any> {
+    const [feedback] = await db.update(interviewFeedbackDetails)
+      .set({ ...feedbackData, updatedAt: new Date() })
+      .where(eq(interviewFeedbackDetails.interviewId, interviewId))
+      .returning();
+    return feedback;
+  }
+
+  async deleteInterviewFeedback(interviewId: string): Promise<void> {
+    await db.delete(interviewFeedbackDetails).where(eq(interviewFeedbackDetails.interviewId, interviewId));
   }
 }
 
