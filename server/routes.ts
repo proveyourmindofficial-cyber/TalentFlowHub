@@ -3058,6 +3058,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Interview Feedback endpoints
+  app.post('/api/interviews/:id/feedback', async (req, res) => {
+    try {
+      const interviewId = req.params.id;
+      const feedbackData = {
+        ...req.body,
+        interviewId,
+        submittedBy: req.user?.id
+      };
+
+      const feedback = await storage.createInterviewFeedback(feedbackData);
+      
+      // Update interview status to show feedback has been submitted
+      await storage.updateInterview(interviewId, { 
+        status: 'Completed' as any 
+      });
+
+      console.log(`✅ Interview feedback submitted for interview ${interviewId}`);
+      res.json(feedback);
+    } catch (error) {
+      console.error('Error creating interview feedback:', error);
+      res.status(500).json({ error: 'Failed to create interview feedback' });
+    }
+  });
+
+  app.get('/api/interviews/:id/feedback', async (req, res) => {
+    try {
+      const interviewId = req.params.id;
+      const feedback = await storage.getInterviewFeedback(interviewId);
+      res.json(feedback || null);
+    } catch (error) {
+      console.error('Error fetching interview feedback:', error);
+      res.status(500).json({ error: 'Failed to fetch interview feedback' });
+    }
+  });
+
+  app.put('/api/interviews/:id/feedback', async (req, res) => {
+    try {
+      const interviewId = req.params.id;
+      const feedbackData = {
+        ...req.body,
+        submittedBy: req.user?.id
+      };
+
+      const feedback = await storage.updateInterviewFeedback(interviewId, feedbackData);
+      console.log(`✅ Interview feedback updated for interview ${interviewId}`);
+      res.json(feedback);
+    } catch (error) {
+      console.error('Error updating interview feedback:', error);
+      res.status(500).json({ error: 'Failed to update interview feedback' });
+    }
+  });
+
   // Test Teams meeting creation endpoint
   app.post('/api/test-teams-meeting', async (req, res) => {
     try {
