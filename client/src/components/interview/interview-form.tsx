@@ -15,7 +15,10 @@ import { Send } from "lucide-react";
 const interviewFormSchema = insertInterviewSchema.extend({
   scheduledDate: z.string().min(1, "Scheduled date is required"),
 }).omit({ 
-  feedback: true 
+  teamsMeetingId: true,
+  teamsMeetingUrl: true,
+  teamsOrganizerEmail: true,
+  createdBy: true
 }).refine((data) => {
   // If HR round and status is Completed, feedbackResult is required
   if (data.interviewRound === 'HR' && data.status === 'Completed') {
