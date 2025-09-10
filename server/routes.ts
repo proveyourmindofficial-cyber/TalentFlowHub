@@ -1113,7 +1113,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Sort by role priority and then by name
-      const rolePriority = { 'Super Admin': 1, 'Director': 2, 'Account Manager': 3, 'HR': 4, 'Recruiter': 5 };
+      const rolePriority: { [key: string]: number } = { 'Super Admin': 1, 'Director': 2, 'Account Manager': 3, 'HR': 4, 'Recruiter': 5 };
       interviewers.sort((a, b) => {
         const priorityDiff = (rolePriority[a.role] || 6) - (rolePriority[b.role] || 6);
         if (priorityDiff !== 0) return priorityDiff;
@@ -2504,14 +2504,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Apply the calculated statuses atomically
-      await storage.updateApplication(interview.applicationId, { 
-        stage: newApplicationStage as any 
-      });
-      await storage.updateCandidate(application.candidateId, { 
-        status: newCandidateStatus as any 
-      });
+      if (newApplicationStage && newCandidateStatus) {
+        await storage.updateApplication(interview.applicationId, { 
+          stage: newApplicationStage as any 
+        });
+        await storage.updateCandidate(application.candidateId, { 
+          status: newCandidateStatus as any 
+        });
+      }
 
-      console.log(`Interview automation applied: ${interview.interviewRound} ${interview.status} ${interview.feedbackResult || ''} → App: ${newApplicationStage}, Candidate: ${newCandidateStatus}`);
+      if (newApplicationStage && newCandidateStatus) {
+        console.log(`Interview automation applied: ${interview.interviewRound} ${interview.status} ${interview.feedbackResult || ''} → App: ${newApplicationStage}, Candidate: ${newCandidateStatus}`);
+      }
 
     } catch (automationError) {
       console.error("Error in interview automation:", automationError);
@@ -4474,10 +4478,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const departmentData = insertDepartmentSchema.parse(req.body);
       const department = await storage.createDepartment(departmentData);
       res.status(201).json(department);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error creating department:', error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ message: 'Invalid department data', errors: error.errors });
+      if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+        return res.status(400).json({ message: 'Invalid department data', errors: (error as any).errors });
       }
       res.status(500).json({ message: 'Failed to create department' });
     }
@@ -4501,10 +4505,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const departmentData = insertDepartmentSchema.partial().parse(req.body);
       const department = await storage.updateDepartment(req.params.id, departmentData);
       res.json(department);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error updating department:', error);
-      if (error.name === 'ZodError') {
-        return res.status(400).json({ message: 'Invalid department data', errors: error.errors });
+      if (error && typeof error === 'object' && 'name' in error && error.name === 'ZodError') {
+        return res.status(400).json({ message: 'Invalid department data', errors: (error as any).errors });
       }
       res.status(500).json({ message: 'Failed to update department' });
     }
