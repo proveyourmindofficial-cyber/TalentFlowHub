@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Calendar, Clock, Edit, Trash2, User, Video, MapPin, Send } from "lucide-react";
+import { Calendar, Clock, Edit, Trash2, User, Video, MapPin, Send, MessageSquare, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { type Interview } from "@shared/schema";
@@ -18,9 +18,10 @@ interface InterviewTableProps {
   onDelete?: (interview: Interview) => void;
   onBulkDelete?: (interviewIds: string[]) => void;
   onResend?: (interview: Interview) => void;
+  onFeedback?: (interview: Interview) => void;
 }
 
-export function InterviewTable({ onEdit, onDelete, onBulkDelete, onResend }: InterviewTableProps) {
+export function InterviewTable({ onEdit, onDelete, onBulkDelete, onResend, onFeedback }: InterviewTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roundFilter, setRoundFilter] = useState<string>("all");
@@ -30,6 +31,27 @@ export function InterviewTable({ onEdit, onDelete, onBulkDelete, onResend }: Int
 
   const { data: interviews, isLoading } = useQuery<Interview[]>({
     queryKey: ["/api/interviews"]
+  });
+
+  // Query to get feedback status for all interviews
+  const { data: feedbackStatus } = useQuery<Record<string, any>>({
+    queryKey: ["/api/interviews/feedback-status"],
+    queryFn: async () => {
+      if (!interviews || interviews.length === 0) return {};
+      
+      const feedbackPromises = interviews.map(async (interview) => {
+        try {
+          const feedback = await apiRequest("GET", `/api/interviews/${interview.id}/feedback`);
+          return { [interview.id]: feedback };
+        } catch (error) {
+          return { [interview.id]: null };
+        }
+      });
+      
+      const results = await Promise.all(feedbackPromises);
+      return results.reduce((acc, curr) => ({ ...acc, ...curr }), {});
+    },
+    enabled: !!interviews && interviews.length > 0
   });
 
   // Resend interview email mutation
@@ -257,6 +279,21 @@ export function InterviewTable({ onEdit, onDelete, onBulkDelete, onResend }: Int
                 </TableCell>
                 
                 <TableCell>
+                  {feedbackStatus?.[interview.id] ? (
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                      <span className="text-sm text-green-600 dark:text-green-400">
+                        Submitted
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">
+                      Pending
+                    </span>
+                  )}
+                </TableCell>
+                
+                <TableCell>
                   <div className="max-w-[200px]">
                     {interview.notes ? (
                       <span className="text-sm text-muted-foreground line-clamp-2">
@@ -293,6 +330,18 @@ export function InterviewTable({ onEdit, onDelete, onBulkDelete, onResend }: Int
                     >
                       <Send className="h-4 w-4" />
                     </Button>
+                    {onFeedback && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onFeedback(interview)}
+                        className={feedbackStatus?.[interview.id] ? "text-green-600 hover:text-green-700" : "text-orange-600 hover:text-orange-700"}
+                        data-testid={`button-feedback-${interview.id}`}
+                        title={feedbackStatus?.[interview.id] ? "Edit feedback" : "Add feedback"}
+                      >
+                        <MessageSquare className="h-4 w-4" />
+                      </Button>
+                    )}
                     {onDelete && (
                       <Button
                         variant="ghost"

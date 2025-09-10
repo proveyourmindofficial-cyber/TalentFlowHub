@@ -7,6 +7,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from "@/hooks/use-toast";
 import { InterviewForm } from "@/components/interview/interview-form";
 import { InterviewTable } from "@/components/interview/interview-table";
+import { InterviewFeedbackForm } from "@/components/interview/interview-feedback-form";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/layout/header";
 import type { Interview } from "@shared/schema";
@@ -15,6 +16,8 @@ export default function Interviews() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingInterview, setEditingInterview] = useState<Interview | null>(null);
   const [deleteInterview, setDeleteInterview] = useState<Interview | null>(null);
+  const [feedbackInterview, setFeedbackInterview] = useState<Interview | null>(null);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -92,6 +95,16 @@ export default function Interviews() {
     bulkDeleteMutation.mutate(interviewIds);
   };
 
+  const handleFeedback = (interview: Interview) => {
+    setFeedbackInterview(interview);
+    setIsFeedbackOpen(true);
+  };
+
+  const handleCloseFeedback = () => {
+    setIsFeedbackOpen(false);
+    setFeedbackInterview(null);
+  };
+
   const handleResend = (interview: Interview) => {
     // The resend functionality is handled by the InterviewTable component
     console.log('Resending interview email for:', interview.id);
@@ -150,8 +163,28 @@ export default function Interviews() {
               onDelete={handleDelete}
               onBulkDelete={handleBulkDelete}
               onResend={handleResend}
+              onFeedback={handleFeedback}
             />
           </div>
+
+        {/* Feedback Dialog */}
+        <Dialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Interview Feedback</DialogTitle>
+              <DialogDescription>
+                Provide detailed feedback for the interview with {feedbackInterview?.interviewer}
+              </DialogDescription>
+            </DialogHeader>
+            {feedbackInterview && (
+              <InterviewFeedbackForm 
+                interview={feedbackInterview}
+                onSuccess={handleCloseFeedback}
+                onCancel={handleCloseFeedback}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={!!deleteInterview} onOpenChange={() => setDeleteInterview(null)}>
