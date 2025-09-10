@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertJobSchema, insertCandidateSchema, insertApplicationSchema, insertInterviewSchema, insertOfferLetterSchema, insertClientSchema, insertClientRequirementSchema, insertCompanyProfileSchema, insertCustomRoleSchema, insertNotificationSchema, insertActivityLogSchema, insertFeedbackSchema, insertDepartmentSchema } from "@shared/schema";
+import { insertJobSchema, insertCandidateSchema, insertApplicationSchema, insertInterviewSchema, insertOfferLetterSchema, insertClientSchema, insertClientRequirementSchema, insertCompanyProfileSchema, insertCustomRoleSchema, insertNotificationSchema, insertActivityLogSchema, insertFeedbackSchema, insertDepartmentSchema, type InsertUser } from "@shared/schema";
 import { ActivityLogger } from './activityLogger';
 import { z } from "zod";
 import { validateCandidateTypeFields, uanNumberSchema, aadhaarNumberSchema, linkedinUrlSchema } from "./validationUtils";
