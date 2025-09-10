@@ -2799,6 +2799,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Resend interview confirmation email
+  app.post('/api/interviews/:id/resend-email', async (req, res) => {
+    try {
+      const interviewId = req.params.id;
+      
+      // Get interview details
+      const interview = await storage.getInterview(interviewId);
+      if (!interview) {
+        return res.status(404).json({ message: "Interview not found" });
+      }
+
+      // Get application and related data
+      const application = await storage.getApplication(interview.applicationId);
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      const candidate = await storage.getCandidate(application.candidateId);
+      const job = await storage.getJob(application.jobId);
+
+      if (!candidate || !job) {
+        return res.status(404).json({ message: "Candidate or Job not found" });
+      }
+
+      // Prepare template data
+      const interviewDate = new Date(interview.scheduledDate);
+      
+      const templateData = {
+        candidate: {
+          name: candidate.name
+        },
+        job: {
+          title: job.title,
+          company: job.company || 'O2F ATS'
+        },
+        interview: {
+          date: interviewDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          time: interviewDate.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }),
+          interviewer: interview.interviewer,
+          mode: interview.mode,
+          location: interview.mode === 'Teams' && interview.teamsMeetingUrl
+            ? `Teams Meeting - ${interview.teamsMeetingUrl}`
+            : interview.mode === 'Online' 
+            ? 'Online Meeting (details will be shared)'
+            : 'Office location (details will be shared)',
+          meetingLink: interview.teamsMeetingUrl || null,
+          confirmationLink: `${process.env.REPLIT_DEV_DOMAIN}/candidate-portal/interviews/${interviewId}/confirm`
+        },
+        company: {
+          name: 'O2F ATS'
+        }
+      };
+
+      // Send interview confirmation email
+      const emailResult = await emailTemplateService.sendEmail(
+        'interview_scheduled',
+        candidate.email,
+        templateData
+      );
+
+      if (emailResult.success) {
+        res.json({ 
+          message: "Interview confirmation email sent successfully",
+          to: candidate.email
+        });
+      } else {
+        res.status(500).json({ 
+          message: "Failed to send interview confirmation email",
+          error: emailResult.error
+        });
+      }
+
+    } catch (error) {
+      console.error("Error resending interview email:", error);
+      res.status(500).json({ message: "Failed to resend interview email" });
+    }
+  });
+
   // Object storage routes for resume uploads
   app.get("/objects/:objectPath(*)", async (req, res) => {
     const objectStorageService = new ObjectStorageService();
