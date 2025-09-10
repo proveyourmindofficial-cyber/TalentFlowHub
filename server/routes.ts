@@ -2823,8 +2823,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Candidate or Job not found" });
       }
 
-      // Prepare template data
+      // Prepare template data with proper timezone handling
       const interviewDate = new Date(interview.scheduledDate);
+      
+      // Get timezone from interview or default to Asia/Kolkata (IST)
+      const timezone = interview.timezone || 'Asia/Kolkata';
       
       const templateData = {
         candidate: {
@@ -2839,12 +2842,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
-            day: 'numeric'
+            day: 'numeric',
+            timeZone: timezone
           }),
           time: interviewDate.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
-            hour12: true
+            hour12: true,
+            timeZone: timezone
           }),
           interviewer: interview.interviewer,
           type: interview.mode,
@@ -2861,22 +2866,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       };
 
-      // Send interview confirmation email
-      const emailResult = await emailTemplateService.sendEmail(
+      // Send interview confirmation email to candidate
+      const candidateEmailResult = await emailTemplateService.sendEmail(
         'interview_invitation',
         candidate.email,
         templateData
       );
 
-      if (emailResult.success) {
+      // Find and send email to interviewer if available
+      let interviewerEmailResult = { success: true, message: 'No interviewer email found' };
+      if (interview.interviewerId) {
+        const interviewer = await storage.getUser(interview.interviewerId);
+        if (interviewer?.email) {
+          // Prepare interviewer template data
+          const interviewerTemplateData = {
+            ...templateData,
+            interviewer: {
+              name: interviewer.firstName + ' ' + interviewer.lastName
+            }
+          };
+          
+          interviewerEmailResult = await emailTemplateService.sendEmail(
+            'interviewer_notification',
+            interviewer.email,
+            interviewerTemplateData
+          );
+        }
+      }
+
+      if (candidateEmailResult.success) {
+        const recipients = [candidate.email];
+        if (interviewerEmailResult.success && interview.interviewerId) {
+          const interviewer = await storage.getUser(interview.interviewerId);
+          if (interviewer?.email) recipients.push(interviewer.email);
+        }
+        
         res.json({ 
-          message: "Interview confirmation email sent successfully",
-          to: candidate.email
+          message: "Interview confirmation emails sent successfully",
+          to: recipients,
+          candidateEmail: candidateEmailResult.success,
+          interviewerEmail: interviewerEmailResult.success
         });
       } else {
         res.status(500).json({ 
-          message: "Failed to send interview confirmation email",
-          error: emailResult.error
+          message: "Failed to send interview confirmation email to candidate",
+          error: candidateEmailResult.error
         });
       }
 
