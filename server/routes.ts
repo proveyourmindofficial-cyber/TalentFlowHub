@@ -6,7 +6,7 @@ import { ActivityLogger } from './activityLogger';
 import { z } from "zod";
 import { validateCandidateTypeFields, uanNumberSchema, aadhaarNumberSchema, linkedinUrlSchema } from "./validationUtils";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
-import { teamsService } from './services/teamsService';
+// Teams service will be imported dynamically when needed
 // emailRoutes removed - functionality consolidated into EmailTemplateService
 import graphEmailRoutes from "./routes/graphEmailRoutes";
 import emailTemplateRoutes from "./routes/emailTemplateRoutes";
@@ -2559,7 +2559,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 organizerEmail = emailMatch[1];
               }
 
-              const teamsmeeting = await teamsService.createOnlineMeeting({
+              // Import and create TeamsService dynamically
+              const { TeamsService } = await import('./services/teamsService');
+              const teamsServiceInstance = new TeamsService();
+              
+              const teamsmeeting = await teamsServiceInstance.createOnlineMeeting({
                 subject: `${interviewData.interviewRound} Interview - ${candidate.name} - ${job.title}`,
                 startDateTime: startTime.toISOString(),
                 endDateTime: endTime.toISOString(),
@@ -2735,7 +2739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               let teamsJoinUrl = interview.teamsMeetingUrl;
               if (interview.mode === 'Teams') {
                 try {
-                  const { TeamsService } = await import('./teamsService');
+                  const { TeamsService } = await import('./services/teamsService');
                   const teamsService = new TeamsService();
                   
                   // For now, use logged-in user as interviewer since interviewerId is not available
@@ -3051,7 +3055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Test Teams meeting creation endpoint
   app.post('/api/test-teams-meeting', async (req, res) => {
     try {
-      const { TeamsService } = await import('./teamsService');
+      const { TeamsService } = await import('./services/teamsService');
       const teamsService = new TeamsService();
       
       // Test connection first
