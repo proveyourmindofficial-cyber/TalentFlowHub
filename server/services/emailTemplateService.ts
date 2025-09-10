@@ -331,7 +331,7 @@ export class EmailTemplateService {
         htmlContent: `
           <div class="greeting">Hi {{candidate.name}},</div>
           <div class="body-text">
-            Great news! We'd like to invite you for an interview for the <strong>{{job.title}}</strong> position at <strong>{{company.name}}</strong>.
+            Great news! We'd like to invite you for an interview at <strong>{{company.name}}</strong> for the <strong>{{job.title}}</strong> position.
           </div>
           <div class="highlight">
             <strong>📅 Interview Details:</strong><br>
