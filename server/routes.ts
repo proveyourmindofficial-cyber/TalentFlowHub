@@ -3048,6 +3048,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test Teams meeting creation endpoint
+  app.post('/api/test-teams-meeting', async (req, res) => {
+    try {
+      const { TeamsService } = await import('./teamsService');
+      const teamsService = new TeamsService();
+      
+      // Test connection first
+      const connectionTest = await teamsService.testConnection();
+      if (!connectionTest) {
+        return res.status(500).json({ 
+          message: "Teams service connection failed",
+          error: "Cannot connect to Microsoft Graph API"
+        });
+      }
+      
+      // Create a test meeting
+      const testMeeting = await teamsService.createOnlineMeeting({
+        subject: "Test Meeting - Interview System",
+        startDateTime: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour from now
+        endDateTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
+        organizerEmail: process.env.GRAPH_FROM_EMAIL || 'itsupport@o2finfosolutions.com',
+        attendeeEmails: ['test@example.com'],
+        additionalInfo: 'Test meeting for interview system'
+      });
+      
+      if (testMeeting) {
+        res.json({ 
+          success: true,
+          message: "Teams meeting created successfully",
+          meeting: testMeeting
+        });
+      } else {
+        res.status(500).json({ 
+          success: false,
+          message: "Failed to create Teams meeting",
+          error: "Meeting creation returned null"
+        });
+      }
+    } catch (error: any) {
+      console.error("Teams meeting test error:", error);
+      res.status(500).json({ 
+        success: false,
+        message: "Teams meeting test failed",
+        error: error.message
+      });
+    }
+  });
+
   // Object storage routes for resume uploads
   app.get("/objects/:objectPath(*)", async (req, res) => {
     const objectStorageService = new ObjectStorageService();
