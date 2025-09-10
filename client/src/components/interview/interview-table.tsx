@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Calendar, Clock, Edit, Trash2, User, Video, MapPin } from "lucide-react";
+import { Calendar, Clock, Edit, Trash2, User, Video, MapPin, Send } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { type Interview } from "@shared/schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,15 +17,39 @@ interface InterviewTableProps {
   onEdit?: (interview: Interview) => void;
   onDelete?: (interview: Interview) => void;
   onBulkDelete?: (interviewIds: string[]) => void;
+  onResend?: (interview: Interview) => void;
 }
 
-export function InterviewTable({ onEdit, onDelete, onBulkDelete }: InterviewTableProps) {
+export function InterviewTable({ onEdit, onDelete, onBulkDelete, onResend }: InterviewTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [roundFilter, setRoundFilter] = useState<string>("all");
 
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const { data: interviews, isLoading } = useQuery<Interview[]>({
     queryKey: ["/api/interviews"]
+  });
+
+  // Resend interview email mutation
+  const resendMutation = useMutation({
+    mutationFn: async (interviewId: string) => {
+      return await apiRequest("POST", `/api/interviews/${interviewId}/resend-email`);
+    },
+    onSuccess: (data: any) => {
+      toast({
+        title: "Success",
+        description: `Interview confirmation email sent to ${data.to}`
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to resend interview email",
+        variant: "destructive"
+      });
+    }
   });
 
   const {
@@ -41,6 +67,11 @@ export function InterviewTable({ onEdit, onDelete, onBulkDelete }: InterviewTabl
       onBulkDelete(selectedIds);
       clearSelection();
     }
+  };
+
+  const handleResend = (interview: Interview) => {
+    resendMutation.mutate(interview.id);
+    onResend?.(interview);
   };
 
   if (isLoading) {
@@ -251,6 +282,17 @@ export function InterviewTable({ onEdit, onDelete, onBulkDelete }: InterviewTabl
                         <Edit className="h-4 w-4" />
                       </Button>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleResend(interview)}
+                      disabled={resendMutation.isPending}
+                      className="text-blue-600 hover:text-blue-700"
+                      data-testid={`button-resend-${interview.id}`}
+                      title="Resend interview confirmation email"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
                     {onDelete && (
                       <Button
                         variant="ghost"
