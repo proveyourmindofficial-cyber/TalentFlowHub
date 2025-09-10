@@ -724,7 +724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateUser(existingUser.id, {
           passwordHash: inviteToken, // Replace old token
           isActive: false // Still inactive until password is set
-        });
+        } as Partial<InsertUser>);
         
         // Create the setup URL
         const setupUrl = `https://${process.env.REPLIT_DEV_DOMAIN}/setup-password?token=${inviteToken}`;
@@ -773,7 +773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         department: department || 'Staff',
         isActive: false, // Will be activated when password is set
         passwordHash: inviteToken, // Temporary store invitation token
-      });
+      } as InsertUser);
 
       // Assign custom role if provided (for invited users)
       if (roleId) {
@@ -864,7 +864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUser(user.id, {
         passwordHash: hashedPassword,
         isActive: true
-      });
+      } as Partial<InsertUser>);
 
       console.log(`✅ Password set for user: ${user.email}`);
 
@@ -986,7 +986,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store reset token in passwordHash temporarily (will be overwritten when password is reset)
       await storage.updateUser(user.id, {
         passwordHash: `RESET:${resetToken}` // Prefix to distinguish from regular passwords
-      });
+      } as Partial<InsertUser>);
 
       // Create the reset URL
       const resetUrl = `https://${process.env.REPLIT_DEV_DOMAIN}/reset-password?token=${resetToken}`;
@@ -1055,7 +1055,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateUser(user.id, {
         passwordHash: hashedPassword,
         isActive: true
-      });
+      } as Partial<InsertUser>);
 
       console.log(`🔑 Password reset successful for: ${user.email}`);
 
