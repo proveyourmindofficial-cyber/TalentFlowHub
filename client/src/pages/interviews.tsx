@@ -92,6 +92,11 @@ export default function Interviews() {
     bulkDeleteMutation.mutate(interviewIds);
   };
 
+  const handleResend = (interview: Interview) => {
+    // The resend functionality is handled by the InterviewTable component
+    console.log('Resending interview email for:', interview.id);
+  };
+
   const confirmDelete = () => {
     if (deleteInterview) {
       deleteMutation.mutate(deleteInterview.id);
@@ -144,6 +149,7 @@ export default function Interviews() {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onBulkDelete={handleBulkDelete}
+              onResend={handleResend}
             />
           </div>
 

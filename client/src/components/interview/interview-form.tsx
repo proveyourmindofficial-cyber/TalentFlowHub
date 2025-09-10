@@ -10,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Send } from "lucide-react";
 
 const interviewFormSchema = insertInterviewSchema.extend({
   scheduledDate: z.string().min(1, "Scheduled date is required"),
@@ -326,9 +327,40 @@ export function InterviewForm({ interview, onSuccess, onCancel }: InterviewFormP
         {/* Teams Meeting Information - Show if Teams mode and meeting URL exists */}
         {isTeamsMode && interview?.teamsMeetingUrl && (
           <div className="p-4 border rounded-lg bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-              <h3 className="font-medium text-blue-900 dark:text-blue-100">Microsoft Teams Meeting</h3>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                <h3 className="font-medium text-blue-900 dark:text-blue-100">Microsoft Teams Meeting</h3>
+              </div>
+              {interview && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Create a resend mutation for the form
+                    fetch(`/api/interviews/${interview.id}/resend-email`, {
+                      method: 'POST'
+                    }).then(res => res.json()).then(data => {
+                      toast({
+                        title: "Success",
+                        description: `Interview confirmation email sent to ${data.to}`
+                      });
+                    }).catch(error => {
+                      toast({
+                        title: "Error",
+                        description: "Failed to resend interview email",
+                        variant: "destructive"
+                      });
+                    });
+                  }}
+                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                  data-testid="button-resend-teams-email"
+                >
+                  <Send className="h-3 w-3 mr-1" />
+                  Resend Email
+                </Button>
+              )}
             </div>
             
             <div className="space-y-2">
