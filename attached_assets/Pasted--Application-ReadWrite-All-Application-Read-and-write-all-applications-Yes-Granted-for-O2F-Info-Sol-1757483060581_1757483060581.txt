@@ -1,0 +1,476 @@
+
+Application.ReadWrite.All
+Application
+Read and write all applications
+Yes
+ Granted for O2F Info Solutions
+Calendars.Read
+Application
+Read calendars in all mailboxes
+Yes
+ Granted for O2F Info Solutions
+Calendars.ReadBasic.All
+Application
+Read basic details of calendars in all mailboxes
+Yes
+ Granted for O2F Info Solutions
+Calendars.ReadWrite
+Application
+Read and write calendars in all mailboxes
+Yes
+ Granted for O2F Info Solutions
+Chat.Read.All
+Application
+Read all chat messages
+Yes
+ Granted for O2F Info Solutions
+Directory.Read.All
+Application
+Read directory data
+Yes
+ Granted for O2F Info Solutions
+email
+Delegated
+View users' email address
+No
+ Granted for O2F Info Solutions
+Files.ReadWrite.All
+Application
+Read and write files in all site collections
+Yes
+ Granted for O2F Info Solutions
+Group.Read.All
+Application
+Read all groups
+Yes
+ Granted for O2F Info Solutions
+Mail-Advanced.ReadWrite.All
+Application
+Read and write mail in all mailboxes, including modifying existing non-draft mails
+Yes
+ Granted for O2F Info Solutions
+Mail.Read
+Application
+Read mail in all mailboxes
+Yes
+ Granted for O2F Info Solutions
+Mail.ReadBasic
+Application
+Read basic mail in all mailboxes
+Yes
+ Granted for O2F Info Solutions
+Mail.ReadBasic.All
+Application
+Read basic mail in all mailboxes
+Yes
+ Granted for O2F Info Solutions
+Mail.ReadWrite
+Application
+Read and write mail in all mailboxes
+Yes
+ Granted for O2F Info Solutions
+Mail.Send
+Application
+Send mail as any user
+Yes
+ Granted for O2F Info Solutions
+MailboxFolder.Read.All
+Application
+Read all the users' mailbox folders
+Yes
+ Granted for O2F Info Solutions
+MailboxFolder.ReadWrite.All
+Application
+Read and write all the users' mailbox folders
+Yes
+ Granted for O2F Info Solutions
+MailboxItem.ImportExport.All
+Application
+Allows the app to perform backup and restore for all mailbox items
+Yes
+ Granted for O2F Info Solutions
+MailboxItem.Read.All
+Application
+Read all the users' mailbox items
+Yes
+ Granted for O2F Info Solutions
+MailboxSettings.Read
+Application
+Read all user mailbox settings
+Yes
+ Granted for O2F Info Solutions
+MailboxSettings.ReadWrite
+Application
+Read and write all user mailbox settings
+Yes
+ Granted for O2F Info Solutions
+OnlineMeetings.ReadWrite.All
+Application
+Read and create online meetings
+Yes
+ Granted for O2F Info Solutions
+OnPremisesPublishingProfiles.ReadWrite.All
+Application
+Manage on-premises published resources
+Yes
+ Granted for O2F Info Solutions
+openid
+Delegated
+Sign users in
+No
+ Granted for O2F Info Solutions
+profile
+Delegated
+View users' basic profile
+No
+ Granted for O2F Info Solutions
+Reports.Read.All
+Application
+Read all usage reports
+Yes
+ Granted for O2F Info Solutions
+RoleManagement.Read.Directory
+Application
+Read all directory RBAC settings
+Yes
+ Granted for O2F Info Solutions
+ServiceActivity-Teams.Read.All
+Application
+Read all Teams service activity
+Yes
+ Granted for O2F Info Solutions
+SharePointTenantSettings.Read.All
+Application
+Read SharePoint and OneDrive tenant settings
+Yes
+ Granted for O2F Info Solutions
+SharePointTenantSettings.ReadWrite.All
+Application
+Read and change SharePoint and OneDrive tenant settings
+Yes
+ Granted for O2F Info Solutions
+Sites.Manage.All
+Application
+Create, edit, and delete items and lists in all site collections
+Yes
+ Granted for O2F Info Solutions
+Sites.ReadWrite.All
+Application
+Read and write items in all site collections
+Yes
+ Granted for O2F Info Solutions
+Team.ReadBasic.All
+Application
+Get a list of all teams
+Yes
+ Granted for O2F Info Solutions
+TeamMember.Read.All
+Application
+Read the members of all teams
+Yes
+ Granted for O2F Info Solutions
+TeamsActivity.Read.All
+Application
+Read all users' teamwork activity feed
+Yes
+ Granted for O2F Info Solutions
+TeamsActivity.Send
+Application
+Send a teamwork activity to any user
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ManageSelectedForChat.All
+Application
+Manage installation and permission grants of selected Teams apps in all chats
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ManageSelectedForTeam.All
+Application
+Manage installation and permission grants of selected Teams apps in all teams
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ManageSelectedForUser.All
+Application
+Manage installation and permission grants of selected Teams apps for all user accounts
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.Read.All
+Application
+Read installed Teams apps for all installation scopes
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadForChat.All
+Application
+Read installed Teams apps for all chats
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadForTeam.All
+Application
+Read installed Teams apps for all teams
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadForUser.All
+Application
+Read installed Teams apps for all users
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadSelectedForChat.All
+Application
+Read selected installed Teams apps in all chats
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadSelectedForTeam.All
+Application
+Read selected installed Teams apps in all teams
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadSelectedForUser.All
+Application
+Read selected installed Teams apps for all users
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteAndConsentForChat.All
+Application
+Manage installation and permission grants of Teams apps for all chats
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteAndConsentForTeam.All
+Application
+Manage installation and permission grants of Teams apps for all teams
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteAndConsentForUser.All
+Application
+Manage installation and permission grants of Teams apps in a user account
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteAndConsentSelfForChat.All
+Application
+Allow the Teams app to manage itself and its permission grants for all chats
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteAndConsentSelfForTeam.All
+Application
+Allow the Teams app to manage itself and its permission grants for all teams
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteAndConsentSelfForUser.All
+Application
+Allow the Teams app to manage itself and its permission grants in all user accounts
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteForChat.All
+Application
+Manage Teams apps for all chats
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteForTeam.All
+Application
+Manage Teams apps for all teams
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteForUser.All
+Application
+Manage Teams apps for all users
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteSelectedForChat.All
+Application
+Manage selected installed Teams apps in all chats
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteSelectedForTeam.All
+Application
+Manage selected installed Teams apps in all teams
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteSelectedForUser.All
+Application
+Manage selected Teams apps installed for all users
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteSelfForChat.All
+Application
+Allow the Teams app to manage itself for all chats
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteSelfForTeam.All
+Application
+Allow the Teams app to manage itself for all teams
+Yes
+ Granted for O2F Info Solutions
+TeamsAppInstallation.ReadWriteSelfForUser.All
+Application
+Allow the app to manage itself for all users
+Yes
+ Granted for O2F Info Solutions
+TeamSettings.Read.All
+Application
+Read all teams' settings
+Yes
+ Granted for O2F Info Solutions
+TeamSettings.ReadWrite.All
+Application
+Read and change all teams' settings
+Yes
+ Granted for O2F Info Solutions
+TeamsPolicyUserAssign.ReadWrite.All
+Application
+Read and Write Teams policy user assignment and unassigment for all policy types.
+Yes
+ Granted for O2F Info Solutions
+TeamsResourceAccount.Read.All
+Application
+Read Teams resource accounts
+Yes
+ Granted for O2F Info Solutions
+TeamsTab.Create
+Application
+Create tabs in Microsoft Teams.
+Yes
+ Granted for O2F Info Solutions
+TeamsTab.Read.All
+Application
+Read tabs in Microsoft Teams.
+Yes
+ Granted for O2F Info Solutions
+TeamsTab.ReadWrite.All
+Application
+Read and write tabs in Microsoft Teams.
+Yes
+ Granted for O2F Info Solutions
+TeamsTab.ReadWriteForChat.All
+Application
+Allow the Teams app to manage all tabs for all chats
+Yes
+ Granted for O2F Info Solutions
+TeamsTab.ReadWriteForTeam.All
+Application
+Allow the Teams app to manage all tabs for all teams
+Yes
+ Granted for O2F Info Solutions
+TeamsTab.ReadWriteForUser.All
+Application
+Allow the app to manage all tabs for all users
+Yes
+ Granted for O2F Info Solutions
+TeamsTab.ReadWriteSelfForChat.All
+Application
+Allow the Teams app to manage only its own tabs for all chats
+Yes
+ Granted for O2F Info Solutions
+TeamsTab.ReadWriteSelfForTeam.All
+Application
+Allow the Teams app to manage only its own tabs for all teams
+Yes
+ Granted for O2F Info Solutions
+TeamsTab.ReadWriteSelfForUser.All
+Application
+Allow the Teams app to manage only its own tabs for all users
+Yes
+ Granted for O2F Info Solutions
+TeamsTelephoneNumber.Read.All
+Application
+Read Tenant-Acquired Telephone Number Details
+Yes
+ Granted for O2F Info Solutions
+TeamsTelephoneNumber.ReadWrite.All
+Application
+Read and Modify Tenant-Acquired Telephone Number Details
+Yes
+ Granted for O2F Info Solutions
+TeamsUserConfiguration.Read.All
+Application
+Read Teams user configurations
+Yes
+ Granted for O2F Info Solutions
+User-Mail.ReadWrite.All
+Application
+Read and write all secondary mail addresses for users
+Yes
+ Granted for O2F Info Solutions
+User.DeleteRestore.All
+Application
+Delete and restore all users
+Yes
+ Granted for O2F Info Solutions
+User.EnableDisableAccount.All
+Application
+Enable and disable user accounts
+Yes
+ Granted for O2F Info Solutions
+User.Export.All
+Application
+Export user's data
+Yes
+ Granted for O2F Info Solutions
+User.Invite.All
+Application
+Invite guest users to the organization
+Yes
+ Granted for O2F Info Solutions
+User.ManageIdentities.All
+Application
+Manage all users' identities
+Yes
+ Granted for O2F Info Solutions
+User.Read
+Delegated
+Sign in and read user profile
+No
+ Granted for O2F Info Solutions
+User.Read.All
+Application
+Read all users' full profiles
+Yes
+ Granted for O2F Info Solutions
+User.ReadBasic.All
+Application
+Read all users' basic profiles
+Yes
+ Granted for O2F Info Solutions
+User.ReadWrite.All
+Application
+Read and write all users' full profiles
+Yes
+ Granted for O2F Info Solutions
+User.ReadWrite.CrossCloud
+Application
+Read and write profiles of users that originate from an external cloud.
+Yes
+ Granted for O2F Info Solutions
+User.RevokeSessions.All
+Application
+Revoke all sign in sessions for a user
+Yes
+ Granted for O2F Info Solutions
+UserAuthenticationMethod.Read.All
+Application
+Read all users' authentication methods
+Yes
+ Granted for O2F Info Solutions
+UserAuthenticationMethod.ReadWrite.All
+Application
+Read and write all users' authentication methods
+Yes
+ Granted for O2F Info Solutions
+UserAuthMethod-Passkey.Read.All
+Application
+Read all users' passkey authentication methods
+Yes
+ Granted for O2F Info Solutions
+UserAuthMethod-Passkey.ReadWrite.All
+Application
+Read and write all users' passkey authentication methods
+Yes
+ Granted for O2F Info Solutions
+UserNotification.ReadWrite.CreatedByApp
+Application
+Deliver and manage all user's notifications
+Yes
+ Granted for O2F Info Solutions
+UserTeamwork.Read.All
+Application
+Read all user teamwork settings
+Yes
+ Granted for O2F Info Solutions
