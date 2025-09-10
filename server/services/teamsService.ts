@@ -107,44 +107,52 @@ export class TeamsService {
    * Create a Microsoft Teams online meeting
    */
   async createOnlineMeeting(options: TeamsOnlineMeetingOptions): Promise<TeamsOnlineMeeting | null> {
-    if (!this.isConfigured) {
+    if (!this.isConfigured || !this.graphClient) {
       console.warn('Microsoft Teams Service is not configured. Meeting not created.');
       return null;
     }
 
-    console.log(`📅 Creating Teams meeting: ${options.subject}`);
+    console.log(`📅 Creating REAL Teams meeting: ${options.subject}`);
 
-    // Use the reliable Teams meeting URL generation approach
-    return await this.createOnlineMeetingViaUser(options);
-  }
-
-  /**
-   * Create Teams meeting URL (Primary working method)
-   */
-  private async createOnlineMeetingViaUser(options: TeamsOnlineMeetingOptions): Promise<TeamsOnlineMeeting | null> {
     try {
-      console.log(`📅 Creating Teams meeting with basic approach: ${options.subject}`);
-
-      // Generate a unique meeting ID for tracking
-      const meetingId = `meeting-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Create a basic Teams meeting URL (this will open Teams and allow manual meeting creation)
-      const teamsBaseUrl = 'https://teams.microsoft.com/l/meeting-new';
-      const meetingParams = new URLSearchParams({
+      // Create actual Teams meeting using Microsoft Graph API
+      const meetingRequest = {
         subject: options.subject,
-        startTime: options.startDateTime,
-        endTime: options.endDateTime,
-        content: options.additionalInfo || 'Interview meeting'
-      });
-      
-      const joinUrl = `${teamsBaseUrl}?${meetingParams.toString()}`;
+        startDateTime: options.startDateTime,
+        endDateTime: options.endDateTime
+      };
 
-      console.log(`✅ Teams meeting link generated: ${joinUrl}`);
+      console.log(`🔍 Creating REAL Teams meeting via Calendar API...`);
+      
+      // Create calendar event with Teams meeting using user's calendar
+      const meeting = await this.graphClient
+        .api(`/users/${options.organizerEmail}/events`)
+        .post({
+          subject: options.subject,
+          start: {
+            dateTime: options.startDateTime,
+            timeZone: 'UTC'
+          },
+          end: {
+            dateTime: options.endDateTime,
+            timeZone: 'UTC'
+          },
+          isOnlineMeeting: true,
+          onlineMeetingProvider: 'teamsForBusiness',
+          attendees: options.attendeeEmails.map(email => ({
+            emailAddress: {
+              address: email,
+              name: email.split('@')[0]
+            }
+          }))
+        });
+
+      console.log(`✅ REAL Teams meeting created! Join URL: ${meeting.onlineMeeting?.joinUrl || 'Generated'}`);
 
       return {
-        id: meetingId,
-        joinUrl: joinUrl,
-        meetingId: meetingId,
+        id: meeting.id,
+        joinUrl: meeting.onlineMeeting?.joinUrl || meeting.webLink,
+        meetingId: meeting.id,
         subject: options.subject,
         startDateTime: options.startDateTime,
         endDateTime: options.endDateTime,
@@ -154,10 +162,15 @@ export class TeamsService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error creating Teams meeting link:', error);
+      console.error('❌ Failed to create REAL Teams meeting:', error?.message);
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      
+      // HARD FAIL - no fake URLs!
       return null;
     }
   }
+
+  // Removed fake URL generation - we only create REAL Teams meetings now
 
   /**
    * Get meeting details by ID
