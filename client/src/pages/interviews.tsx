@@ -178,7 +178,9 @@ export default function Interviews() {
             </DialogHeader>
             {feedbackInterview && (
               <InterviewFeedbackForm 
-                interview={feedbackInterview}
+                interviewId={feedbackInterview.id}
+                candidateName="Candidate" // We'll fetch this from the API
+                jobTitle="Position" // We'll fetch this from the API
                 onSuccess={handleCloseFeedback}
                 onCancel={handleCloseFeedback}
               />
