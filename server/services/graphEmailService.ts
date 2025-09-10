@@ -209,13 +209,13 @@ export class GraphEmailService {
           response = await this.graphClient.api(`/users/${actualSender}/sendMail`).post(message);
         } else {
           // Send from default system account
-          response = await this.graphClient.api('/me/sendMail').post(message);
+          response = await this.graphClient.api('/users/itsupport@o2finfosolutions.com/sendMail').post(message);
           finalSender = 'itsupport@o2finfosolutions.com';
         }
       } catch (userError: any) {
         console.warn(`⚠️ Could not send from ${actualSender} (${userError?.message || 'Unknown error'}), using system account...`);
         // Fallback to system account
-        response = await this.graphClient.api('/me/sendMail').post(message);
+        response = await this.graphClient.api('/users/itsupport@o2finfosolutions.com/sendMail').post(message);
         finalSender = 'itsupport@o2finfosolutions.com';
       }
       
