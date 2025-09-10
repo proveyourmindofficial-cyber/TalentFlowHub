@@ -2802,21 +2802,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 templateData
               );
               
-              // Send rescheduling notification to interviewer
-              if (req.user?.email) {
-                const interviewer = req.user;
-                if (interviewer?.email) {
-                  const interviewerTemplateData = {
-                    ...templateData,
-                    interviewer: { name: (interviewer.firstName || '') + ' ' + (interviewer.lastName || '') }
-                  };
-                  
-                  await emailTemplateService.sendEmail(
-                    'interviewer_notification',
-                    interviewer.email,
-                    interviewerTemplateData
-                  );
-                }
+              // Send rescheduling notification to interviewer (extract email from interviewer field)
+              const emailMatch = interview.interviewer.match(/\(([^)]+)\)/);
+              if (emailMatch && emailMatch[1] && emailMatch[1].includes('@')) {
+                const interviewerEmail = emailMatch[1];
+                const interviewerName = interview.interviewer.replace(/\s*\([^)]*\)\s*$/, '');
+                
+                const interviewerTemplateData = {
+                  ...templateData,
+                  interviewer: { name: interviewerName }
+                };
+                
+                console.log(`📧 Sending rescheduling notification to interviewer: ${interviewerEmail}`);
+                await emailTemplateService.sendEmail(
+                  'interviewer_notification',
+                  interviewerEmail,
+                  interviewerTemplateData
+                );
+              }
+              
+              // Send confirmation to interview creator (logged-in user) if different from interviewer
+              if (req.user?.email && req.user.email !== (emailMatch && emailMatch[1])) {
+                const creatorTemplateData = {
+                  ...templateData,
+                  creator: { 
+                    firstName: req.user.firstName || 'User',
+                    name: (req.user.firstName || '') + ' ' + (req.user.lastName || '')
+                  }
+                };
+                
+                console.log(`📧 Sending rescheduling confirmation to creator: ${req.user.email}`);
+                await emailTemplateService.sendEmail(
+                  'interview_scheduled_confirmation',
+                  req.user.email,
+                  creatorTemplateData
+                );
               }
               
               console.log('✅ Rescheduling notifications sent to candidate and interviewer');
@@ -2958,39 +2978,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         templateData
       );
 
-      // Find and send email to interviewer if available
+      const recipients = [candidate.email];
       let interviewerEmailResult = { success: true, message: 'No interviewer email found' };
-      if (req.user?.email) {
-        const interviewer = req.user;
-        if (interviewer?.email) {
-          // Prepare interviewer template data
-          const interviewerTemplateData = {
-            ...templateData,
-            interviewer: {
-              name: interviewer.firstName + ' ' + interviewer.lastName
-            }
-          };
-          
-          interviewerEmailResult = await emailTemplateService.sendEmail(
-            'interviewer_notification',
-            interviewer.email,
-            interviewerTemplateData
-          );
+      let creatorEmailResult = { success: true, message: 'No creator email needed' };
+
+      // Send email to interviewer (extract email from interviewer field)
+      const emailMatch = interview.interviewer.match(/\(([^)]+)\)/);
+      if (emailMatch && emailMatch[1] && emailMatch[1].includes('@')) {
+        const interviewerEmail = emailMatch[1];
+        const interviewerName = interview.interviewer.replace(/\s*\([^)]*\)\s*$/, '');
+        
+        const interviewerTemplateData = {
+          ...templateData,
+          interviewer: { name: interviewerName }
+        };
+        
+        console.log(`📧 Sending resend notification to interviewer: ${interviewerEmail}`);
+        interviewerEmailResult = await emailTemplateService.sendEmail(
+          'interviewer_notification',
+          interviewerEmail,
+          interviewerTemplateData
+        );
+        
+        if (interviewerEmailResult.success) {
+          recipients.push(interviewerEmail);
+        }
+      }
+
+      // Send confirmation to interview creator (logged-in user) if different from interviewer
+      if (req.user?.email && req.user.email !== (emailMatch && emailMatch[1])) {
+        const creatorTemplateData = {
+          ...templateData,
+          creator: { 
+            firstName: req.user.firstName || 'User',
+            name: (req.user.firstName || '') + ' ' + (req.user.lastName || '')
+          }
+        };
+        
+        console.log(`📧 Sending resend confirmation to creator: ${req.user.email}`);
+        creatorEmailResult = await emailTemplateService.sendEmail(
+          'interview_scheduled_confirmation',
+          req.user.email,
+          creatorTemplateData
+        );
+        
+        if (creatorEmailResult.success) {
+          recipients.push(req.user.email);
         }
       }
 
       if (candidateEmailResult.success) {
-        const recipients = [candidate.email];
-        if (interviewerEmailResult.success && req.user?.email) {
-          const interviewer = req.user;
-          if (interviewer?.email) recipients.push(interviewer.email);
-        }
-        
         res.json({ 
           message: "Interview confirmation emails sent successfully",
           to: recipients,
           candidateEmail: candidateEmailResult.success,
-          interviewerEmail: interviewerEmailResult.success
+          interviewerEmail: interviewerEmailResult.success,
+          creatorEmail: creatorEmailResult.success
         });
       } else {
         res.status(500).json({ 
