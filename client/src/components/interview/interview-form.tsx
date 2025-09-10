@@ -69,7 +69,22 @@ export function InterviewForm({ interview, onSuccess, onCancel }: InterviewFormP
     queryFn: async () => {
       const response = await fetch(`/api/applications/available-for-interview`);
       if (!response.ok) throw new Error('Failed to fetch available applications');
-      return response.json();
+      const availableApps = await response.json();
+      
+      // If editing an interview, ensure the current application is included
+      if (interview?.applicationId) {
+        const currentAppExists = availableApps.find((app: any) => app.id === interview.applicationId);
+        if (!currentAppExists) {
+          // Fetch the current application details
+          const currentAppResponse = await fetch(`/api/applications/${interview.applicationId}`);
+          if (currentAppResponse.ok) {
+            const currentApp = await currentAppResponse.json();
+            return [currentApp, ...availableApps];
+          }
+        }
+      }
+      
+      return availableApps;
     }
   });
 
