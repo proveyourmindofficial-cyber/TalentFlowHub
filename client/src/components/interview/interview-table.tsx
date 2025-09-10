@@ -49,7 +49,7 @@ export function InterviewTable({ onEdit, onDelete, onBulkDelete, onResend, onFee
       });
       
       const results = await Promise.all(feedbackPromises);
-      return results.reduce((acc, curr) => ({ ...acc, ...curr }), {});
+      return results.reduce((acc, curr) => ({ ...acc, ...curr }), {} as Record<string, any>);
     },
     enabled: !!interviews && interviews.length > 0
   });
