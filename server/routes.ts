@@ -2847,14 +2847,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             hour12: true
           }),
           interviewer: interview.interviewer,
-          mode: interview.mode,
+          type: interview.mode,
           location: interview.mode === 'Teams' && interview.teamsMeetingUrl
-            ? `Teams Meeting - ${interview.teamsMeetingUrl}`
+            ? `Teams Meeting`
             : interview.mode === 'Online' 
             ? 'Online Meeting (details will be shared)'
             : 'Office location (details will be shared)',
-          meetingLink: interview.teamsMeetingUrl || null,
-          confirmationLink: `${process.env.REPLIT_DEV_DOMAIN}/candidate-portal/interviews/${interviewId}/confirm`
+          meetingLink: interview.teamsMeetingUrl || '#',
+          confirmationLink: `https://${process.env.REPLIT_DEV_DOMAIN}/candidate-portal/interviews/${interviewId}/confirm`
         },
         company: {
           name: 'O2F ATS'
@@ -2863,7 +2863,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Send interview confirmation email
       const emailResult = await emailTemplateService.sendEmail(
-        'interview_scheduled',
+        'interview_invitation',
         candidate.email,
         templateData
       );
