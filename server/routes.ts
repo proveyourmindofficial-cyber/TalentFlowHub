@@ -2742,10 +2742,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   const { TeamsService } = await import('./services/teamsService');
                   const teamsService = new TeamsService();
                   
-                  // For now, use logged-in user as interviewer since interviewerId is not available
-                  const interviewerEmail = req.user?.email || null;
+                  // Get organizer email from interviewer field or use logged-in user
+                  let organizerEmail = req.user?.email || process.env.GRAPH_FROM_EMAIL || 'noreply@o2finfosolutions.com';
+                  const emailMatch = interview.interviewer.match(/\(([^)]+)\)/);
+                  if (emailMatch && emailMatch[1] && emailMatch[1].includes('@')) {
+                    organizerEmail = emailMatch[1];
+                  }
                   
-                  if (interviewerEmail) {
+                  console.log(`📧 Using organizer email for Teams meeting: ${organizerEmail}`);
+                  
+                  if (organizerEmail) {
                     const interviewDate = new Date(interview.scheduledDate);
                     const endDate = new Date(interviewDate.getTime() + 60 * 60 * 1000); // 1 hour duration
                     
@@ -2753,7 +2759,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       subject: `Interview: ${candidate.name} for ${job.title}`,
                       startDateTime: interviewDate.toISOString(),
                       endDateTime: endDate.toISOString(),
-                      organizerEmail: interviewerEmail,
+                      organizerEmail: organizerEmail,
                       attendeeEmails: [candidate.email!],
                       additionalInfo: `Interview for ${job.title} position - Round: ${interview.interviewRound}`
                     };
