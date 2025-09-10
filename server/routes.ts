@@ -2724,17 +2724,102 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 }, req.user?.email);
               }
             }
-            // Send reminder if interview date changed and is tomorrow
-            else if (originalInterview.scheduledDate !== interview.scheduledDate) {
-              const tomorrow = new Date();
-              tomorrow.setDate(tomorrow.getDate() + 1);
-              const interviewDate = new Date(interview.scheduledDate);
+            // Handle interview rescheduling (date, time, or mode change)
+            else if (originalInterview.scheduledDate !== interview.scheduledDate || 
+                     originalInterview.mode !== interview.mode ||
+                     originalInterview.interviewer !== interview.interviewer) {
               
-              if (interviewDate.toDateString() === tomorrow.toDateString()) {
-                await sendModuleEmail('interview_reminder', candidate.email, {
-                  candidate, job, application, interview
-                }, req.user?.email);
+              console.log('📅 Interview rescheduled, sending notifications and updating Teams meeting...');
+              
+              // Create/update Teams meeting if mode is Teams
+              let teamsJoinUrl = interview.teamsMeetingUrl;
+              if (interview.mode === 'Teams') {
+                try {
+                  const { TeamsService } = await import('./teamsService');
+                  const teamsService = new TeamsService();
+                  
+                  // For now, use logged-in user as interviewer since interviewerId is not available
+                  const interviewerEmail = req.user?.email || null;
+                  
+                  if (interviewerEmail) {
+                    const interviewDate = new Date(interview.scheduledDate);
+                    const endDate = new Date(interviewDate.getTime() + 60 * 60 * 1000); // 1 hour duration
+                    
+                    const teamsOptions = {
+                      subject: `Interview: ${candidate.name} for ${job.title}`,
+                      startDateTime: interviewDate.toISOString(),
+                      endDateTime: endDate.toISOString(),
+                      organizerEmail: interviewerEmail,
+                      attendeeEmails: [candidate.email!],
+                      additionalInfo: `Interview for ${job.title} position - Round: ${interview.interviewRound}`
+                    };
+                    
+                    const teamsMeeting = await teamsService.createOnlineMeeting(teamsOptions);
+                    if (teamsMeeting) {
+                      teamsJoinUrl = teamsMeeting.joinUrl;
+                      // Update interview with Teams meeting URL
+                      await storage.updateInterview(interview.id, { 
+                        teamsMeetingUrl: teamsJoinUrl 
+                      });
+                      console.log('✅ Teams meeting created/updated for rescheduled interview');
+                    }
+                  }
+                } catch (teamsError) {
+                  console.error('❌ Failed to create/update Teams meeting:', teamsError);
+                }
               }
+              
+              // Prepare template data with proper timezone handling
+              const interviewDate = new Date(interview.scheduledDate);
+              const timezone = 'Asia/Kolkata'; // Default timezone
+              
+              const templateData = {
+                candidate: { name: candidate.name },
+                job: { title: job?.title || 'Position', company: 'O2F ATS' },
+                interview: {
+                  date: interviewDate.toLocaleDateString('en-US', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+                    timeZone: timezone
+                  }),
+                  time: interviewDate.toLocaleTimeString('en-US', {
+                    hour: '2-digit', minute: '2-digit', hour12: true,
+                    timeZone: timezone
+                  }),
+                  interviewer: interview.interviewer,
+                  type: interview.mode,
+                  location: interview.mode === 'Teams' ? 'Teams Meeting' :
+                           interview.mode === 'Online' ? 'Online Meeting' : 'Office location',
+                  meetingLink: teamsJoinUrl || '#',
+                  confirmationLink: `https://${process.env.REPLIT_DEV_DOMAIN}/candidate-portal/interviews/${interview.id}/confirm`
+                },
+                company: { name: 'O2F ATS' }
+              };
+              
+              // Send rescheduling notification to candidate
+              await emailTemplateService.sendEmail(
+                'interview_invitation',
+                candidate.email,
+                templateData
+              );
+              
+              // Send rescheduling notification to interviewer
+              if (req.user?.email) {
+                const interviewer = req.user;
+                if (interviewer?.email) {
+                  const interviewerTemplateData = {
+                    ...templateData,
+                    interviewer: { name: (interviewer.firstName || '') + ' ' + (interviewer.lastName || '') }
+                  };
+                  
+                  await emailTemplateService.sendEmail(
+                    'interviewer_notification',
+                    interviewer.email,
+                    interviewerTemplateData
+                  );
+                }
+              }
+              
+              console.log('✅ Rescheduling notifications sent to candidate and interviewer');
             }
           }
         }
@@ -2826,16 +2911,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Prepare template data with proper timezone handling
       const interviewDate = new Date(interview.scheduledDate);
       
-      // Get timezone from interview or default to Asia/Kolkata (IST)
-      const timezone = interview.timezone || 'Asia/Kolkata';
+      // Default timezone
+      const timezone = 'Asia/Kolkata';
       
       const templateData = {
         candidate: {
           name: candidate.name
         },
         job: {
-          title: job.title,
-          company: job.company || 'O2F ATS'
+          title: job?.title || 'Position',
+          company: 'O2F ATS'
         },
         interview: {
           date: interviewDate.toLocaleDateString('en-US', {
@@ -2875,8 +2960,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Find and send email to interviewer if available
       let interviewerEmailResult = { success: true, message: 'No interviewer email found' };
-      if (interview.interviewerId) {
-        const interviewer = await storage.getUser(interview.interviewerId);
+      if (req.user?.email) {
+        const interviewer = req.user;
         if (interviewer?.email) {
           // Prepare interviewer template data
           const interviewerTemplateData = {
@@ -2896,8 +2981,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (candidateEmailResult.success) {
         const recipients = [candidate.email];
-        if (interviewerEmailResult.success && interview.interviewerId) {
-          const interviewer = await storage.getUser(interview.interviewerId);
+        if (interviewerEmailResult.success && req.user?.email) {
+          const interviewer = req.user;
           if (interviewer?.email) recipients.push(interviewer.email);
         }
         
