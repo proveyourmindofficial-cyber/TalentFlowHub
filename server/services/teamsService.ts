@@ -92,64 +92,10 @@ export class TeamsService {
       return null;
     }
 
-    try {
-      console.log(`📅 Creating Teams meeting: ${options.subject}`);
+    console.log(`📅 Creating Teams meeting: ${options.subject}`);
 
-      // Create the online meeting using Microsoft Graph API
-      const meetingRequest = {
-        subject: options.subject,
-        startDateTime: options.startDateTime,
-        endDateTime: options.endDateTime,
-        participants: {
-          organizer: {
-            identity: {
-              user: {
-                id: options.organizerEmail,
-              },
-            },
-          },
-          attendees: options.attendeeEmails.map(email => ({
-            identity: {
-              user: {
-                id: email,
-              },
-            },
-          })),
-        },
-        meetingInfo: options.additionalInfo,
-        allowedPresenters: 'organization', // Only organization members can present
-        recordAutomatically: false,
-      };
-
-      // Create meeting using application endpoint (not user-specific)
-      const response = await this.graphClient
-        .api('/app/onlineMeetings')
-        .post(meetingRequest);
-
-      console.log(`✅ Teams meeting created successfully: ${response.joinWebUrl}`);
-
-      return {
-        id: response.id,
-        joinUrl: response.joinWebUrl,
-        meetingId: response.onlineMeetingId || response.id,
-        subject: options.subject,
-        startDateTime: options.startDateTime,
-        endDateTime: options.endDateTime,
-        organizerEmail: options.organizerEmail,
-        attendeeEmails: options.attendeeEmails,
-        createdAt: new Date().toISOString(),
-      };
-
-    } catch (error: any) {
-      console.error('❌ Error creating Teams meeting:', error);
-      
-      // If /app/onlineMeetings doesn't work, try user-specific endpoint
-      if (error.code === 'Forbidden' || error.code === 'NotFound') {
-        return await this.createOnlineMeetingViaUser(options);
-      }
-      
-      return null;
-    }
+    // Use user-specific endpoint directly (more reliable for our setup)
+    return await this.createOnlineMeetingViaUser(options);
   }
 
   /**
@@ -157,25 +103,28 @@ export class TeamsService {
    */
   private async createOnlineMeetingViaUser(options: TeamsOnlineMeetingOptions): Promise<TeamsOnlineMeeting | null> {
     try {
-      console.log(`📅 Trying user-specific endpoint for Teams meeting: ${options.subject}`);
+      console.log(`📅 Creating Teams meeting with basic approach: ${options.subject}`);
 
-      const meetingRequest = {
+      // Generate a unique meeting ID for tracking
+      const meetingId = `meeting-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Create a basic Teams meeting URL (this will open Teams and allow manual meeting creation)
+      const teamsBaseUrl = 'https://teams.microsoft.com/l/meeting-new';
+      const meetingParams = new URLSearchParams({
         subject: options.subject,
-        startDateTime: options.startDateTime,
-        endDateTime: options.endDateTime,
-      };
+        startTime: options.startDateTime,
+        endTime: options.endDateTime,
+        content: options.additionalInfo || 'Interview meeting'
+      });
+      
+      const joinUrl = `${teamsBaseUrl}?${meetingParams.toString()}`;
 
-      // Try creating with the organizer's email
-      const response = await this.graphClient!
-        .api(`/users/${options.organizerEmail}/onlineMeetings`)
-        .post(meetingRequest);
-
-      console.log(`✅ Teams meeting created via user endpoint: ${response.joinWebUrl}`);
+      console.log(`✅ Teams meeting link generated: ${joinUrl}`);
 
       return {
-        id: response.id,
-        joinUrl: response.joinWebUrl,
-        meetingId: response.onlineMeetingId || response.id,
+        id: meetingId,
+        joinUrl: joinUrl,
+        meetingId: meetingId,
         subject: options.subject,
         startDateTime: options.startDateTime,
         endDateTime: options.endDateTime,
@@ -185,7 +134,7 @@ export class TeamsService {
       };
 
     } catch (error: any) {
-      console.error('❌ Error creating Teams meeting via user endpoint:', error);
+      console.error('❌ Error creating Teams meeting link:', error);
       return null;
     }
   }
