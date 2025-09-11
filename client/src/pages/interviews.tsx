@@ -126,8 +126,8 @@ export default function Interviews() {
     // Get candidate ID from the interview to invalidate candidate-specific caches
     if (feedbackInterview) {
       try {
-        const application = await apiRequest("GET", `/api/applications/${feedbackInterview.applicationId}`);
-        const candidateId = application.candidateId;
+        const application = await apiRequest("GET", `/api/applications/${feedbackInterview.applicationId}`) as any;
+        const candidateId = application?.candidateId;
         
         // Invalidate both Interview and Candidate view caches
         queryClient.invalidateQueries({ queryKey: ["/api/interviews"] });
