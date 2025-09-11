@@ -335,6 +335,279 @@ export class ApplicationWorkflowService {
   }
 
 
+  // 🎯 ============================================
+  // INTERVIEW WORKFLOW AUTOMATION ENGINE
+  // ============================================
+
+  /**
+   * 📋 DECLARATIVE WORKFLOW RULES TABLE
+   * Maps interview feedback to next application stage and actions
+   */
+  private static readonly INTERVIEW_WORKFLOW_RULES = {
+    'L1': {
+      'Selected': { 
+        applicationStage: 'L2 Scheduled', 
+        candidateStatus: 'Interviewing',
+        nextStageInfo: 'L2 Technical Round'
+      },
+      'Rejected': { 
+        applicationStage: 'Rejected', 
+        candidateStatus: 'Rejected'
+      },
+      'On Hold': { 
+        applicationStage: 'On Hold', 
+        candidateStatus: 'Interviewing'
+      },
+      'No Show': { 
+        applicationStage: 'No Show', 
+        candidateStatus: 'Available'
+      }
+    },
+    'L2': {
+      'Selected': { 
+        applicationStage: 'Selected', 
+        candidateStatus: 'Interviewing',
+        nextStageInfo: 'HR Discussion'
+      },
+      'Rejected': { 
+        applicationStage: 'Rejected', 
+        candidateStatus: 'Rejected'
+      },
+      'On Hold': { 
+        applicationStage: 'On Hold', 
+        candidateStatus: 'Interviewing'
+      },
+      'No Show': { 
+        applicationStage: 'No Show', 
+        candidateStatus: 'Available'
+      }
+    },
+    'HR': {
+      'Selected': { 
+        applicationStage: 'Offer Released', 
+        candidateStatus: 'Offered'
+      },
+      'Rejected': { 
+        applicationStage: 'Rejected', 
+        candidateStatus: 'Rejected'
+      },
+      'On Hold': { 
+        applicationStage: 'On Hold', 
+        candidateStatus: 'Interviewing'
+      },
+      'No Show': { 
+        applicationStage: 'No Show', 
+        candidateStatus: 'Available'
+      }
+    },
+    'Final': {
+      'Selected': { 
+        applicationStage: 'Selected', 
+        candidateStatus: 'Interviewing'
+      },
+      'Rejected': { 
+        applicationStage: 'Rejected', 
+        candidateStatus: 'Rejected'
+      },
+      'On Hold': { 
+        applicationStage: 'On Hold', 
+        candidateStatus: 'Interviewing'
+      }
+    }
+  } as const;
+
+  /**
+   * 🎯 Process Interview Feedback Workflow
+   * This is the CORE automation engine that drives candidate progression
+   */
+  async processInterviewFeedback(interviewId: string, userId?: string): Promise<boolean> {
+    try {
+      console.log(`🎯 Processing interview feedback workflow for interview ${interviewId}`);
+      
+      const interview = await storage.getInterview(interviewId);
+      if (!interview) {
+        console.error('Interview not found');
+        return false;
+      }
+
+      const application = await storage.getApplication(interview.applicationId);
+      if (!application) {
+        console.error('Application not found');
+        return false;
+      }
+
+      const candidate = await storage.getCandidate(application.candidateId);
+      const job = await storage.getJob(application.jobId);
+
+      // Get workflow rule for this round and feedback result
+      const rules = ApplicationWorkflowService.INTERVIEW_WORKFLOW_RULES;
+      const rule = rules[interview.interviewRound]?.[interview.feedbackResult];
+      
+      if (!rule) {
+        console.warn(`No workflow rule found for ${interview.interviewRound} + ${interview.feedbackResult}`);
+        return false;
+      }
+
+      // 📊 Apply Status Changes Atomically
+      await Promise.all([
+        storage.updateApplication(interview.applicationId, { 
+          stage: rule.applicationStage as any 
+        }),
+        storage.updateCandidate(application.candidateId, { 
+          status: rule.candidateStatus as any 
+        })
+      ]);
+
+      // 📧 Send Progress Email Notifications  
+      if (candidate?.email && interview.feedbackResult === 'Selected' && rule.nextStageInfo) {
+        try {
+          const emailData = {
+            candidate: { name: candidate.name || 'Candidate' },
+            job: { 
+              title: job?.title || 'Position',
+              company: (await this.getCompanyData()).name
+            },
+            application: {},
+            interview: { 
+              round: interview.interviewRound,
+              nextStage: rule.nextStageInfo,
+              result: interview.feedbackResult
+            }
+          };
+
+          await emailTemplateService.sendEmail(
+            'application_shortlisted',
+            candidate.email,
+            emailData
+          );
+
+          console.log(`📧 Progress email sent to ${candidate.email}: ${interview.interviewRound} → ${rule.nextStageInfo}`);
+        } catch (emailError) {
+          console.error(`Failed to send progress email:`, emailError);
+        }
+      }
+
+      // 📧 Send Rejection Email
+      else if (candidate?.email && interview.feedbackResult === 'Rejected') {
+        try {
+          const emailData = {
+            candidate: { name: candidate.name || 'Candidate' },
+            job: { 
+              title: job?.title || 'Position',
+              company: (await this.getCompanyData()).name
+            },
+            application: {},
+            interview: { 
+              round: interview.interviewRound,
+              result: interview.feedbackResult
+            }
+          };
+
+          await emailTemplateService.sendEmail(
+            'application_rejected',
+            candidate.email,
+            emailData
+          );
+
+          console.log(`📧 Rejection email sent to ${candidate.email}`);
+        } catch (emailError) {
+          console.error(`Failed to send rejection email:`, emailError);
+        }
+      }
+
+      console.log(`✅ Interview workflow processed: ${interview.interviewRound} ${interview.feedbackResult} → App: ${rule.applicationStage}, Candidate: ${rule.candidateStatus}`);
+      return true;
+
+    } catch (error) {
+      console.error('Error processing interview feedback workflow:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 🗓️ Process Interview Scheduled Event
+   * Updates application stage when interviews are scheduled
+   */
+  async processInterviewScheduled(interviewId: string, userId?: string): Promise<boolean> {
+    try {
+      const interview = await storage.getInterview(interviewId);
+      if (!interview) return false;
+
+      const application = await storage.getApplication(interview.applicationId);
+      if (!application) return false;
+
+      // Update application stage to reflect scheduling
+      const scheduledStage = `${interview.interviewRound} Scheduled`;
+      await Promise.all([
+        storage.updateApplication(interview.applicationId, { 
+          stage: scheduledStage as any 
+        }),
+        storage.updateCandidate(application.candidateId, { 
+          status: 'Interviewing' as any 
+        })
+      ]);
+
+      console.log(`📅 Interview scheduled: ${interview.interviewRound} → Application: ${scheduledStage}, Candidate: Interviewing`);
+      return true;
+
+    } catch (error) {
+      console.error('Error processing interview scheduled event:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 💼 Process Offer Created Event
+   */
+  async processOfferCreated(applicationId: string, userId?: string): Promise<boolean> {
+    try {
+      const application = await storage.getApplication(applicationId);
+      if (!application) return false;
+
+      await Promise.all([
+        storage.updateApplication(applicationId, { 
+          stage: 'Offer Released' as any 
+        }),
+        storage.updateCandidate(application.candidateId, { 
+          status: 'Offered' as any 
+        })
+      ]);
+
+      console.log(`💼 Offer created → Application: Offer Released, Candidate: Offered`);
+      return true;
+
+    } catch (error) {
+      console.error('Error processing offer created event:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 🎉 Process Candidate Joined Event
+   */
+  async processCandidateJoined(applicationId: string, userId?: string): Promise<boolean> {
+    try {
+      const application = await storage.getApplication(applicationId);
+      if (!application) return false;
+
+      await Promise.all([
+        storage.updateApplication(applicationId, { 
+          stage: 'Joined' as any 
+        }),
+        storage.updateCandidate(application.candidateId, { 
+          status: 'Joined' as any 
+        })
+      ]);
+
+      console.log(`🎉 Candidate joined → Application: Joined, Candidate: Joined`);
+      return true;
+
+    } catch (error) {
+      console.error('Error processing candidate joined event:', error);
+      return false;
+    }
+  }
+
 }
 
 export const applicationWorkflowService = new ApplicationWorkflowService();

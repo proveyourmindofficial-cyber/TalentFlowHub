@@ -2605,8 +2605,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const finalInterviewData = { ...interviewData, ...teamsDetails };
       const interview = await storage.createInterview(finalInterviewData);
       
-      // Apply comprehensive interview automation
-      await applyInterviewAutomation(interview);
+      // 🚀 Apply centralized workflow automation for interview scheduling
+      const { applicationWorkflowService } = await import('./applicationWorkflow');
+      await applicationWorkflowService.processInterviewScheduled(interview.id, req.user?.id);
       
       // Send interview scheduled email
       try {
@@ -2696,8 +2697,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const interviewData = insertInterviewSchema.partial().parse(requestData);
       const interview = await storage.updateInterview(req.params.id, interviewData);
       
-      // Apply comprehensive interview automation (ALWAYS recalculate fresh)
-      await applyInterviewAutomation(interview);
+      // 🚀 Apply centralized workflow automation based on interview changes
+      const { applicationWorkflowService } = await import('./applicationWorkflow');
+      
+      // If interview status changed to Completed with feedbackResult, process feedback workflow
+      if (originalInterview.status !== 'Completed' && interview.status === 'Completed' && interview.feedbackResult) {
+        await applicationWorkflowService.processInterviewFeedback(interview.id, req.user?.id);
+      } else {
+        // Otherwise, handle as scheduling event (date/time/mode changes)
+        await applicationWorkflowService.processInterviewScheduled(interview.id, req.user?.id);
+      }
       
       // Send appropriate emails based on changes
       try {
@@ -3088,8 +3097,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         feedbackResult: feedbackResult as any
       });
 
-      // 🚀 CRITICAL: Apply workflow automation after feedback submission
-      await applyInterviewAutomation(updatedInterview);
+      // 🚀 CRITICAL: Apply centralized workflow automation after feedback submission
+      const { applicationWorkflowService } = await import('./applicationWorkflow');
+      await applicationWorkflowService.processInterviewFeedback(interviewId, req.user?.id);
 
       console.log(`✅ Interview feedback submitted for interview ${interviewId}`);
       res.json(feedback);
@@ -3127,8 +3137,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         feedbackResult: feedbackResult as any
       });
 
-      // 🚀 Apply workflow automation after feedback update
-      await applyInterviewAutomation(updatedInterview);
+      // 🚀 Apply centralized workflow automation after feedback update
+      const { applicationWorkflowService } = await import('./applicationWorkflow');
+      await applicationWorkflowService.processInterviewFeedback(interviewId, req.user?.id);
       
       console.log(`✅ Interview feedback updated for interview ${interviewId}`);
       res.json(feedback);
