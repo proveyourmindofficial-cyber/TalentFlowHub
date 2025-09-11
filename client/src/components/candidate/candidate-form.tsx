@@ -535,7 +535,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
     console.log('✅ Section validation passed, moving to next section');
 
     // Mark current section as completed
-    setCompletedSections(prev => new Set([...prev, currentSection]));
+    setCompletedSections(prev => new Set([...Array.from(prev), currentSection]));
     
     // Move to next section
     if (currentSection < sections.length - 1) {
@@ -554,6 +554,17 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
 
   const canProceedToNext = () => {
     return currentSection < sections.length - 1;
+  };
+
+  // Check if current section has validation errors
+  const hasCurrentSectionErrors = () => {
+    const section = sections[currentSection];
+    const errors = form.formState.errors;
+    
+    return section.fields.some(field => {
+      const fieldError = (errors as any)[field];
+      return !!fieldError;
+    });
   };
 
   const canGoBack = () => {
@@ -1177,6 +1188,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
               <Button
                 type="button"
                 onClick={handleNextSection}
+                disabled={hasCurrentSectionErrors()}
                 data-testid="button-next"
               >
                 Next
