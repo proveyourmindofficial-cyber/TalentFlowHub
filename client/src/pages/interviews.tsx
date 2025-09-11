@@ -11,6 +11,7 @@ import { InterviewFeedbackForm } from "@/components/interview/interview-feedback
 import { InterviewFeedbackView } from "@/components/interview/interview-feedback-view";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/layout/header";
+import { HelpButton } from "@/components/help/HelpCenter";
 import type { Interview } from "@shared/schema";
 
 export default function Interviews() {
@@ -176,13 +177,15 @@ export default function Interviews() {
   };
 
   const headerActions = (
-    <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-      <DialogTrigger asChild>
-        <Button data-testid="button-new-interview">
-          <Calendar className="h-4 w-4 mr-2" />
-          New Interview
-        </Button>
-      </DialogTrigger>
+    <div className="flex gap-2">
+      <HelpButton module="interviews" />
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogTrigger asChild>
+          <Button data-testid="button-new-interview">
+            <Calendar className="h-4 w-4 mr-2" />
+            New Interview
+          </Button>
+        </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -205,6 +208,7 @@ export default function Interviews() {
         />
       </DialogContent>
     </Dialog>
+    </div>
   );
 
   return (

@@ -17,6 +17,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { type Candidate, type InsertCandidate, type CandidateSkill } from "@shared/schema";
 import { useLocation } from "wouter";
 import Header from "@/components/layout/header";
+import { HelpButton } from "@/components/help/HelpCenter";
 
 export default function CandidatesPage() {
   const [, setLocation] = useLocation();
@@ -259,49 +260,44 @@ export default function CandidatesPage() {
         title="Candidates"
         description="Manage and track your candidate pipeline"
         showNewJobButton={false}
+        action={
+          <div className="flex gap-2">
+            <HelpButton module="candidates" />
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button data-testid="button-create-candidate" className="bg-primary hover:bg-primary/90">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Candidate
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingCandidate ? "Edit Candidate" : "Add New Candidate"}
+                  </DialogTitle>
+                </DialogHeader>
+                <CandidateForm
+                  initialData={editingCandidate || undefined}
+                  onSubmit={handleSubmit}
+                  isLoading={createMutation.isPending || updateMutation.isPending}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        }
       />
 
       <div className="flex-1 overflow-auto p-6 space-y-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <Button 
-                onClick={() => setDialogOpen(true)} 
-                data-testid="button-create-candidate"
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Candidate
-              </Button>
-            </div>
-          </div>
 
-          <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" aria-describedby="candidate-form-description">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingCandidate ? "Edit Candidate" : "Create New Candidate"}
-                </DialogTitle>
-                <div id="candidate-form-description" className="sr-only">
-                  {editingCandidate ? "Edit candidate information including contact details, experience, and compensation" : "Create a new candidate profile with contact details, experience, and compensation information"}
-                </div>
-              </DialogHeader>
-              <CandidateForm
-                initialData={editingCandidate || undefined}
-                onSubmit={handleSubmit}
-                isLoading={createMutation.isPending || updateMutation.isPending}
-              />
-            </DialogContent>
-          </Dialog>
-
-          <CandidateTable
-            candidates={candidates}
-            isLoading={candidatesLoading}
-            onView={handleView}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onBulkDelete={handleBulkDelete}
-          />
-        </div>
+        <CandidateTable
+          candidates={candidates}
+          isLoading={candidatesLoading}
+          onView={handleView}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onBulkDelete={handleBulkDelete}
+        />
+      </div>
 
       {/* Candidate Detail View Dialog */}
       {viewingCandidate && (

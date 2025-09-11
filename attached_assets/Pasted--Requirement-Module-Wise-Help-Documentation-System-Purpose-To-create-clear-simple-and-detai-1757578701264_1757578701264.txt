@@ -1,0 +1,90 @@
+📘 Requirement: Module-Wise Help Documentation System
+🎯 Purpose
+
+To create clear, simple, and detailed help documents for every module in the application. The goal is to remove confusion, provide end-to-end understanding, and serve as a knowledge transfer (KT) guide for users and testers.
+
+✅ Key Expectations
+
+Module-Specific Help
+
+Each module (Jobs, Candidates, Applications, Interviews, etc.) must have its own help document.
+
+When a user opens a module, the relevant help document should automatically display (context-aware help).
+
+Content Structure for Each Help Document
+For consistency, each module document should follow the same structure:
+
+A) Introduction (What this module is for)
+
+Example: “The Job Module is used to create and manage job openings for which candidates can be applied.”
+
+B) Step-by-Step Actions (What to do & How to do it)
+
+What fields to fill, what options to select, and what each option means.
+
+Example: “If you set Job Status to Active → job will be visible to recruiters for candidate submission. If set to Draft → only Admin can see it.”
+
+C) Impact (What will happen after submission or action)
+
+How the data flows, what statuses will update, what notifications are sent, and what happens in other linked modules.
+
+Example: “After creating a Job, recruiters can start attaching candidates. Applications are automatically linked to the Job.”
+
+D) Workflow (End-to-End Flow in Simple Terms)
+
+Example for Interviews: “Candidate Applied → L1 Scheduled → Feedback Submitted → Candidate Moved to L2 → Final Decision.”
+
+Must clearly show all status transitions.
+
+E) Integration Points (Connections with Other Modules)
+
+Jobs link to Applications → Applications link to Candidates → Candidates show in Timeline → Feedback reflects in Dashboard.
+
+F) Notifications (Emails/Alerts)
+
+Which actions trigger emails/alerts, and to whom.
+
+Example: “When Interview is Scheduled → Email sent to Candidate + Interviewer.”
+
+Scope Limitation (Only Current Functionality)
+
+Documents must describe only what currently exists in the application.
+
+No assumptions, no futuristic features, no past glitches.
+
+Clarity & Simplicity
+
+Must use simple language, clear examples, and avoid technical jargon.
+
+Target audience: recruiters, HR, managers, and testers (not developers).
+
+Centralized Repository
+
+All module documents should be stored in one place (Help Center).
+
+Each module should auto-load its own guide when opened.
+
+🚦 Why This is Needed
+
+Users/testers get confused while testing or using the system.
+
+Sometimes they don’t know what their actions mean, or what status updates will happen.
+
+This causes rework, mistakes, and delays.
+
+A structured Help Document solves this by acting as a real-time training guide.
+
+📝 Suggested Approach
+
+Create a Help Document Template (Introduction → Steps → Impact → Workflow → Integrations → Notifications).
+
+Document each module (Jobs, Candidates, Applications, Interviews, Offers, etc.) using this template.
+
+Store all docs in one Help Center.
+
+Integrate module-wise auto-display help (like a side panel or pop-up help button).
+
+Keep documents updated as features change.
+
+👉 In short:
+This is not just “notes” but a proper KT-style help system inside the application. Every module should explain in simple words — what it is, how to use it, and what happens after each action.

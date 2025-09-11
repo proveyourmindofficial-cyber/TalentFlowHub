@@ -9,6 +9,7 @@ import { ApplicationForm } from "@/components/application/application-form";
 import { ApplicationTable } from "@/components/application/application-table";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/layout/header";
+import { HelpButton } from "@/components/help/HelpCenter";
 import type { ApplicationWithRelations } from "@shared/schema";
 
 export default function Applications() {
@@ -106,6 +107,8 @@ export default function Applications() {
         title="Applications"
         description="Manage job applications and track candidate progress through the hiring workflow"
         action={
+          <div className="flex gap-2">
+            <HelpButton module="applications" />
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => setEditingApplication(null)} data-testid="button-new-application">
@@ -132,6 +135,7 @@ export default function Applications() {
                 />
               </DialogContent>
             </Dialog>
+          </div>
           }
         />
 
