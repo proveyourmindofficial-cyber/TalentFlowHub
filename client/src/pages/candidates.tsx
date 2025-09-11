@@ -44,9 +44,35 @@ export default function CandidatesPage() {
           "Content-Type": "application/json",
         },
       });
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errorMessage = "Failed to create candidate";
+        let errorType = "unknown";
+        let errorField = "";
+        
+        try {
+          const errorData = await response.json();
+          if (errorData.message) {
+            errorMessage = errorData.message;
+            errorType = errorData.type || "unknown";
+            errorField = errorData.field || "";
+          }
+        } catch (parseError) {
+          // If we can't parse the error response, use the status code
+          errorMessage = `Failed to create candidate (${response.status})`;
+        }
+        
+        const error = new Error(errorMessage) as Error & { 
+          type?: string; 
+          field?: string; 
+          status?: number;
+        };
+        error.type = errorType;
+        error.field = errorField;
+        error.status = response.status;
+        throw error;
       }
+      
       const candidate = await response.json();
       
       // Save skills after candidate is created
@@ -84,11 +110,33 @@ export default function CandidatesPage() {
         description: "Candidate created successfully",
       });
     },
-    onError: (error: Error) => {
+    onError: (error: Error & { type?: string; field?: string; status?: number }) => {
+      let title = "Error Creating Candidate";
+      let description = error.message;
+      
+      // Provide user-friendly messages based on error type
+      if (error.type === "unique_violation") {
+        title = "Duplicate Information";
+        if (error.field === "phone") {
+          description = "A candidate with this phone number already exists. Please check and use a different phone number.";
+        } else if (error.field === "email") {
+          description = "A candidate with this email address already exists. Please check and use a different email address.";
+        } else {
+          description = "This candidate information already exists in the system. Please check the phone number and email address.";
+        }
+      } else if (error.type === "validation_error") {
+        title = "Validation Error";
+        description = error.message || "Please check that all required fields are filled correctly.";
+      } else if (error.status === 400) {
+        title = "Invalid Data";
+        description = error.message || "Please check your input and try again.";
+      }
+      
       toast({
-        title: "Error",
-        description: error.message,
+        title,
+        description,
         variant: "destructive",
+        duration: 6000, // Show longer for user to read the detailed message
       });
     },
   });
