@@ -84,7 +84,7 @@ const formatDate = (date: Date | string): string => {
 };
 
 export function CandidateTimelineTab({ candidateId }: CandidateTimelineTabProps) {
-  const { data: timeline = [], isLoading } = useQuery({
+  const { data: timeline = [], isLoading } = useQuery<any[]>({
     queryKey: ['/api/candidates', candidateId, 'timeline'],
     enabled: !!candidateId,
   });
