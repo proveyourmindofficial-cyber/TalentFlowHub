@@ -2442,14 +2442,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to map feedback recommendation to interview result
+  function mapRecommendationToFeedbackResult(recommendation: string): string {
+    const mapping: Record<string, string> = {
+      'Hire': 'Selected',
+      'Strong Hire': 'Selected', 
+      'No Hire': 'Rejected',
+      'Maybe': 'On Hold'
+    };
+    return mapping[recommendation] || 'On Hold';
+  }
+
   // Helper function to apply interview automation rules
   async function applyInterviewAutomation(interview: any) {
     try {
       const application = await storage.getApplication(interview.applicationId);
       if (!application) return;
 
-      let newApplicationStage: string;
-      let newCandidateStatus: string;
+      let newApplicationStage: string = '';
+      let newCandidateStatus: string = '';
 
       // Rule 1: HR + Completed + Feedback rules (highest priority)
       if (interview.interviewRound === 'HR' && interview.status === 'Completed' && interview.feedbackResult) {
@@ -2756,12 +2767,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     const endDate = new Date(interviewDate.getTime() + 60 * 60 * 1000); // 1 hour duration
                     
                     const teamsOptions = {
-                      subject: `Interview: ${candidate.name} for ${job.title}`,
+                      subject: `Interview: ${candidate.name} for ${job?.title || 'Position'}`,
                       startDateTime: interviewDate.toISOString(),
                       endDateTime: endDate.toISOString(),
                       organizerEmail: organizerEmail,
                       attendeeEmails: [candidate.email!],
-                      additionalInfo: `Interview for ${job.title} position - Round: ${interview.interviewRound}`
+                      additionalInfo: `Interview for ${job?.title || 'Position'} position - Round: ${interview.interviewRound}`
                     };
                     
                     const teamsMeeting = await teamsService.createOnlineMeeting(teamsOptions);
@@ -3070,10 +3081,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const feedback = await storage.createInterviewFeedback(feedbackData);
       
-      // Update interview status to show feedback has been submitted
-      await storage.updateInterview(interviewId, { 
-        status: 'Completed' as any 
+      // Map recommendation to feedback result and update interview status
+      const feedbackResult = mapRecommendationToFeedbackResult(feedbackData.overallRecommendation);
+      const updatedInterview = await storage.updateInterview(interviewId, { 
+        status: 'Completed' as any,
+        feedbackResult: feedbackResult as any
       });
+
+      // 🚀 CRITICAL: Apply workflow automation after feedback submission
+      await applyInterviewAutomation(updatedInterview);
 
       console.log(`✅ Interview feedback submitted for interview ${interviewId}`);
       res.json(feedback);
@@ -3103,6 +3119,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const feedback = await storage.updateInterviewFeedback(interviewId, feedbackData);
+      
+      // Map recommendation to feedback result and update interview
+      const feedbackResult = mapRecommendationToFeedbackResult(feedbackData.overallRecommendation);
+      const updatedInterview = await storage.updateInterview(interviewId, { 
+        status: 'Completed' as any,
+        feedbackResult: feedbackResult as any
+      });
+
+      // 🚀 Apply workflow automation after feedback update
+      await applyInterviewAutomation(updatedInterview);
+      
       console.log(`✅ Interview feedback updated for interview ${interviewId}`);
       res.json(feedback);
     } catch (error) {
