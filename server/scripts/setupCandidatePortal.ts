@@ -27,7 +27,7 @@ async function setupCandidatePortalAccess() {
         });
         
         console.log(`✅ Portal access enabled for ${candidate.name} (${candidate.email})`);
-        console.log(`   Default password: ${defaultPassword}`);
+        console.log(`   Default password: [REDACTED FOR SECURITY]`);
         console.log('   ⚠️  Candidate should change this password after first login\n');
       } else {
         console.log(`✓ Portal already active for ${candidate.name} (${candidate.email})`);

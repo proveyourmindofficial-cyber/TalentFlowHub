@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = (userData: User, token: string) => {
-    console.log('Login called with:', userData, token);
+    console.log('Login called for user:', userData.email || 'unknown');
     localStorage.setItem('authToken', token);
     localStorage.setItem('userData', JSON.stringify(userData));
     setUser(userData);

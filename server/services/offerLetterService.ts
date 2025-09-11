@@ -402,7 +402,7 @@ export class OfferLetterService {
       // TODO: Implement actual email sending with SendGrid or similar
       // For now, just log the action
       console.log(`Sending offer letter to ${candidate.email} for position ${offerLetter.designation}`);
-      console.log(`PDF URL: ${pdfUrl}`);
+      console.log(`PDF URL: [REDACTED FOR SECURITY]`);
       
       return true;
     } catch (error) {

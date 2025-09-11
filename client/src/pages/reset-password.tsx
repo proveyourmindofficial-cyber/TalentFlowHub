@@ -24,8 +24,8 @@ export default function ResetPasswordPage() {
     const url = new URL(fullUrl);
     const urlToken = url.searchParams.get('token');
     
-    console.log('Full URL:', fullUrl);
-    console.log('Extracted token:', urlToken);
+    // Token extraction from URL - details redacted for security
+    console.log('Processing password reset request');
     
     if (urlToken) {
       setToken(urlToken);

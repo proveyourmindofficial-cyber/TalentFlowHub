@@ -110,9 +110,9 @@ export class ApplicationWorkflowService {
       const applications = await storage.getApplications();
       const application = applications.find(app => app.responseToken === token);
       
-      console.log(`Looking for token: ${token}`);
+      console.log(`Processing candidate response for application lookup`);
       console.log(`Found ${applications.length} applications`);
-      console.log(`Applications with tokens:`, applications.map(app => ({ id: app.id, token: app.responseToken })));
+      // Token details redacted for security
       
       if (!application) {
         return {
@@ -287,7 +287,7 @@ export class ApplicationWorkflowService {
       // Send secure password setup email
       await this.sendPortalPasswordSetupEmail(candidate, setupToken);
 
-      console.log(`✅ Password setup token generated for ${candidate.email}`);
+      console.log(`✅ Password setup process initiated for ${candidate.email}`);
       return {
         success: true,
         message: 'Password setup email sent successfully'
@@ -326,7 +326,7 @@ export class ApplicationWorkflowService {
 
       if (result.success) {
         console.log(`✅ Password setup email sent to ${candidate.email}`);
-        console.log(`   Setup URL: ${passwordSetupUrl}`);
+        // URL redacted for security - token not logged
       } else {
         console.error(`❌ Failed to send password setup email to ${candidate.email}`);
       }
