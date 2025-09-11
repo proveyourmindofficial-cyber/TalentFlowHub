@@ -12,7 +12,11 @@ import {
   Edit,
   Mail,
   Phone,
-  CheckCircle
+  CheckCircle,
+  Star,
+  ThumbsUp,
+  ThumbsDown,
+  Eye
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -85,6 +89,52 @@ export function CandidateTimelineTab({ candidateId }: CandidateTimelineTabProps)
     enabled: !!candidateId,
   });
 
+  // Fetch candidate's interviews and their feedback
+  const { data: candidateInterviews = [] } = useQuery({
+    queryKey: ['/api/candidates', candidateId, 'interviews'],
+    queryFn: async () => {
+      const response = await fetch(`/api/interviews`);
+      const allInterviews = await response.json();
+      
+      // Filter interviews for this candidate by checking applications
+      const candidateApplicationsResponse = await fetch(`/api/applications`);
+      const allApplications = await candidateApplicationsResponse.json();
+      const candidateApplicationIds = allApplications
+        .filter((app: any) => app.candidateId === candidateId)
+        .map((app: any) => app.id);
+        
+      return allInterviews.filter((interview: any) => 
+        candidateApplicationIds.includes(interview.applicationId)
+      );
+    },
+    enabled: !!candidateId,
+  });
+
+  // Fetch feedback for all candidate interviews
+  const { data: interviewsFeedback = {} } = useQuery({
+    queryKey: ['/api/candidates', candidateId, 'interviews-feedback'],
+    queryFn: async () => {
+      if (!candidateInterviews || candidateInterviews.length === 0) return {};
+      
+      const feedbackPromises = candidateInterviews.map(async (interview: any) => {
+        try {
+          const response = await fetch(`/api/interviews/${interview.id}/feedback`);
+          if (response.ok) {
+            const feedback = await response.json();
+            return { [interview.id]: feedback };
+          }
+          return { [interview.id]: null };
+        } catch {
+          return { [interview.id]: null };
+        }
+      });
+      
+      const results = await Promise.all(feedbackPromises);
+      return results.reduce((acc, curr) => ({ ...acc, ...curr }), {} as Record<string, any>);
+    },
+    enabled: !!candidateId && candidateInterviews.length > 0,
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -109,6 +159,7 @@ export function CandidateTimelineTab({ candidateId }: CandidateTimelineTabProps)
     applications: timeline.filter((event: any) => event.type === 'application_submitted').length,
     interviews: timeline.filter((event: any) => event.type === 'interview_scheduled').length,
     documents: timeline.filter((event: any) => event.type === 'document_uploaded').length,
+    feedbacks: Object.values(interviewsFeedback).filter(feedback => feedback !== null).length,
   };
 
   return (
@@ -150,7 +201,165 @@ export function CandidateTimelineTab({ candidateId }: CandidateTimelineTabProps)
             </div>
           </CardContent>
         </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Feedback</span>
+              <Badge variant={timelineStats.feedbacks > 0 ? "default" : "outline"}>
+                {timelineStats.feedbacks}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Interview Feedback Section */}
+      {candidateInterviews.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5" />
+              Interview Feedback Summary ({candidateInterviews.length} Rounds)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {candidateInterviews.map((interview: any) => {
+                const feedback = interviewsFeedback[interview.id];
+                return (
+                  <Card key={interview.id} className="border-l-4 border-l-blue-500">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{interview.interviewRound} Round</CardTitle>
+                        <Badge variant={feedback ? "default" : "outline"}>
+                          {feedback ? "Completed" : "Pending"}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Interviewer: {interview.interviewer}
+                        <br />
+                        Date: {format(new Date(interview.scheduledDate), "MMM dd, yyyy")}
+                      </p>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      {feedback ? (
+                        <div className="space-y-3">
+                          {/* Overall Recommendation */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">Recommendation:</span>
+                            <Badge variant={
+                              feedback.overallRecommendation === 'Hire' ? 'default' : 
+                              feedback.overallRecommendation === 'Maybe' ? 'secondary' : 'destructive'
+                            }>
+                              {feedback.overallRecommendation || 'Not set'}
+                            </Badge>
+                          </div>
+                          
+                          {/* Ratings */}
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div className="flex items-center justify-between">
+                              <span>Technical:</span>
+                              <div className="flex items-center gap-1">
+                                {[1,2,3,4,5].map(star => (
+                                  <Star 
+                                    key={star}
+                                    className={`w-3 h-3 ${
+                                      star <= (feedback.technicalSkills || 0) 
+                                        ? 'text-yellow-400 fill-current' 
+                                        : 'text-gray-300'
+                                    }`} 
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <span>Communication:</span>
+                              <div className="flex items-center gap-1">
+                                {[1,2,3,4,5].map(star => (
+                                  <Star 
+                                    key={star}
+                                    className={`w-3 h-3 ${
+                                      star <= (feedback.communicationSkills || 0) 
+                                        ? 'text-yellow-400 fill-current' 
+                                        : 'text-gray-300'
+                                    }`} 
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <span>Problem Solving:</span>
+                              <div className="flex items-center gap-1">
+                                {[1,2,3,4,5].map(star => (
+                                  <Star 
+                                    key={star}
+                                    className={`w-3 h-3 ${
+                                      star <= (feedback.problemSolving || 0) 
+                                        ? 'text-yellow-400 fill-current' 
+                                        : 'text-gray-300'
+                                    }`} 
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between">
+                              <span>Cultural Fit:</span>
+                              <div className="flex items-center gap-1">
+                                {[1,2,3,4,5].map(star => (
+                                  <Star 
+                                    key={star}
+                                    className={`w-3 h-3 ${
+                                      star <= (feedback.culturalFit || 0) 
+                                        ? 'text-yellow-400 fill-current' 
+                                        : 'text-gray-300'
+                                    }`} 
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Comments */}
+                          {feedback.strengthsComments && (
+                            <div className="bg-green-50 dark:bg-green-950 p-2 rounded text-xs">
+                              <strong>Strengths:</strong> {feedback.strengthsComments}
+                            </div>
+                          )}
+                          
+                          {feedback.improvementsComments && (
+                            <div className="bg-orange-50 dark:bg-orange-950 p-2 rounded text-xs">
+                              <strong>Areas for Improvement:</strong> {feedback.improvementsComments}
+                            </div>
+                          )}
+                          
+                          {feedback.additionalNotes && (
+                            <div className="bg-blue-50 dark:bg-blue-950 p-2 rounded text-xs">
+                              <strong>Additional Notes:</strong> {feedback.additionalNotes}
+                            </div>
+                          )}
+                          
+                          <div className="text-xs text-muted-foreground pt-2">
+                            Submitted: {formatDate(feedback.createdAt)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4 text-muted-foreground">
+                          <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">Feedback not submitted yet</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Timeline */}
       <Card>
