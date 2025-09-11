@@ -35,20 +35,108 @@ import { useAuth } from "@/hooks/useAuth";
 import type { UploadResult } from "@uppy/core";
 
 const candidateFormSchema = insertCandidateSchema.extend({
-  totalExperience: z.coerce.number().min(0).max(50),
-  relevantExperience: z.coerce.number().min(0).max(50),
-  currentCtc: z.coerce.number().min(0).optional(),
-  expectedCtc: z.coerce.number().min(0).optional(),
+  // Required fields with proper validation
+  name: z.string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name cannot exceed 100 characters")
+    .regex(/^[a-zA-Z\s]+$/, "Name can only contain letters and spaces"),
+  email: z.string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+  phone: z.string()
+    .min(1, "Phone number is required")
+    .regex(/^\+?[1-9]\d{1,14}$/, "Please enter a valid phone number (e.g., +1234567890 or 1234567890)"),
+  primarySkill: z.string()
+    .min(1, "Primary skill is required"),
+  
+  // Experience fields with proper validation
+  totalExperience: z.coerce.number()
+    .min(0, "Total experience cannot be negative")
+    .max(50, "Total experience cannot exceed 50 years"),
+  relevantExperience: z.coerce.number()
+    .min(0, "Relevant experience cannot be negative")
+    .max(50, "Relevant experience cannot exceed 50 years"),
+  
+  // Optional financial fields
+  currentCtc: z.coerce.number().min(0, "Current CTC cannot be negative").optional(),
+  expectedCtc: z.coerce.number().min(0, "Expected CTC cannot be negative").optional(),
+  
+  // Employee ID for internal candidates
   serialNumber: z.preprocess(
     (v) => (v === '' || v == null ? undefined : v),
     z.coerce.number().int().positive("Employee ID must be a positive number").optional()
   ),
+  
+  // Date fields
   tentativeDoj: z.string().optional(),
+  
+  // Candidate type
   candidateType: z.enum(['internal', 'external']).default('internal'),
-  // External candidate specific validations
-  uanNumber: z.string().regex(/^\d{12}$/, "UAN must be 12 digits").optional().or(z.literal('')),
-  aadhaarNumber: z.string().regex(/^\d{12}$/, "Aadhaar must be 12 digits").optional().or(z.literal('')),
-  linkedinUrl: z.string().url("Invalid LinkedIn URL").optional().or(z.literal('')),
+  
+  // External candidate specific validations - conditional based on candidate type
+  uanNumber: z.string().optional().refine((val) => {
+    // If empty or undefined, it's valid for optional
+    if (!val || val === '') return true;
+    // If has value, must be 12 digits
+    return /^\d{12}$/.test(val);
+  }, "UAN number must be exactly 12 digits"),
+  
+  aadhaarNumber: z.string().optional().refine((val) => {
+    // If empty or undefined, it's valid for optional
+    if (!val || val === '') return true;
+    // If has value, must be 12 digits
+    return /^\d{12}$/.test(val);
+  }, "Aadhaar number must be exactly 12 digits"),
+  
+  linkedinUrl: z.string().optional().refine((val) => {
+    // If empty or undefined, it's valid for optional
+    if (!val || val === '') return true;
+    // If has value, must be valid URL
+    try {
+      new URL(val);
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Please enter a valid LinkedIn URL"),
+  
+  // External candidate required fields - conditionally validated in refinement
+  recruiterName: z.string(),
+  source: z.string(),
+  clientName: z.string(),
+}).refine((data) => {
+  // For external candidates, make certain fields required
+  if (data.candidateType === 'external') {
+    return data.recruiterName && data.recruiterName.trim() !== '';
+  }
+  return true;
+}, {
+  message: "Recruiter name is required for external candidates",
+  path: ["recruiterName"]
+}).refine((data) => {
+  // For external candidates, source is required
+  if (data.candidateType === 'external') {
+    return data.source && data.source.trim() !== '';
+  }
+  return true;
+}, {
+  message: "Source is required for external candidates",
+  path: ["source"]
+}).refine((data) => {
+  // For external candidates, client name is required
+  if (data.candidateType === 'external') {
+    return data.clientName && data.clientName.trim() !== '';
+  }
+  return true;
+}, {
+  message: "Client name is required for external candidates",
+  path: ["clientName"]
+}).refine((data) => {
+  // Relevant experience should not exceed total experience
+  return data.relevantExperience <= data.totalExperience;
+}, {
+  message: "Relevant experience cannot exceed total experience",
+  path: ["relevantExperience"]
 });
 
 interface CandidateFormProps {
@@ -65,6 +153,59 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
   const [candidateType, setCandidateType] = useState<'internal' | 'external'>(
     (initialData?.candidateType as 'internal' | 'external') || 'internal'
   );
+
+  // Section progression state
+  const [currentSection, setCurrentSection] = useState(0);
+  const [completedSections, setCompletedSections] = useState<Set<number>>(new Set());
+
+  // Define form sections
+  const sections = [
+    {
+      id: 0,
+      title: "Candidate Type",
+      fields: ["candidateType"]
+    },
+    {
+      id: 1,
+      title: "Basic Information",
+      fields: candidateType === 'internal' 
+        ? ["name", "email", "phone", "primarySkill", "serialNumber", "recruiterName"]
+        : ["name", "email", "phone", "primarySkill", "notes"] // notes = father's name for external
+    },
+    {
+      id: 2,
+      title: candidateType === 'external' ? "Recruitment Details" : "Experience Information",
+      fields: candidateType === 'external'
+        ? ["recruiterName", "source", "clientName"]
+        : ["totalExperience", "relevantExperience", "currentCompany", "currentLocation", "preferredLocation"]
+    },
+    {
+      id: 3,
+      title: candidateType === 'external' ? "Government IDs & Links" : "Compensation & Timeline",
+      fields: candidateType === 'external'
+        ? ["uanNumber", "aadhaarNumber", "linkedinUrl"]
+        : ["currentCtc", "expectedCtc", "noticePeriod", "tentativeDoj"]
+    },
+    {
+      id: 4,
+      title: candidateType === 'external' ? "Experience Information" : "Education & Skills",
+      fields: candidateType === 'external'
+        ? ["totalExperience", "relevantExperience", "currentCompany", "currentLocation", "preferredLocation"]
+        : ["highestQualification"]
+    },
+    {
+      id: 5,
+      title: candidateType === 'external' ? "Compensation & Timeline" : "Documents & Final Review",
+      fields: candidateType === 'external'
+        ? ["currentCtc", "expectedCtc", "noticePeriod", "tentativeDoj"]
+        : ["status"]
+    },
+    ...(candidateType === 'external' ? [{
+      id: 6,
+      title: "Documents & Final Review",
+      fields: ["status"]
+    }] : [])
+  ];
 
   // Document Manager State  
   const [educationEntries, setEducationEntries] = useState(() => {
@@ -251,6 +392,178 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
     return false;
   };
 
+  // Section validation and navigation functions with robust error checking
+  const validateSectionFields = async (sectionIndex: number): Promise<boolean> => {
+    const section = sections[sectionIndex];
+    console.log('🔍 Validating section:', section.title, 'Fields:', section.fields);
+    
+    try {
+      // First trigger validation for all fields in this section
+      const fieldValidationResults = await Promise.all(
+        section.fields.map(async (field) => {
+          const result = await form.trigger(field as any);
+          console.log(`Field ${field} validation result:`, result);
+          return result;
+        })
+      );
+      
+      // Wait a moment for form state to update
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Check form errors after validation
+      const formErrors = form.formState.errors;
+      console.log('📋 Form errors after validation:', formErrors);
+      
+      // Get current form values for debugging
+      const formValues = form.getValues();
+      console.log('📝 Current form values:', {
+        name: formValues.name,
+        email: formValues.email,
+        phone: formValues.phone,
+        primarySkill: formValues.primarySkill,
+        candidateType: formValues.candidateType
+      });
+      
+      // Check if any section fields have errors
+      const sectionHasErrors = section.fields.some(field => {
+        const hasError = Boolean(formErrors[field as keyof typeof formErrors]);
+        console.log(`Field ${field} has error:`, hasError, formErrors[field as keyof typeof formErrors]);
+        return hasError;
+      });
+      
+      // Also check if required fields are empty (additional validation)
+      let hasEmptyRequiredFields = false;
+      
+      if (sectionIndex === 1) { // Basic Information section
+        const requiredFields = ['name', 'email', 'phone', 'primarySkill'];
+        hasEmptyRequiredFields = requiredFields.some(field => {
+          const value = formValues[field as keyof typeof formValues];
+          const isEmpty = !value || (typeof value === 'string' && value.trim() === '');
+          console.log(`Required field ${field} is empty:`, isEmpty, 'Value:', value);
+          return isEmpty;
+        });
+      }
+      
+      const isValid = !sectionHasErrors && !hasEmptyRequiredFields;
+      
+      console.log('✅ Section validation result:', {
+        section: section.title,
+        isValid,
+        sectionHasErrors,
+        hasEmptyRequiredFields,
+        fieldValidationResults
+      });
+      
+      return isValid;
+      
+    } catch (error) {
+      console.error("❌ Section validation error:", error);
+      return false;
+    }
+  };
+
+  const handleNextSection = async () => {
+    console.log('🚀 Attempting to move to next section from:', currentSection);
+    
+    // Force validation of the entire form first
+    const allFieldsValid = await form.trigger();
+    console.log('📊 All fields validation result:', allFieldsValid);
+    
+    // Then validate just this section
+    const isCurrentSectionValid = await validateSectionFields(currentSection);
+    console.log('📋 Current section validation result:', isCurrentSectionValid);
+    
+    if (!isCurrentSectionValid) {
+      const section = sections[currentSection];
+      const formErrors = form.formState.errors;
+      
+      console.log('🚫 Blocking progression due to validation errors:', formErrors);
+      
+      // Get specific error messages with better formatting
+      const errorDetails = section.fields
+        .map(field => {
+          const error = formErrors[field as keyof typeof formErrors];
+          const value = form.getValues(field as any);
+          return {
+            field,
+            error: error?.message,
+            value,
+            hasError: Boolean(error)
+          };
+        })
+        .filter(item => item.hasError || !item.value);
+        
+      console.log('📝 Error details:', errorDetails);
+      
+      const errorMessages = errorDetails.map(item => 
+        `${item.field}: ${item.error || 'This field is required'}`
+      );
+      
+      toast({
+        title: "❌ Validation Failed",
+        description: errorMessages.length > 0 
+          ? `Please fix these issues before proceeding:\n• ${errorMessages.join('\n• ')}`
+          : `Please complete all required fields in "${section.title}" before proceeding.`,
+        variant: "destructive",
+      });
+      
+      // Focus on first problematic field
+      const firstErrorField = errorDetails[0]?.field;
+      if (firstErrorField) {
+        // Try multiple selectors to find the field
+        const selectors = [
+          `[data-testid*="${firstErrorField}"]`,
+          `[name="${firstErrorField}"]`,
+          `input[placeholder*="${firstErrorField}"]`
+        ];
+        
+        for (const selector of selectors) {
+          const element = document.querySelector(selector);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if ('focus' in element) {
+              (element as HTMLElement).focus();
+            }
+            break;
+          }
+        }
+      }
+      
+      return false;
+    }
+
+    console.log('✅ Section validation passed, moving to next section');
+
+    // Mark current section as completed
+    setCompletedSections(prev => new Set([...prev, currentSection]));
+    
+    // Move to next section
+    if (currentSection < sections.length - 1) {
+      setCurrentSection(currentSection + 1);
+      console.log('➡️ Moved to section:', currentSection + 1);
+    }
+    
+    return true;
+  };
+
+  const handlePreviousSection = () => {
+    if (currentSection > 0) {
+      setCurrentSection(currentSection - 1);
+    }
+  };
+
+  const canProceedToNext = () => {
+    return currentSection < sections.length - 1;
+  };
+
+  const canGoBack = () => {
+    return currentSection > 0;
+  };
+
+  const isSectionCompleted = (sectionIndex: number) => {
+    return completedSections.has(sectionIndex);
+  };
+
   // Handle Primary Skill selection - auto-populate Skills & Expertise
   const handlePrimarySkillSelect = (skill: any) => {
     const primarySkillEntry = {
@@ -304,201 +617,203 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
     onSubmit(candidateData, selectedSkills);
   }
 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-        {/* Candidate Type Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Candidate Type
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FormField
-              control={form.control}
-              name="candidateType"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Select Candidate Type *</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <SelectTrigger data-testid="select-candidate-type">
-                        <SelectValue placeholder="Select candidate type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="internal">Internal Candidate</SelectItem>
-                        <SelectItem value="external">External Candidate</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Basic Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Basic Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {candidateType === 'external' && (
-              <div className="md:col-span-2 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
-                  <strong>S.No:</strong> Will be auto-generated | 
-                  <strong> Date:</strong> Will be set to today's date automatically
-                </p>
-              </div>
-            )}
-            
-            {candidateType === 'internal' && (
-              <div className="md:col-span-2 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                <p className="text-sm text-green-800 dark:text-green-200">
-                  <strong>Internal Candidate:</strong> Employee ID and department information will be required | 
-                  <strong>Referral tracking:</strong> Available for internal recommendations
-                </p>
-              </div>
-            )}
-
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name *</FormLabel>
-                  <FormControl>
-                    <Input data-testid="input-name" placeholder="Enter full name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email *</FormLabel>
-                  <FormControl>
-                    <Input data-testid="input-email" type="email" placeholder="Enter email" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone *</FormLabel>
-                  <FormControl>
-                    <Input data-testid="input-phone" placeholder="Enter phone number" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="primarySkill"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Primary Skill *</FormLabel>
-                  <FormControl>
-                    <PrimarySkillDropdown
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      onSkillSelect={(skill) => {
-                        // Auto-populate Skills & Expertise with primary skill at Expert level
-                        handlePrimarySkillSelect(skill);
-                      }}
-                      placeholder="Select your primary skill"
-                      data-testid="dropdown-primary-skill"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {candidateType === 'internal' && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="serialNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Employee ID</FormLabel>
-                      <FormControl>
-                        <Input data-testid="input-employee-id" placeholder="Enter employee ID" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="recruiterName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Department</FormLabel>
-                      <FormControl>
-                        <DropdownWithAdd
-                          category="current_department"
-                          value={field.value}
-                          onValueChange={field.onChange}
-                          placeholder="Select or add department"
-                          data-testid="dropdown-department"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-
-              </>
-            )}
-
-            {candidateType === 'external' && (
+  // Function to render section-specific content
+  const renderSectionContent = () => {
+    const section = sections[currentSection];
+    
+    switch (section.id) {
+      case 0: // Candidate Type Selection
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                {section.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <FormField
                 control={form.control}
-                name="notes"
+                name="candidateType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Father's Name</FormLabel>
+                    <FormLabel>Select Candidate Type *</FormLabel>
                     <FormControl>
-                      <Input data-testid="input-father-name" placeholder="Enter father's name" {...field} />
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger data-testid="select-candidate-type">
+                          <SelectValue placeholder="Select candidate type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="internal">Internal Candidate</SelectItem>
+                          <SelectItem value="external">External Candidate</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage role="alert" />
                   </FormItem>
                 )}
               />
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        );
 
-        {/* External Candidate Specific Fields */}
-        {candidateType === 'external' && (
-          <>
-            {/* Recruitment Details */}
+      case 1: // Basic Information
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                {section.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {candidateType === 'external' && (
+                <div className="md:col-span-2 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-800 dark:text-blue-200">
+                    <strong>S.No:</strong> Will be auto-generated | 
+                    <strong> Date:</strong> Will be set to today's date automatically
+                  </p>
+                </div>
+              )}
+              
+              {candidateType === 'internal' && (
+                <div className="md:col-span-2 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="text-sm text-green-800 dark:text-green-200">
+                    <strong>Internal Candidate:</strong> Employee ID and department information will be required | 
+                    <strong>Referral tracking:</strong> Available for internal recommendations
+                  </p>
+                </div>
+              )}
+
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name *</FormLabel>
+                    <FormControl>
+                      <Input data-testid="input-name" placeholder="Enter full name" {...field} />
+                    </FormControl>
+                    <FormMessage role="alert" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email *</FormLabel>
+                    <FormControl>
+                      <Input data-testid="input-email" type="email" placeholder="Enter email" {...field} />
+                    </FormControl>
+                    <FormMessage role="alert" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone *</FormLabel>
+                    <FormControl>
+                      <Input data-testid="input-phone" placeholder="Enter phone number" {...field} />
+                    </FormControl>
+                    <FormMessage role="alert" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="primarySkill"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Primary Skill *</FormLabel>
+                    <FormControl>
+                      <PrimarySkillDropdown
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        onSkillSelect={(skill) => {
+                          handlePrimarySkillSelect(skill);
+                        }}
+                        placeholder="Select your primary skill"
+                        data-testid="dropdown-primary-skill"
+                      />
+                    </FormControl>
+                    <FormMessage role="alert" />
+                  </FormItem>
+                )}
+              />
+
+              {candidateType === 'internal' && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="serialNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Employee ID</FormLabel>
+                        <FormControl>
+                          <Input data-testid="input-employee-id" placeholder="Enter employee ID" {...field} />
+                        </FormControl>
+                        <FormMessage role="alert" />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="recruiterName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Current Department</FormLabel>
+                        <FormControl>
+                          <DropdownWithAdd
+                            category="current_department"
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            placeholder="Select or add department"
+                            data-testid="dropdown-department"
+                          />
+                        </FormControl>
+                        <FormMessage role="alert" />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+
+              {candidateType === 'external' && (
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Father's Name</FormLabel>
+                      <FormControl>
+                        <Input data-testid="input-father-name" placeholder="Enter father's name" {...field} />
+                      </FormControl>
+                      <FormMessage role="alert" />
+                    </FormItem>
+                  )}
+                />
+              )}
+            </CardContent>
+          </Card>
+        );
+
+      case 2: // Recruitment Details or Experience Information
+        if (candidateType === 'external') {
+          return (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Building2 className="h-5 w-5" />
-                  Recruitment Details
+                  {section.title}
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -530,7 +845,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
                           Only directors, managers, and HR can modify recruiter assignments
                         </p>
                       )}
-                      <FormMessage />
+                      <FormMessage role="alert" />
                     </FormItem>
                   )}
                 />
@@ -550,7 +865,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
                           data-testid="dropdown-source"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage role="alert" />
                     </FormItem>
                   )}
                 />
@@ -570,19 +885,25 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
                           data-testid="dropdown-client-name"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage role="alert" />
                     </FormItem>
                   )}
                 />
               </CardContent>
             </Card>
+          );
+        } else {
+          return <ExperienceSection control={form.control} />;
+        }
 
-            {/* Government IDs */}
+      case 3: // Government IDs & Links or Compensation & Timeline
+        if (candidateType === 'external') {
+          return (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  Government IDs & Links
+                  {section.title}
                 </CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -600,7 +921,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
                           maxLength={12}
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage role="alert" />
                     </FormItem>
                   )}
                 />
@@ -619,7 +940,7 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
                           maxLength={12}
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage role="alert" />
                     </FormItem>
                   )}
                 />
@@ -629,235 +950,30 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
                   name="linkedinUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>LinkedIn Profile URL</FormLabel>
+                      <FormLabel>LinkedIn URL</FormLabel>
                       <FormControl>
                         <Input 
                           data-testid="input-linkedin-url" 
-                          placeholder="https://www.linkedin.com/in/username" 
+                          placeholder="https://linkedin.com/in/yourprofile"
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage role="alert" />
                     </FormItem>
                   )}
                 />
               </CardContent>
             </Card>
+          );
+        } else {
+          return <CompensationSection control={form.control} />;
+        }
 
-            {/* Address Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Address Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="currentCompany"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Current Address</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          data-testid="textarea-current-address"
-                          placeholder="Enter current address"
-                          {...field}
-                          rows={3}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="preferredLocation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Permanent Address</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          data-testid="textarea-permanent-address"
-                          placeholder="Enter permanent address"
-                          {...field}
-                          rows={3}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Personal Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="jobLocation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Blood Group</FormLabel>
-                      <FormControl>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger data-testid="select-blood-group">
-                            <SelectValue placeholder="Select blood group" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="A+">A+</SelectItem>
-                            <SelectItem value="A-">A-</SelectItem>
-                            <SelectItem value="B+">B+</SelectItem>
-                            <SelectItem value="B-">B-</SelectItem>
-                            <SelectItem value="AB+">AB+</SelectItem>
-                            <SelectItem value="AB-">AB-</SelectItem>
-                            <SelectItem value="O+">O+</SelectItem>
-                            <SelectItem value="O-">O-</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="source"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Marital Status</FormLabel>
-                      <FormControl>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger data-testid="select-marital-status">
-                            <SelectValue placeholder="Select marital status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Single">Single</SelectItem>
-                            <SelectItem value="Married">Married</SelectItem>
-                            <SelectItem value="Divorced">Divorced</SelectItem>
-                            <SelectItem value="Widowed">Widowed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="clientName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nationality</FormLabel>
-                      <FormControl>
-                        <Input 
-                          data-testid="input-nationality" 
-                          placeholder="Enter nationality (e.g., Indian)"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="uanNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Religion</FormLabel>
-                      <FormControl>
-                        <Input 
-                          data-testid="input-religion" 
-                          placeholder="Enter religion (optional)"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Emergency Contact */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Emergency Contact</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="aadhaarNumber"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Emergency Contact Name</FormLabel>
-                      <FormControl>
-                        <Input 
-                          data-testid="input-emergency-contact-name" 
-                          placeholder="Enter emergency contact name"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="highestQualification"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Emergency Contact Number</FormLabel>
-                      <FormControl>
-                        <Input 
-                          data-testid="input-emergency-contact-number" 
-                          placeholder="Enter emergency contact number"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="currentLocation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Relationship</FormLabel>
-                      <FormControl>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger data-testid="select-relationship">
-                            <SelectValue placeholder="Select relationship" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Father">Father</SelectItem>
-                            <SelectItem value="Mother">Mother</SelectItem>
-                            <SelectItem value="Spouse">Spouse</SelectItem>
-                            <SelectItem value="Brother">Brother</SelectItem>
-                            <SelectItem value="Sister">Sister</SelectItem>
-                            <SelectItem value="Friend">Friend</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Education & Skills */}
+      case 4: // Experience Information or Education & Skills
+        if (candidateType === 'external') {
+          return <ExperienceSection control={form.control} />;
+        } else {
+          return (
             <Card>
               <CardHeader>
                 <CardTitle>Education & Skills</CardTitle>
@@ -878,12 +994,11 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
                           data-testid="dropdown-qualification"
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage role="alert" />
                     </FormItem>
                   )}
                 />
 
-                {/* Advanced Skills Manager */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Skills & Expertise</h3>
                   <SkillsManager
@@ -895,37 +1010,188 @@ export function CandidateForm({ initialData, onSubmit, isLoading }: CandidateFor
                 </div>
               </CardContent>
             </Card>
-          </>
-        )}
+          );
+        }
 
-        {/* Common sections for both candidate types */}
-        <ExperienceSection control={form.control} />
-        
-        <CompensationSection control={form.control} />
+      case 5: // Compensation & Timeline or Documents & Final Review
+        if (candidateType === 'external') {
+          return <CompensationSection control={form.control} />;
+        } else {
+          return (
+            <Card>
+              <CardHeader>
+                <CardTitle>Documents & Final Review</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <DocumentManager
+                  candidateType={candidateType}
+                  educationEntries={educationEntries}
+                  employmentEntries={employmentEntries}
+                  identityDocuments={identityDocuments}
+                  additionalDocuments={additionalDocuments}
+                  onEducationChange={setEducationEntries}
+                  onEmploymentChange={setEmploymentEntries}
+                  onIdentityChange={setIdentityDocuments}
+                  onAdditionalChange={setAdditionalDocuments}
+                />
 
-        {/* Advanced Document Manager */}
-        <DocumentManager
-          candidateType={candidateType}
-          educationEntries={educationEntries}
-          employmentEntries={employmentEntries}
-          identityDocuments={identityDocuments}
-          additionalDocuments={additionalDocuments}
-          onEducationChange={setEducationEntries}
-          onEmploymentChange={setEmploymentEntries}
-          onIdentityChange={setIdentityDocuments}
-          onAdditionalChange={setAdditionalDocuments}
-        />
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <FormControl>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger data-testid="select-status">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Available">Available</SelectItem>
+                            <SelectItem value="Interviewing">Interviewing</SelectItem>
+                            <SelectItem value="Offered">Offered</SelectItem>
+                            <SelectItem value="Placed">Placed</SelectItem>
+                            <SelectItem value="Rejected">Rejected</SelectItem>
+                            <SelectItem value="On Hold">On Hold</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage role="alert" />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          );
+        }
 
-        {/* Submit Button */}
-        <div className="flex justify-end gap-4">
-          <Button 
-            type="submit" 
-            disabled={isLoading || resumeUploading}
-            className="min-w-32"
-            data-testid="button-submit"
+      case 6: // Documents & Final Review (external candidates only)
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle>Documents & Final Review</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <DocumentManager
+                candidateType={candidateType}
+                educationEntries={educationEntries}
+                employmentEntries={employmentEntries}
+                identityDocuments={identityDocuments}
+                additionalDocuments={additionalDocuments}
+                onEducationChange={setEducationEntries}
+                onEmploymentChange={setEmploymentEntries}
+                onIdentityChange={setIdentityDocuments}
+                onAdditionalChange={setAdditionalDocuments}
+              />
+
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <FormControl>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger data-testid="select-status">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Available">Available</SelectItem>
+                          <SelectItem value="Interviewing">Interviewing</SelectItem>
+                          <SelectItem value="Offered">Offered</SelectItem>
+                          <SelectItem value="Placed">Placed</SelectItem>
+                          <SelectItem value="Rejected">Rejected</SelectItem>
+                          <SelectItem value="On Hold">On Hold</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage role="alert" />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        {/* Progress Indicator */}
+        <div className="mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Add New Candidate</h2>
+            <div className="text-sm text-muted-foreground">
+              Step {currentSection + 1} of {sections.length}
+            </div>
+          </div>
+          
+          {/* Progress Bar */}
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-in-out" 
+              style={{ width: `${((currentSection + 1) / sections.length) * 100}%` }}
+            />
+          </div>
+
+          {/* Section Steps */}
+          <div className="flex flex-wrap gap-2">
+            {sections.map((section, index) => (
+              <div
+                key={section.id}
+                className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  index === currentSection
+                    ? "bg-blue-600 text-white"
+                    : isSectionCompleted(index)
+                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                    : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                }`}
+              >
+                {section.title}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Current Section Content */}
+        {renderSectionContent()}
+
+        {/* Navigation Controls */}
+        <div className="flex justify-between items-center pt-6 border-t">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePreviousSection}
+            disabled={!canGoBack()}
+            data-testid="button-previous"
           >
-            {isLoading ? "Saving..." : initialData ? "Update Candidate" : "Create Candidate"}
+            Previous
           </Button>
+
+          <div className="flex gap-2">
+            {canProceedToNext() ? (
+              <Button
+                type="button"
+                onClick={handleNextSection}
+                data-testid="button-next"
+              >
+                Next
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={isLoading || resumeUploading}
+                className="min-w-32"
+                data-testid="button-submit"
+              >
+                {isLoading ? "Saving..." : initialData ? "Update Candidate" : "Create Candidate"}
+              </Button>
+            )}
+          </div>
         </div>
       </form>
     </Form>
