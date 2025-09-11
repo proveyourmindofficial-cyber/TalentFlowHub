@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { InterviewForm } from "@/components/interview/interview-form";
 import { InterviewTable } from "@/components/interview/interview-table";
 import { InterviewFeedbackForm } from "@/components/interview/interview-feedback-form";
+import { InterviewFeedbackView } from "@/components/interview/interview-feedback-view";
 import { apiRequest } from "@/lib/queryClient";
 import Header from "@/components/layout/header";
 import type { Interview } from "@shared/schema";
@@ -18,6 +19,9 @@ export default function Interviews() {
   const [deleteInterview, setDeleteInterview] = useState<Interview | null>(null);
   const [feedbackInterview, setFeedbackInterview] = useState<Interview | null>(null);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [feedbackViewInterview, setFeedbackViewInterview] = useState<Interview | null>(null);
+  const [isFeedbackViewOpen, setIsFeedbackViewOpen] = useState(false);
+  const [currentFeedback, setCurrentFeedback] = useState<any>(null);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -95,14 +99,48 @@ export default function Interviews() {
     bulkDeleteMutation.mutate(interviewIds);
   };
 
-  const handleFeedback = (interview: Interview) => {
-    setFeedbackInterview(interview);
-    setIsFeedbackOpen(true);
+  const handleFeedback = async (interview: Interview) => {
+    try {
+      // Check if feedback already exists
+      const feedback = await apiRequest("GET", `/api/interviews/${interview.id}/feedback`);
+      if (feedback) {
+        // Show feedback view dialog
+        setFeedbackViewInterview(interview);
+        setCurrentFeedback(feedback);
+        setIsFeedbackViewOpen(true);
+      } else {
+        // Show feedback form dialog
+        setFeedbackInterview(interview);
+        setIsFeedbackOpen(true);
+      }
+    } catch (error) {
+      // No feedback exists, show form dialog
+      setFeedbackInterview(interview);
+      setIsFeedbackOpen(true);
+    }
   };
 
   const handleCloseFeedback = () => {
     setIsFeedbackOpen(false);
     setFeedbackInterview(null);
+    // Invalidate feedback-related queries to refresh both views
+    queryClient.invalidateQueries({ queryKey: ["/api/interviews"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/interviews/feedback-status"] });
+  };
+
+  const handleCloseFeedbackView = () => {
+    setIsFeedbackViewOpen(false);
+    setFeedbackViewInterview(null);
+    setCurrentFeedback(null);
+  };
+
+  const handleEditFromView = () => {
+    if (feedbackViewInterview) {
+      // Close view dialog and open edit form
+      setIsFeedbackViewOpen(false);
+      setFeedbackInterview(feedbackViewInterview);
+      setIsFeedbackOpen(true);
+    }
   };
 
   const handleResend = (interview: Interview) => {
@@ -167,13 +205,13 @@ export default function Interviews() {
             />
           </div>
 
-        {/* Feedback Dialog */}
+        {/* Feedback Form Dialog */}
         <Dialog open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Interview Feedback</DialogTitle>
               <DialogDescription>
-                Provide detailed feedback for the interview with {feedbackInterview?.interviewer}
+                Provide detailed feedback for the {feedbackInterview?.interviewRound} round interview
               </DialogDescription>
             </DialogHeader>
             {feedbackInterview && (
@@ -187,6 +225,15 @@ export default function Interviews() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Feedback View Dialog */}
+        <InterviewFeedbackView
+          interview={feedbackViewInterview}
+          feedback={currentFeedback}
+          isOpen={isFeedbackViewOpen}
+          onClose={handleCloseFeedbackView}
+          onEdit={handleEditFromView}
+        />
 
         {/* Delete Confirmation Dialog */}
         <AlertDialog open={!!deleteInterview} onOpenChange={() => setDeleteInterview(null)}>
