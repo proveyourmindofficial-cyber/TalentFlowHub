@@ -120,12 +120,33 @@ export default function Interviews() {
     }
   };
 
-  const handleCloseFeedback = () => {
+  const handleCloseFeedback = async () => {
     setIsFeedbackOpen(false);
+    
+    // Get candidate ID from the interview to invalidate candidate-specific caches
+    if (feedbackInterview) {
+      try {
+        const application = await apiRequest("GET", `/api/applications/${feedbackInterview.applicationId}`);
+        const candidateId = application.candidateId;
+        
+        // Invalidate both Interview and Candidate view caches
+        queryClient.invalidateQueries({ queryKey: ["/api/interviews"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/interviews/feedback-status"] });
+        
+        if (candidateId) {
+          queryClient.invalidateQueries({ queryKey: ["/api/candidates", candidateId, "timeline"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/candidates", candidateId, "interviews"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/candidates", candidateId, "interviews-feedback"] });
+        }
+      } catch (error) {
+        console.error("Failed to invalidate candidate caches:", error);
+        // Still invalidate interview caches even if candidate cache invalidation fails
+        queryClient.invalidateQueries({ queryKey: ["/api/interviews"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/interviews/feedback-status"] });
+      }
+    }
+    
     setFeedbackInterview(null);
-    // Invalidate feedback-related queries to refresh both views
-    queryClient.invalidateQueries({ queryKey: ["/api/interviews"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/interviews/feedback-status"] });
   };
 
   const handleCloseFeedbackView = () => {
