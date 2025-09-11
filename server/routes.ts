@@ -1764,6 +1764,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid candidate data", errors: error.errors });
       }
+      
+      // Handle database constraint violations (Neon database errors)
+      if (error && typeof error === 'object') {
+        const dbError = error as any;
+        
+        // Handle unique constraint violations (PostgreSQL error code 23505)
+        if (dbError.code === '23505' || (dbError.message && dbError.message.includes('duplicate key value violates unique constraint'))) {
+          // Check constraint name or message for specific field
+          if (dbError.constraint === 'candidates_phone_unique' || (dbError.detail && dbError.detail.includes('phone'))) {
+            return res.status(400).json({ 
+              message: "Phone number already exists", 
+              field: "phone",
+              type: "unique_violation"
+            });
+          }
+          if (dbError.constraint === 'candidates_email_unique' || (dbError.detail && dbError.detail.includes('email'))) {
+            return res.status(400).json({ 
+              message: "Email address already exists", 
+              field: "email",
+              type: "unique_violation"
+            });
+          }
+          // Generic unique constraint error
+          return res.status(400).json({ 
+            message: "This candidate information already exists in the system", 
+            type: "unique_violation"
+          });
+        }
+        
+        // Handle not-null constraint violations (PostgreSQL error code 23502)
+        if (dbError.code === '23502' || (dbError.message && dbError.message.includes('violates not-null constraint'))) {
+          return res.status(400).json({ 
+            message: "Required field is missing", 
+            type: "validation_error"
+          });
+        }
+        
+        // Handle foreign key constraint violations (PostgreSQL error code 23503)
+        if (dbError.code === '23503' || (dbError.message && dbError.message.includes('violates foreign key constraint'))) {
+          return res.status(400).json({ 
+            message: "Referenced record does not exist", 
+            type: "reference_error"
+          });
+        }
+      }
+      
       console.error("Error creating candidate:", error);
       res.status(500).json({ message: "Failed to create candidate" });
     }
