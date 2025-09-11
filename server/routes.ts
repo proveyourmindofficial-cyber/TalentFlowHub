@@ -2631,7 +2631,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   teamsMeetingUrl: teamsmeeting.joinUrl,
                   teamsOrganizerEmail: organizerEmail
                 };
-                console.log(`✅ Teams meeting created: ${teamsmeeting.joinUrl}`);
+                console.log(`✅ Teams meeting created successfully`);
               } else {
                 console.warn('❌ Failed to create Teams meeting - proceeding without it');
               }

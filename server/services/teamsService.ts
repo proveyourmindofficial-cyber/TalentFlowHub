@@ -147,7 +147,7 @@ export class TeamsService {
           }))
         });
 
-      console.log(`✅ REAL Teams meeting created! Join URL: ${meeting.onlineMeeting?.joinUrl || 'Generated'}`);
+      console.log(`✅ REAL Teams meeting created! Join URL generated successfully`);
 
       return {
         id: meeting.id,
