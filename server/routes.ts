@@ -1434,12 +1434,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/dropdowns", async (req, res) => {
+  app.post("/api/dropdowns", authenticateUser, async (req, res) => {
     try {
-      const optionData = req.body;
-      const newOption = await storage.createDropdownOption(optionData);
+      // Validate request body
+      const dropdownOptionSchema = z.object({
+        category: z.string().min(1, "Category is required").max(50),
+        label: z.string().min(1, "Label is required").max(100),
+        value: z.string().min(1, "Value is required").max(100),
+      });
+
+      const validatedData = dropdownOptionSchema.parse(req.body);
+      
+      // Basic authorization - require authenticated user with admin or director role
+      if (!req.user || !['admin', 'director', 'hr'].includes(req.user.role)) {
+        return res.status(403).json({ message: "Insufficient permissions to create dropdown options" });
+      }
+
+      const newOption = await storage.createDropdownOption(validatedData);
+      
+      // Log the activity
+      await ActivityLogger.log({
+        userId: req.user.id,
+        action: 'create',
+        entity: 'dropdown_option',
+        entityId: newOption.id,
+        details: { category: validatedData.category, label: validatedData.label },
+        userAgent: req.get('User-Agent'),
+        ipAddress: req.ip,
+      });
+
       res.status(201).json(newOption);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          errors: error.errors.map(e => e.message) 
+        });
+      }
       console.error("Error creating dropdown option:", error);
       res.status(500).json({ message: "Failed to create dropdown option" });
     }

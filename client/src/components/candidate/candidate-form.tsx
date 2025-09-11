@@ -39,7 +39,10 @@ const candidateFormSchema = insertCandidateSchema.extend({
   relevantExperience: z.coerce.number().min(0).max(50),
   currentCtc: z.coerce.number().min(0).optional(),
   expectedCtc: z.coerce.number().min(0).optional(),
-  serialNumber: z.coerce.number().positive("Employee ID must be a positive number").optional(),
+  serialNumber: z.preprocess(
+    (v) => (v === '' || v == null ? undefined : v),
+    z.coerce.number().int().positive("Employee ID must be a positive number").optional()
+  ),
   tentativeDoj: z.string().optional(),
   candidateType: z.enum(['internal', 'external']).default('internal'),
   // External candidate specific validations
