@@ -1,5 +1,6 @@
 import Header from "@/components/layout/header";
 import JobTable from "@/components/job/job-table";
+import { HelpButton } from "@/components/help/HelpCenter";
 
 export default function Jobs() {
   return (
@@ -8,6 +9,7 @@ export default function Jobs() {
         title="Jobs"
         description="Manage all your job postings and recruitment positions."
         showNewJobButton={true}
+        action={<HelpButton module="jobs" />}
       />
 
       <div className="flex-1 overflow-auto p-6">
