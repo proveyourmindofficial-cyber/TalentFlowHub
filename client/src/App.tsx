@@ -29,6 +29,7 @@ import Settings from "@/pages/settings";
 import UserManagement from "@/pages/user-management";
 import ProfilePage from "@/pages/profile";
 import CandidatePortal from "@/pages/candidate-portal";
+import { CandidatePasswordSetupPage } from "@/pages/candidate-portal/setup-password";
 import CandidateResponse from "@/pages/candidate-response";
 import NotFound from "@/pages/not-found";
 import { usePageTracking } from "@/hooks/usePageTracking";
@@ -57,6 +58,7 @@ function Router() {
       <Switch>
         {/* Public candidate portal routes - no authentication required */}
         <Route path="/portal" component={CandidatePortal} />
+        <Route path="/candidate-portal/setup-password" component={CandidatePasswordSetupPage} />
         <Route path="/candidate-portal/*" component={CandidatePortal} />
         <Route path="/candidate-response" component={CandidateResponse} />
         <Route path="/setup-password" component={PasswordSetupPage} />

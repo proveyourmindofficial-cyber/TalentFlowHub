@@ -2,7 +2,7 @@ import express from 'express';
 import { z } from 'zod';
 import { emailTemplateService, replacePlaceholders } from '../services/emailTemplateService';
 import { storage } from '../storage';
-import type { EmailTemplate, InsertEmailTemplate } from '@shared/schema';
+import type { EmailTemplate, InsertEmailTemplate } from '../../shared/schema';
 
 const router = express.Router();
 

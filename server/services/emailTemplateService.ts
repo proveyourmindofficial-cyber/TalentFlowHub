@@ -1,6 +1,6 @@
 import { storage } from '../storage';
 import { graphEmailService } from './graphEmailService';
-import type { EmailTemplate, InsertEmailTemplate, CompanyProfile } from '@shared/schema';
+import type { EmailTemplate, InsertEmailTemplate, CompanyProfile } from '../../shared/schema';
 
 // Email configuration interface
 interface EmailConfig {

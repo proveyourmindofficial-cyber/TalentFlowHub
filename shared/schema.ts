@@ -25,7 +25,7 @@ export const permissionActionEnum = pgEnum('permission_action', ['view', 'add', 
 export const notificationTypeEnum = pgEnum('notification_type', ['info', 'success', 'warning', 'error', 'system']);
 export const activityActionEnum = pgEnum('activity_action', [
   // Authentication & User Management
-  'login', 'logout', 'login_failed', 'password_setup', 'password_reset', 'account_locked', 'account_unlocked',
+  'login', 'logout', 'login_failed', 'password_setup', 'password_reset', 'account_locked', 'account_unlocked', 'authentication_failed',
   // Email & Communication
   'email_sent', 'email_delivered', 'email_bounced', 'email_opened', 'email_failed', 'invitation_sent', 'invitation_resent',
   // Data Operations
@@ -33,11 +33,14 @@ export const activityActionEnum = pgEnum('activity_action', [
   // User Journey & Session
   'page_accessed', 'page_view', 'page_hidden', 'page_visible', 'session_started', 'session_ended', 'session_heartbeat', 'error_encountered', 'feedback_submitted', 'performance_issue', 'frontend_error',
   // Admin Actions
-  'user_invited', 'user_activated', 'user_deactivated', 'role_assigned', 'permission_changed'
+  'user_invited', 'user_activated', 'user_deactivated', 'role_assigned', 'permission_changed',
+  // Feedback & Support
+  'feedback_updated', 'issue_reported'
 ]);
 export const feedbackTypeEnum = pgEnum('feedback_type', ['bug', 'feature', 'improvement', 'question', 'other']);
 export const feedbackStatusEnum = pgEnum('feedback_status', ['open', 'in_progress', 'resolved', 'closed']);
 export const feedbackPriorityEnum = pgEnum('feedback_priority', ['low', 'medium', 'high', 'urgent']);
+export const activityCategoryEnum = pgEnum('activity_category', ['authentication', 'email', 'data', 'navigation', 'error', 'feedback', 'admin', 'user_interaction', 'admin_action', 'user_support', 'custom']);
 
 // Remove old role system enum - we ONLY use custom roles now
 

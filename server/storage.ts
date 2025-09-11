@@ -75,7 +75,7 @@ import {
   userCustomRoles,
   type UserCustomRole,
   type InsertUserCustomRole,
-} from "@shared/schema";
+} from "../shared/schema";
 import { db } from "./db";
 import { eq, desc, and, count, sql, inArray, lt, or } from "drizzle-orm";
 

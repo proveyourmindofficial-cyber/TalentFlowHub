@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { db } from "../db";
-import { skills, candidateSkills } from "@shared/schema";
+import { skills, candidateSkills } from "../../shared/schema";
 import { eq, like } from "drizzle-orm";
 import { z } from "zod";
 

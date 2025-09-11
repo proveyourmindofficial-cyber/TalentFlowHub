@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { storage } from './storage';
-import { type Candidate, type CandidateSession } from '@shared/schema';
+import { type Candidate, type CandidateSession } from '../shared/schema';
 import { ActivityLogger } from './activityLogger';
 import type { Request } from 'express';
 

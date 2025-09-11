@@ -1,7 +1,7 @@
 import express from 'express';
 import { candidateAuth } from '../candidateAuth';
 import { storage } from '../storage';
-import { candidateLoginSchema, candidateRegistrationSchema } from '@shared/schema';
+import { candidateLoginSchema, candidateRegistrationSchema } from '../../shared/schema';
 import { z } from 'zod';
 
 const router = express.Router();
