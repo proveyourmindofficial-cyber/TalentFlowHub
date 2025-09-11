@@ -1,5 +1,5 @@
 import { storage } from './storage';
-import type { Candidate } from '@shared/schema';
+import type { Candidate } from '../shared/schema';
 
 export class CandidateWorkflowService {
   

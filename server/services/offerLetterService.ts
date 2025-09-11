@@ -1,4 +1,4 @@
-import type { OfferLetter, Candidate, Job } from "@shared/schema";
+import type { OfferLetter, Candidate, Job } from "../../shared/schema";
 
 export class OfferLetterService {
   

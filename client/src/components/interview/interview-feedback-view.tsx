@@ -175,8 +175,14 @@ export function InterviewFeedbackView({
           {/* Metadata */}
           <div className="bg-muted/30 p-3 rounded text-xs text-muted-foreground border-t">
             <div className="flex justify-between">
-              <span>Feedback submitted on: {format(new Date(feedback.createdAt), "MMM dd, yyyy 'at' h:mm a")}</span>
-              {feedback.updatedAt && feedback.updatedAt !== feedback.createdAt && (
+              <span>
+                Feedback submitted on: {
+                  feedback.createdAt && !isNaN(new Date(feedback.createdAt).getTime()) 
+                    ? format(new Date(feedback.createdAt), "MMM dd, yyyy 'at' h:mm a")
+                    : "Date not available"
+                }
+              </span>
+              {feedback.updatedAt && feedback.updatedAt !== feedback.createdAt && !isNaN(new Date(feedback.updatedAt).getTime()) && (
                 <span>Last updated: {format(new Date(feedback.updatedAt), "MMM dd, yyyy 'at' h:mm a")}</span>
               )}
             </div>

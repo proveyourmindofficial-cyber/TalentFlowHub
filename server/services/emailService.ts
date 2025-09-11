@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { MailService } from '@sendgrid/mail';
 import { storage } from '../storage';
-import type { EmailTemplate, EmailProvider, EmailLog, InsertEmailLog } from '@shared/schema';
+import type { EmailTemplate, EmailProvider, EmailLog, InsertEmailLog } from '../../shared/schema';
 
 export interface EmailConfig {
   provider: 'smtp' | 'sendgrid' | 'outlook' | 'gmail';

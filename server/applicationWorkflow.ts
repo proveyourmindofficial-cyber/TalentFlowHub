@@ -1,6 +1,6 @@
 import { storage } from './storage';
 import { nanoid } from 'nanoid';
-import type { Application, Job, Candidate, CompanyProfile } from '@shared/schema';
+import type { Application, Job, Candidate, CompanyProfile } from '../shared/schema';
 import { emailTemplateService } from './services/emailTemplateService';
 
 export class ApplicationWorkflowService {
@@ -260,7 +260,7 @@ export class ApplicationWorkflowService {
   }
 
   /**
-   * Create or activate candidate portal account
+   * Create or activate candidate portal account with secure token-based password setup
    */
   async createPortalAccount(candidateId: string): Promise<{ success: boolean; message: string }> {
     const candidate = await storage.getCandidate(candidateId);
@@ -268,69 +268,165 @@ export class ApplicationWorkflowService {
       return { success: false, message: 'Candidate not found' };
     }
     try {
-      // Generate temporary password
-      const tempPassword = `temp_${candidate.email.split('@')[0]}_${Date.now()}`;
+      // Generate cryptographically secure password setup token
+      const crypto = await import('crypto');
+      const setupToken = crypto.randomBytes(32).toString('hex');
       
-      // Hash the password (simple implementation)
-      const bcrypt = await import('bcrypt');
-      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      // Set token expiration to 48 hours from now
+      const tokenExpiresAt = new Date();
+      tokenExpiresAt.setHours(tokenExpiresAt.getHours() + 48);
       
-      // Update candidate with portal credentials
+      // Update candidate with password setup token (no password yet)
       await storage.updateCandidate(candidate.id, {
-        password: hashedPassword,
-        isPortalActive: true,
-        portalToken: null, // Reset any existing tokens
-        tokenExpiresAt: null
+        password: null, // No password until they set it up
+        isPortalActive: false, // Will be activated after password setup
+        portalToken: setupToken,
+        tokenExpiresAt: tokenExpiresAt
       });
 
-      // Send welcome email with credentials
-      await this.sendPortalWelcomeEmail(candidate, tempPassword);
+      // Send secure password setup email
+      await this.sendPortalPasswordSetupEmail(candidate, setupToken);
 
-      console.log(`✅ Portal account created for ${candidate.email}`);
+      console.log(`✅ Password setup token generated for ${candidate.email}`);
       return {
         success: true,
-        message: 'Portal account created successfully'
+        message: 'Password setup email sent successfully'
       };
     } catch (error) {
       console.error('Error creating portal account:', error);
       return {
         success: false,
-        message: 'Failed to create portal account'
+        message: 'Failed to send password setup email'
       };
     }
   }
 
   /**
-   * Send welcome email for portal access with login credentials
+   * Send secure password setup email with token-based link
    */
-  private async sendPortalWelcomeEmail(candidate: any, tempPassword: string): Promise<void> {
+  private async sendPortalPasswordSetupEmail(candidate: any, setupToken: string): Promise<void> {
     try {
       const baseUrl = process.env.REPLIT_DEV_DOMAIN ? `https://${process.env.REPLIT_DEV_DOMAIN}` : 'http://localhost:5000';
-      const portalUrl = `${baseUrl}/candidate-portal/login`;
+      const passwordSetupUrl = `${baseUrl}/candidate-portal/setup-password?token=${setupToken}`;
       
-      // Send email using proper credentials template
+      // Send email using secure password setup template
       const result = await emailTemplateService.sendEmail(
-        'candidate_portal_credentials', 
+        'candidate_portal_password_setup', 
         candidate.email,
         {
           candidate: { 
             name: candidate.name || 'Candidate',
-            email: candidate.email,
-            tempPassword: tempPassword
+            email: candidate.email
           },
           company: await this.getCompanyData(),
-          portalUrl: portalUrl
+          passwordSetupUrl: passwordSetupUrl,
+          tokenExpiresIn: '48 hours'
         }
       );
 
       if (result.success) {
-        console.log(`✅ Portal credentials email sent to ${candidate.email}`);
-        console.log(`   Login: ${candidate.email} / ${tempPassword}`);
+        console.log(`✅ Password setup email sent to ${candidate.email}`);
+        console.log(`   Setup URL: ${passwordSetupUrl}`);
       } else {
-        console.error(`❌ Failed to send portal credentials email to ${candidate.email}`);
+        console.error(`❌ Failed to send password setup email to ${candidate.email}`);
       }
     } catch (error) {
-      console.error('Error sending portal welcome email:', error);
+      console.error('Error sending password setup email:', error);
+    }
+  }
+
+  /**
+   * Validate password setup token and complete account setup
+   */
+  async setupCandidatePassword(token: string, newPassword: string): Promise<{ success: boolean; message: string; candidateEmail?: string }> {
+    try {
+      // Find candidate by token
+      const candidates = await storage.getCandidates();
+      const candidate = candidates.find(c => c.portalToken === token);
+      
+      if (!candidate) {
+        return {
+          success: false,
+          message: 'Invalid or expired password setup link. Please contact our recruitment team.'
+        };
+      }
+
+      // Check token expiration
+      if (candidate.tokenExpiresAt && new Date() > candidate.tokenExpiresAt) {
+        return {
+          success: false,
+          message: 'Password setup link has expired. Please contact our recruitment team for a new link.'
+        };
+      }
+
+      // Validate password strength (basic validation)
+      if (!newPassword || newPassword.length < 8) {
+        return {
+          success: false,
+          message: 'Password must be at least 8 characters long.'
+        };
+      }
+
+      // Hash the new password
+      const bcrypt = await import('bcrypt');
+      const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+      // Update candidate with hashed password and activate portal
+      await storage.updateCandidate(candidate.id, {
+        password: hashedPassword,
+        isPortalActive: true,
+        portalToken: null, // Invalidate the setup token
+        tokenExpiresAt: null
+      });
+
+      console.log(`✅ Password setup completed for ${candidate.email}`);
+      return {
+        success: true,
+        message: 'Password setup completed successfully. You can now login to your portal.',
+        candidateEmail: candidate.email
+      };
+    } catch (error) {
+      console.error('Error setting up candidate password:', error);
+      return {
+        success: false,
+        message: 'An error occurred while setting up your password. Please try again.'
+      };
+    }
+  }
+
+  /**
+   * Validate password setup token (for form display)
+   */
+  async validatePasswordSetupToken(token: string): Promise<{ success: boolean; message: string; candidateName?: string }> {
+    try {
+      const candidates = await storage.getCandidates();
+      const candidate = candidates.find(c => c.portalToken === token);
+      
+      if (!candidate) {
+        return {
+          success: false,
+          message: 'Invalid password setup link.'
+        };
+      }
+
+      if (candidate.tokenExpiresAt && new Date() > candidate.tokenExpiresAt) {
+        return {
+          success: false,
+          message: 'Password setup link has expired.'
+        };
+      }
+
+      return {
+        success: true,
+        message: 'Valid token',
+        candidateName: candidate.name
+      };
+    } catch (error) {
+      console.error('Error validating password setup token:', error);
+      return {
+        success: false,
+        message: 'Error validating token.'
+      };
     }
   }
 

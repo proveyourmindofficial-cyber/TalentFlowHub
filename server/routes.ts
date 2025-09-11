@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertJobSchema, insertCandidateSchema, insertApplicationSchema, insertInterviewSchema, insertOfferLetterSchema, insertClientSchema, insertClientRequirementSchema, insertCompanyProfileSchema, insertCustomRoleSchema, insertNotificationSchema, insertActivityLogSchema, insertFeedbackSchema, insertDepartmentSchema, type InsertUser } from "@shared/schema";
+import { insertJobSchema, insertCandidateSchema, insertApplicationSchema, insertInterviewSchema, insertOfferLetterSchema, insertClientSchema, insertClientRequirementSchema, insertCompanyProfileSchema, insertCustomRoleSchema, insertNotificationSchema, insertActivityLogSchema, insertFeedbackSchema, insertDepartmentSchema, type InsertUser } from "../shared/schema";
 import { ActivityLogger } from './activityLogger';
 import { z } from "zod";
 import { validateCandidateTypeFields, uanNumberSchema, aadhaarNumberSchema, linkedinUrlSchema } from "./validationUtils";
@@ -1815,6 +1815,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ========================================
+  // SECURE CANDIDATE PASSWORD SETUP ROUTES
+  // ========================================
+  
+  // Validate password setup token (for frontend to check token validity)
+  app.get('/api/candidate/validate-password-token', async (req, res) => {
+    try {
+      const { token } = req.query;
+      if (!token) {
+        return res.status(400).json({ success: false, message: 'Token is required' });
+      }
+
+      const { applicationWorkflowService } = await import('./applicationWorkflow');
+      const result = await applicationWorkflowService.validatePasswordSetupToken(token as string);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error validating password setup token:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  });
+
+  // Setup candidate password with secure token
+  app.post('/api/candidate/setup-password', async (req, res) => {
+    try {
+      const { token, password } = req.body;
+      
+      if (!token || !password) {
+        return res.status(400).json({ success: false, message: 'Token and password are required' });
+      }
+
+      const { applicationWorkflowService } = await import('./applicationWorkflow');
+      const result = await applicationWorkflowService.setupCandidatePassword(token, password);
+      
+      if (result.success) {
+        console.log(`✅ Password setup completed for ${result.candidateEmail}`);
+      }
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error setting up candidate password:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  });
+
   // Enhanced candidate response endpoints
   app.get('/api/application/respond', async (req, res) => {
     const { token } = req.query;
@@ -2453,86 +2498,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return mapping[recommendation] || 'On Hold';
   }
 
-  // Helper function to apply interview automation rules
-  async function applyInterviewAutomation(interview: any) {
-    try {
-      const application = await storage.getApplication(interview.applicationId);
-      if (!application) return;
-
-      let newApplicationStage: string = '';
-      let newCandidateStatus: string = '';
-
-      // Rule 1: HR + Completed + Feedback rules (highest priority)
-      if (interview.interviewRound === 'HR' && interview.status === 'Completed' && interview.feedbackResult) {
-        switch (interview.feedbackResult) {
-          case 'Selected':
-            newApplicationStage = 'Offer Released';
-            newCandidateStatus = 'Offered';
-            break;
-          case 'Rejected':
-            newApplicationStage = 'Rejected';
-            newCandidateStatus = 'Rejected';
-            break;
-          case 'On Hold':
-            newApplicationStage = 'On Hold';
-            newCandidateStatus = 'Interviewing';
-            break;
-          case 'No Show':
-            newApplicationStage = 'No Show';
-            newCandidateStatus = 'Available';
-            break;
-          default:
-            // Fallback for unknown feedback
-            newApplicationStage = 'Shortlisted';
-            newCandidateStatus = 'Interviewing';
-        }
-      }
-      // Rule 1.5: L1/L2/Final + Completed + Selected → Progress to next stage
-      else if (['L1', 'L2', 'Final'].includes(interview.interviewRound) && interview.status === 'Completed' && interview.feedbackResult === 'Selected') {
-        if (interview.interviewRound === 'L1') {
-          newApplicationStage = 'L2 Scheduled';
-        } else if (interview.interviewRound === 'L2') {
-          newApplicationStage = 'Selected';
-        } else if (interview.interviewRound === 'Final') {
-          newApplicationStage = 'Selected';
-        }
-        newCandidateStatus = 'Interviewing';
-      }
-      // Rule 1.6: L1/L2/Final + Completed + Rejected → Reject application
-      else if (['L1', 'L2', 'Final'].includes(interview.interviewRound) && interview.status === 'Completed' && interview.feedbackResult === 'Rejected') {
-        newApplicationStage = 'Rejected';
-        newCandidateStatus = 'Rejected';
-      }
-      // Rule 2: L1/L2/Final rounds (any status) - Update to proper scheduled stage
-      else if (['L1', 'L2', 'Final'].includes(interview.interviewRound)) {
-        newApplicationStage = `${interview.interviewRound} Scheduled`;
-        newCandidateStatus = 'Interviewing';
-      }
-      // Rule 3: Default fallback for any other scenarios
-      else {
-        newApplicationStage = 'Shortlisted';
-        newCandidateStatus = 'Interviewing';
-      }
-
-      // Apply the calculated statuses atomically
-      if (newApplicationStage && newCandidateStatus) {
-        await storage.updateApplication(interview.applicationId, { 
-          stage: newApplicationStage as any 
-        });
-        await storage.updateCandidate(application.candidateId, { 
-          status: newCandidateStatus as any 
-        });
-      }
-
-      if (newApplicationStage && newCandidateStatus) {
-        console.log(`Interview automation applied: ${interview.interviewRound} ${interview.status} ${interview.feedbackResult || ''} → App: ${newApplicationStage}, Candidate: ${newCandidateStatus}`);
-      }
-
-    } catch (automationError) {
-      console.error("Error in interview automation:", automationError);
-      // Don't throw - just log the error to avoid breaking the interview operation
-    }
-  }
 
   app.post('/api/interviews', async (req, res) => {
     try {
