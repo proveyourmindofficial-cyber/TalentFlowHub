@@ -1,0 +1,49 @@
+I went through your breakdown — good work on capturing the overall structure and flow. But are you sure this is the complete picture? I feel there are still gaps and missing connections that need to be checked again carefully. Please review once more in detail, especially the following:
+
+Status Stages & Transitions
+
+Recheck the exact statuses before, during, and after feedback submission.
+
+Confirm whether transitions between rounds (L1 → L2 → HR → Final) are correctly captured, or if they’re just overwriting the same record.
+
+Ensure feedback updates don’t simply “modify” but actually create distinct stage records.
+
+Module Connections
+
+Verify how interviews are linking back to Applications, Jobs, Candidates, and Dashboard.
+
+Check that Candidate status changes are properly reflected across modules (not just in the interview record).
+
+Audit whether activity logs are recording all events or missing intermediate updates.
+
+Button Functions & Features
+
+Check each button (Edit, Resend, Feedback, Delete) for proper behavior.
+
+Confirm there are no missing actions like “Mark as Completed” or “Move to Next Round” if feedback is given.
+
+Validate if “Resend” is notifying the right people (candidate, interviewer, or both).
+
+Email & Notification Gaps
+
+Example: when L1 is completed → should there be an internal alert or candidate notification?
+
+Review if reminders, reschedules, and stage-change alerts are consistently sent.
+
+Ensure both candidate and internal teams are covered in every stage of communication.
+
+Candidate Portal (Future Scope)
+
+I understand it’s not active yet, but note down the missing sync points (feedback visibility, interview status updates, confirmations).
+
+These must be part of the roadmap so nothing is skipped later.
+
+Workflow Simplification Check
+
+Step through a real scenario: Candidate applied → L1 scheduled → L1 feedback submitted → L2 scheduled → L2 feedback submitted → HR round → Offer/Reject.
+
+Watch carefully if statuses and notifications are firing at every handover.
+
+From this exercise, identify exactly where the workflow breaks or gaps remain.
+
+In short: what you documented looks fine on the surface, but we must validate the practical workflow and cover the missing status transitions, module links, notification triggers, and feedback stage handling. Let’s treat this as a thorough gap analysis — not just a description of the current system.
